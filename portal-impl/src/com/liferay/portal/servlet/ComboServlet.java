@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
+import com.liferay.portal.kernel.frontend.source.map.FrontendSourceMapUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -184,7 +185,9 @@ public class ComboServlet extends HttpServlet {
 				extension = pathExtension;
 			}
 
-			if (!extension.equals(pathExtension)) {
+			if (!modulePath.startsWith(_WEB_SERVER_SERVLET_FILE_ENTRY_PREFIX) &&
+				!extension.equals(pathExtension)) {
+
 				httpServletResponse.setHeader(
 					HttpHeaders.CACHE_CONTROL,
 					HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE);
@@ -285,7 +288,7 @@ public class ComboServlet extends HttpServlet {
 
 		String contentType = ContentTypes.TEXT_JAVASCRIPT;
 
-		if (StringUtil.equalsIgnoreCase(extension, _CSS_EXTENSION)) {
+		if (StringUtil.equalsIgnoreCase(minifierType, "css")) {
 			contentType = ContentTypes.TEXT_CSS_UTF8;
 		}
 
@@ -398,6 +401,10 @@ public class ComboServlet extends HttpServlet {
 					stringFileContent = AggregateUtil.updateRelativeURLs(
 						stringFileContent, baseURL);
 
+					stringFileContent =
+						FrontendSourceMapUtil.stripCSSSourceMapping(
+							stringFileContent);
+
 					stringFileContent = MinifierUtil.minifyCss(
 						stringFileContent);
 				}
@@ -420,6 +427,10 @@ public class ComboServlet extends HttpServlet {
 						stringFileContent = MinifierUtil.minifyJavaScript(
 							resourcePath, stringFileContent);
 					}
+
+					stringFileContent =
+						FrontendSourceMapUtil.stripJSSourceMapping(
+							stringFileContent);
 
 					stringFileContent = stringFileContent.concat(
 						StringPool.NEW_LINE);
@@ -496,6 +507,10 @@ public class ComboServlet extends HttpServlet {
 			moduleName = moduleName.substring(0, index);
 		}
 
+		if (moduleName.startsWith(_WEB_SERVER_SERVLET_FILE_ENTRY_PREFIX)) {
+			return true;
+		}
+
 		boolean validModuleExtension = false;
 
 		String[] fileExtensions = PrefsPropsUtil.getStringArray(
@@ -540,6 +555,9 @@ public class ComboServlet extends HttpServlet {
 	private static final String _JAVASCRIPT_MINIFIED_DASH_SUFFIX = "-min.js";
 
 	private static final String _JAVASCRIPT_MINIFIED_DOT_SUFFIX = ".min.js";
+
+	private static final String _WEB_SERVER_SERVLET_FILE_ENTRY_PREFIX =
+		"/documents/d/";
 
 	private static final Log _log = LogFactoryUtil.getLog(ComboServlet.class);
 

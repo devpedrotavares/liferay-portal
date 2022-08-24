@@ -120,9 +120,7 @@ public class FieldConstants {
 
 				String formattedValue = String.valueOf(number);
 
-				if ((number.doubleValue() > Integer.MAX_VALUE) ||
-					formattedValue.matches(_SCIENTIFIC_NOTATION_PATTERN)) {
-
+				if (number.doubleValue() > Integer.MAX_VALUE) {
 					return value;
 				}
 
@@ -287,9 +285,6 @@ public class FieldConstants {
 
 		return false;
 	}
-
-	private static final String _SCIENTIFIC_NOTATION_PATTERN =
-		"^[+-]?\\d+(?:\\.\\d*(?:[eE][+-]?\\d+)+)+$";
 
 	private static final Log _log = LogFactoryUtil.getLog(FieldConstants.class);
 

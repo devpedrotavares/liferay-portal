@@ -14,6 +14,7 @@
 
 package com.liferay.site.navigation.internal.upgrade.v2_3_0;
 
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -30,37 +31,35 @@ public class SiteNavigationMenuItemUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (PreparedStatement selectPreparedStatement =
-				connection.prepareStatement(
-					"select siteNavigationMenuItemId, typeSettings from " +
-						"SiteNavigationMenuItem where type_ = 'display_page'");
-			PreparedStatement updatePreparedStatement =
-				connection.prepareStatement(
+		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
+				"select siteNavigationMenuItemId, typeSettings from " +
+					"SiteNavigationMenuItem where type_ = 'display_page'");
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+					connection,
 					"update SiteNavigationMenuItem set type_ = ? where " +
 						"siteNavigationMenuItemId = ?");
-			ResultSet resultSet = selectPreparedStatement.executeQuery()) {
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
 			while (resultSet.next()) {
-				long siteNavigationMenuItemId = resultSet.getLong(
-					"siteNavigationMenuItemId");
-
-				String typeSettings = resultSet.getString("typeSettings");
-
 				UnicodeProperties typeSettingsUnicodeProperties =
 					UnicodePropertiesBuilder.fastLoad(
-						typeSettings
+						resultSet.getString("typeSettings")
 					).build();
 
 				long classNameId = GetterUtil.getLong(
 					typeSettingsUnicodeProperties.getProperty("classNameId"));
 
-				updatePreparedStatement.setString(
+				preparedStatement2.setString(
 					1, PortalUtil.getClassName(classNameId));
 
-				updatePreparedStatement.setLong(2, siteNavigationMenuItemId);
+				preparedStatement2.setLong(
+					2, resultSet.getLong("siteNavigationMenuItemId"));
 
-				updatePreparedStatement.executeUpdate();
+				preparedStatement2.addBatch();
 			}
+
+			preparedStatement2.executeBatch();
 		}
 	}
 

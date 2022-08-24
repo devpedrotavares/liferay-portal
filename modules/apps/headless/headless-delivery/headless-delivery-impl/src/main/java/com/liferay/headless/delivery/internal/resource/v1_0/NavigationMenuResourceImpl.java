@@ -14,13 +14,18 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.headless.delivery.dto.v1_0.NavigationMenu;
 import com.liferay.headless.delivery.dto.v1_0.NavigationMenuItem;
 import com.liferay.headless.delivery.dto.v1_0.util.CreatorUtil;
 import com.liferay.headless.delivery.resource.v1_0.NavigationMenuResource;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutFriendlyURL;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -33,6 +38,8 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.portal.vulcan.dto.converter.DTOConverter;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.JaxRsLinkUtil;
@@ -260,15 +267,31 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 		);
 	}
 
-	private String _getName(UnicodeProperties unicodeProperties) {
-		String preferredLanguageId =
-			contextAcceptLanguage.getPreferredLanguageId();
+	private String _getName(
+			String type, UnicodeProperties unicodeProperties,
+			boolean useCustomName)
+		throws JSONException {
+
 		String defaultLanguageId = LocaleUtil.toLanguageId(
 			LocaleUtil.getDefault());
 
-		return unicodeProperties.getProperty(
-			"name_" + preferredLanguageId,
-			unicodeProperties.getProperty("name_" + defaultLanguageId));
+		if (useCustomName) {
+			JSONObject customNameJSONObject = JSONFactoryUtil.createJSONObject(
+				unicodeProperties.getProperty("localizedNames"));
+
+			return customNameJSONObject.getString(defaultLanguageId);
+		}
+
+		if (StringUtil.equals(type, "url")) {
+			String preferredLanguageId =
+				contextAcceptLanguage.getPreferredLanguageId();
+
+			return unicodeProperties.getProperty(
+				"name_" + preferredLanguageId,
+				unicodeProperties.getProperty("name_" + defaultLanguageId));
+		}
+
+		return unicodeProperties.getProperty("title");
 	}
 
 	private Map<Long, List<SiteNavigationMenuItem>>
@@ -492,12 +515,33 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 				type = _toType(siteNavigationMenuItem.getType());
 				url = unicodeProperties.getProperty("url");
 
+				useCustomName = Boolean.valueOf(
+					unicodeProperties.getProperty("useCustomName"));
+
 				setAvailableLanguages(
 					() -> {
 						Set<Locale> locales = localizedMap.keySet();
 
 						return LocaleUtil.toW3cLanguageIds(
 							locales.toArray(new Locale[localizedMap.size()]));
+					});
+				setContentURL(
+					() -> {
+						if (Objects.equals(type, FileEntry.class.getName())) {
+							type = DLFileEntry.class.getName();
+						}
+
+						DTOConverter<?, ?> dtoConverter =
+							_dtoConverterRegistry.getDTOConverter(type);
+
+						if (dtoConverter == null) {
+							return null;
+						}
+
+						return dtoConverter.getJaxRsLink(
+							GetterUtil.getLong(
+								unicodeProperties.getProperty("classPK")),
+							contextUriInfo);
 					});
 				setLink(
 					() -> {
@@ -535,7 +579,8 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 					});
 				setName(
 					() -> {
-						String name = _getName(unicodeProperties);
+						String name = _getName(
+							type, unicodeProperties, useCustomName);
 
 						if ((name == null) && (layout != null)) {
 							return layout.getName(
@@ -579,16 +624,6 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 							"headless-delivery", BaseSitePageResourceImpl.class,
 							"getSiteSitePage", contextUriInfo,
 							arguments.toArray(new Object[0]));
-					});
-				setUseCustomName(
-					() -> {
-						if (layout == null) {
-							return null;
-						}
-
-						return Boolean.valueOf(
-							unicodeProperties.getProperty(
-								"useCustomName", "false"));
 					});
 			}
 		};
@@ -667,6 +702,9 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 				siteNavigationMenuItem.getSiteNavigationMenuItemId());
 		}
 	}
+
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
 	private LayoutFriendlyURLLocalService _layoutFriendlyURLLocalService;

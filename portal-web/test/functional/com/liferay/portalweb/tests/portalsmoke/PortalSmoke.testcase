@@ -98,8 +98,9 @@ definition {
 
 	@priority = "3"
 	test SmokeWithReadWriteDatabaseConfigurationJDBC {
+		property app.server.types = "tomcat";
 		property configure.read.write.database = "jdbc";
-		property databases.size = "1";
+		property database.types = "mysql";
 		property portal.smoke = "false";
 		property test.assert.warning.exceptions = "true";
 
@@ -107,13 +108,24 @@ definition {
 
 		Smoke.viewWelcomeContentPage();
 
+		ServerAdministration.openServerAdmin();
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "ALL",
+			categoryName = "com.liferay.portal.dao.jdbc.aop.DefaultDynamicDataSourceTargetSource");
+
 		Smoke.runSmoke();
+
+		AssertConsoleTextPresent(value1 = "Returning write data source");
+
+		AssertConsoleTextPresent(value1 = "Returning read data source");
 	}
 
 	@priority = "3"
 	test SmokeWithReadWriteDatabaseConfigurationJNDI {
+		property app.server.types = "tomcat";
 		property configure.read.write.database = "jndi";
-		property databases.size = "1";
+		property database.types = "mysql";
 		property portal.smoke = "false";
 		property test.assert.warning.exceptions = "true";
 
@@ -121,7 +133,17 @@ definition {
 
 		Smoke.viewWelcomeContentPage();
 
+		ServerAdministration.openServerAdmin();
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "ALL",
+			categoryName = "com.liferay.portal.dao.jdbc.aop.DefaultDynamicDataSourceTargetSource");
+
 		Smoke.runSmoke();
+
+		AssertConsoleTextPresent(value1 = "Returning write data source");
+
+		AssertConsoleTextPresent(value1 = "Returning read data source");
 	}
 
 	@priority = "5"

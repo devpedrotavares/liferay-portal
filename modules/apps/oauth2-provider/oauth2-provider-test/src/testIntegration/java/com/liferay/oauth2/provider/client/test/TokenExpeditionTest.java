@@ -149,7 +149,7 @@ public class TokenExpeditionTest extends BaseClientTestCase {
 
 			Response response = invocationBuilder.get();
 
-			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals(401, response.getStatus());
 
 			invocationBuilder = webTarget.request(
 			).header(
@@ -158,7 +158,7 @@ public class TokenExpeditionTest extends BaseClientTestCase {
 
 			response = invocationBuilder.get();
 
-			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals(401, response.getStatus());
 		}
 	}
 

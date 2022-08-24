@@ -63,6 +63,9 @@
 						"pageElements": [
 							{
 								"definition": {
+									"fragmentStyle": {
+										"borderWidth": "0"
+									},
 									"indexed": true,
 									"layout": {
 										"align": "Center",
@@ -209,6 +212,16 @@
 												"marginRight": "4",
 												"marginTop": "4"
 											},
+											"widgetInstance": {
+												"widgetConfig": {
+												},
+												"widgetName": "com_liferay_portal_search_web_internal_sort_portlet_SortPortlet"
+											}
+										},
+										"type": "Widget"
+									},
+									{
+										"definition": {
 											"widgetInstance": {
 												"widgetConfig": {
 												},

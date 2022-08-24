@@ -121,8 +121,6 @@ public class ContentDashboardAdminManagementToolbarDisplayContext
 			).setParameter(
 				"contentDashboardItemSubtypePayload", (String)null
 			).setParameter(
-				"fileExtension", (String)null
-			).setParameter(
 				"scopeId", (String)null
 			).setParameter(
 				"status", WorkflowConstants.STATUS_ANY
@@ -249,31 +247,6 @@ public class ContentDashboardAdminManagementToolbarDisplayContext
 			contentDashboardItemSubtypes =
 				_contentDashboardAdminDisplayContext.
 					getContentDashboardItemSubtypes();
-
-		List<String> fileExtensions =
-			_contentDashboardAdminDisplayContext.getFileExtensions();
-
-		for (String fileExtension : fileExtensions) {
-			labelItemListWrapper.add(
-				labelItem -> {
-					labelItem.putData(
-						"removeLabelURL",
-						_getRemoveLabelURL(
-							"fileExtension",
-							() -> {
-								Stream<String> stream = fileExtensions.stream();
-
-								return stream.filter(
-									curFileExtension -> !Objects.equals(
-										curFileExtension, fileExtension)
-								).toArray(
-									String[]::new
-								);
-							}));
-					labelItem.setCloseable(true);
-					labelItem.setLabel(_getLabel("extension", fileExtension));
-				});
-		}
 
 		for (ContentDashboardItemSubtype contentDashboardItemSubtype :
 				contentDashboardItemSubtypes) {

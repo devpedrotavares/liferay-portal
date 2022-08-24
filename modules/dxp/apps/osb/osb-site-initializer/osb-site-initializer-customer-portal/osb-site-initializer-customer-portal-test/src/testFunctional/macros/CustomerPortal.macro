@@ -19,6 +19,40 @@ definition {
 		Click(locator1 = "Button#SAVE");
 	}
 
+	macro activeStatus {
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "Account Subscription Groups");
+
+		CustomerPortal.viewCPObjectInfo();
+
+		CP2DXPCloudSetup.typeSetupDXPCloudInfoFields(
+			label = "activationStatus",
+			value = "Active");
+
+		Click(locator1 = "Button#SAVE");
+
+		Alert.viewSuccessMessage();
+	}
+
+	macro addCPObject {
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "Objects");
+
+		ObjectPortlet.selectObject(label = "${title}");
+
+		CreateObject.checkToggleActive();
+
+		CreateObject.selectPanelCategoryKey(panelCategoryKey = "Site Administration > Content & Data");
+
+		CustomerPortal.checkToggleHideWidget();
+
+		CreateObject.saveObject();
+	}
+
 	macro addCustomerPortalSite {
 		Site.openSitesAdmin();
 
@@ -138,8 +172,33 @@ definition {
 		Check.checkToggleSwitch(locator1 = "CP2LiferayContact#HIDE_WIDGET");
 	}
 
+	macro clearActivationStatus {
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "Account Subscription Groups");
+
+		var key_status = "${status}";
+
+		if (IsElementPresent(locator1 = "CustomerPortalSite#DND_TABLE_ELEMENT")) {
+			CustomerPortal.viewCPObjectInfo();
+
+			CP2DXPCloudSetup.typeSetupDXPCloudInfoFields(
+				label = "activationStatus",
+				value = "");
+
+			Click(locator1 = "Button#SAVE");
+
+			Alert.viewSuccessMessage();
+		}
+	}
+
 	macro clickOnCancelButton {
 		Click(locator1 = "CustomerPortalSite#CANCEL_BUTTON");
+	}
+
+	macro clickOnFinishActivationButton {
+		Click(locator1 = "CustomerPortalSite#FINISH_ACTIVATION");
 	}
 
 	macro clickOnSkipForNowButton {
@@ -150,8 +209,8 @@ definition {
 		Click(locator1 = "CustomerPortalSite#START_PROJECT_SETUP_BUTTON");
 	}
 
-	macro clickOnSubmitButton {
-		Click(locator1 = "CP2DXPCloudSetup#SUBMIT_BUTTON");
+	macro clickOnTheCloseButton {
+		Click(locator1 = "CustomerPortalSite#CLOSE_MODAL_CARD");
 	}
 
 	macro createCPSiteObjects {
@@ -237,6 +296,14 @@ definition {
 		Click(locator1 = "CustomerPortalSite#CLOSE_MODAL_CARD");
 	}
 
+	macro fullOnboardingFlow {
+		CustomerPortal.clickOnStartProjectSetup();
+
+		CustomerPortal.clickOnSkipForNowButton();
+
+		CustomerPortal.clickOnSkipForNowButton();
+	}
+
 	macro loginOktaToUpdateCP {
 		var userEmailAddress = "garrettz@mbopartners.com.broken";
 		var userPassword = "q4F63ZEH3njnnA34S761";
@@ -260,6 +327,21 @@ definition {
 				key_product = "${productTab}",
 				locator1 = "CustomerPortalSite#SUBSCRIPTION_NAVBAR",
 				value = "${product}");
+		}
+	}
+
+	macro onboardingFlow {
+		CustomerPortal.clickOnStartProjectSetup();
+
+		CustomerPortal.clickOnSkipForNowButton();
+
+		if (isSet(cloudEnvironment)) {
+			CP2DXPCloudSetup.typeAllSetupDXPCloudInfoFields();
+
+			CP2AnalyticsCloudSetup.typeAllSetupAnalyticsCloudInfoFields();
+		}
+		else {
+			CustomerPortal.clickOnSkipForNowButton();
 		}
 	}
 
@@ -469,6 +551,38 @@ definition {
 		Uncheck.uncheckToggleSwitch(locator1 = "CP2LiferayContact#HIDE_WIDGET");
 	}
 
+	macro viewActivationStatusCardChange {
+		AssertElementPresent(
+			locator1 = "CustomerPortalSite#CARD_SUBSCRIPTION",
+			title = "${subtitle}");
+
+		AssertElementPresent(
+			key_status = "${status}",
+			locator1 = "CustomerPortalSite#STATUS_CARD");
+	}
+
+	macro viewActivationStatusCardValue {
+		AssertElementPresent(
+			locator1 = "CustomerPortalSite#CARD_SUBSCRIPTION",
+			title = "${subtitle}");
+
+		AssertElementPresent(
+			locator1 = "CustomerPortalSite#CARD_LOGO",
+			product = "${productIcon}");
+
+		AssertElementPresent(
+			locator1 = "CustomerPortalSite#CARD_TITLE",
+			project = "${project}");
+
+		AssertElementPresent(
+			date = "${dates}",
+			locator1 = "CustomerPortalSite#CARD_DATES");
+
+		AssertElementPresent(
+			key_status = "${status}",
+			locator1 = "CustomerPortalSite#STATUS_CARD");
+	}
+
 	macro viewAllProjectsTitlePage {
 		AssertElementPresent(locator1 = "CustomerPortalSite#PROJECT_TITLE_MAIN_PAGE");
 	}
@@ -519,7 +633,7 @@ definition {
 
 	macro viewObjectInfo {
 		Click(
-			key_index = "4",
+			key_index = "${index}",
 			key_text = "",
 			locator1 = "Icon#VERTICAL_ELLIPSIS_INDEXED");
 

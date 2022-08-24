@@ -101,7 +101,7 @@ public class RefreshTokenTest extends BaseClientTestCase {
 
 			Response response = invocationBuilder.get();
 
-			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals(401, response.getStatus());
 		}
 	}
 

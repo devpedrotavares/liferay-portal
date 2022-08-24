@@ -37,13 +37,10 @@ const ActivityPanel = ({
 			collapsable={detail}
 			displayTitle={
 				<ClayPanel.Title
-					className={classNames(
-						'bg-brand-primary-lighten-6 text-dark',
-						{
-							'p-4': !detail,
-							'py-2': detail,
-						}
-					)}
+					className={classNames('text-dark', {
+						'p-4': !detail,
+						'py-2': detail,
+					})}
 				>
 					<div className="d-flex justify-content-between">
 						<div>

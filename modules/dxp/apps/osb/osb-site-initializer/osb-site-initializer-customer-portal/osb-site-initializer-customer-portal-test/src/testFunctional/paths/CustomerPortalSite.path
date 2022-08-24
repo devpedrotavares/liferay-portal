@@ -231,6 +231,66 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SETUP_FIELDS</td>
+	<td>xpath=(//*[contains(@class, 'form-control') and contains(@name, '${label}')])[${key_index}]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SETUP_VALUE</td>
+	<td>//input[contains(@name,'${label}') and contains(@value,'${value}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FINISH_ACTIVATION</td>
+	<td>//button[contains(@class, 'btn-link') and contains(.,'Finish Activation')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SUBMIT_BUTTON</td>
+	<td>//button[contains(@class, 'btn btn-primary') and contains(text(), 'Submit')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CARD_SUBSCRIPTION</td>
+	<td>//p[contains(@class, 'text-paragraph') and contains(text(), '${title}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CARD_TITLE</td>
+	<td>//span[contains(@class, 'text-truncate') and contains(.,'${project}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CARD_DATES</td>
+	<td>//p[contains(@class, 'text-paragraph') and contains(.,'${date}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CARD_LOGO</td>
+	<td>//img[contains(@class, 'cp-img-activation-status') and contains(@src, '${product}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>STATUS_CARD</td>
+	<td>//span[contains(text(),'${key_status}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>MODAL_PAGE</td>
+	<td>//h2[contains(@class, 'text-neutral') and contains(.,'${modal}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DND_TABLE_ELEMENT</td>
+	<td>//div[contains(@class, 'dnd-td')]//*[text()='${key_status}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_CONSOLE</td>
+	<td>//a[contains(@class, 'text-paragraph') and contains(text(),'Go to Product Console')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>WELCOME_PAGE_USER_NAME</td>
 	<td>//*[contains(@id,'customer-portal-user-name') and text()='${key_userFirstName}!']</td>
 	<td></td>

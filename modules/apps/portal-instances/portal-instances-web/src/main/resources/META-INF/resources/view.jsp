@@ -27,19 +27,9 @@ PortletURL portletURL = PortletURLBuilder.createRenderURL(
 %>
 
 <clay:management-toolbar
-	creationMenu='<%=
-		new JSPCreationMenu(pageContext) {
-			{
-				addDropdownItem(
-					dropdownItem -> {
-						dropdownItem.setHref(renderResponse.createRenderURL(), "mvcRenderCommandName", "/portal_instances/edit_instance", "redirect", PortalUtil.getCurrentURL(httpServletRequest));
-						dropdownItem.setLabel(LanguageUtil.get(httpServletRequest, "add"));
-					});
-			}
-		}
-	%>'
-	selectable="<%= false %>"
-	showSearch="<%= false %>"
+	managementToolbarDisplayContext="<%= new PortalInstancesManagementToolbarDisplayContext(request, liferayPortletRequest, liferayPortletResponse) %>"
+	propsTransformer="js/PortalInstancesManagementToolbarPropsTransformer"
+	propsTransformerServletContext="<%= application %>"
 />
 
 <portlet:renderURL var="redirectURL">
@@ -48,7 +38,6 @@ PortletURL portletURL = PortletURLBuilder.createRenderURL(
 </portlet:renderURL>
 
 <aui:form action="<%= portletURL %>" cssClass="container-fluid container-fluid-max-xl" method="post" name="fm">
-	<aui:input name="<%= Constants.CMD %>" type="hidden" />
 	<aui:input name="redirect" type="hidden" value="<%= redirectURL %>" />
 	<aui:input name="className" type="hidden" />
 
