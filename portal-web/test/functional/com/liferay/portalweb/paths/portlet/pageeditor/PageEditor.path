@@ -261,7 +261,7 @@
 </tr>
 <tr>
 	<td>NO_FRAGMENTS_MESSAGE</td>
-	<td>//div[contains(@class,'page-editor__no-fragments-state')][normalize-space()='Place fragments here.']</td>
+	<td>//div[contains(@class,'page-editor__no-fragments-state')][normalize-space()='Place fragments or widgets here.']</td>
 	<td></td>
 </tr>
 <tr>
@@ -464,6 +464,11 @@
 <tr>
 	<td>FRAGMENT_SIDEBAR_TAB_BUTTON_ACTIVE</td>
 	<td>//button[contains(@title,'${key_tabName}')][contains(@aria-pressed,'true')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FRAGMENT_SIDEBAR_TAB_BUTTON_BY_INDEX</td>
+	<td>xpath=(//div[contains(@class,'page-editor__sidebar__buttons')]//button)[${index}][@*='${key_tabName}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -672,6 +677,11 @@
 <tr>
 	<td>FORM_CONTAINER_CONTAINER_NESTED_ELEMENT</td>
 	<td>xpath=(//div[@aria-label='Form Container'])[${key_position}]/div[contains(@class,'page-editor__topper__content')]/div[contains(@class,'page-editor__container')]${key_elementHeader}</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FORM_CONTAINER_SELECT_FIELD</td>
+	<td>xpath=(//div[@aria-label='Form Container'])[${key_position}]//label[normalize-space(text())='Content Type']//following-sibling::select</td>
 	<td></td>
 </tr>
 

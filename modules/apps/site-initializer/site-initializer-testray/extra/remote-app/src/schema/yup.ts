@@ -103,7 +103,8 @@ const yupSchema = {
 		summary: yup.string().required(),
 	}),
 	routine: yup.object({
-		autoanalyze: yup.boolean(),
+		autoanalyze: yup.boolean().required(),
+		id: yup.number(),
 		name: yup.string().required(),
 	}),
 	suite: yup.object({
@@ -118,6 +119,7 @@ const yupSchema = {
 		id: yup.string(),
 		name: yup.string().required(),
 		projectId: yup.string(),
+		teamId: yup.string(),
 	}),
 	user: yup.object({
 		alternateName: yup.string().required(),

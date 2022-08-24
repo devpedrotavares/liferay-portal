@@ -23,7 +23,7 @@ import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
-import com.liferay.object.runtime.scripting.executor.GroovyScriptingExecutor;
+import com.liferay.object.scripting.executor.ObjectScriptingExecutor;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -93,12 +93,12 @@ public class ObjectActionLocalServiceTest {
 				TestPropsValues.getUserId(),
 				_objectDefinition.getObjectDefinitionId());
 
-		_originalGroovyScriptingExecutor =
-			(GroovyScriptingExecutor)_getAndSetFieldValue(
-				GroovyScriptingExecutor.class, "_groovyScriptingExecutor",
-				ObjectActionExecutorConstants.KEY_GROOVY);
 		_originalHttp = (Http)_getAndSetFieldValue(
 			Http.class, "_http", ObjectActionExecutorConstants.KEY_WEBHOOK);
+		_originalObjectScriptingExecutor =
+			(ObjectScriptingExecutor)_getAndSetFieldValue(
+				ObjectScriptingExecutor.class, "_objectScriptingExecutor",
+				ObjectActionExecutorConstants.KEY_GROOVY);
 	}
 
 	@After
@@ -107,12 +107,12 @@ public class ObjectActionLocalServiceTest {
 
 		ReflectionTestUtil.setFieldValue(
 			_objectActionExecutorRegistry.getObjectActionExecutor(
-				ObjectActionExecutorConstants.KEY_GROOVY),
-			"_groovyScriptingExecutor", _originalGroovyScriptingExecutor);
-		ReflectionTestUtil.setFieldValue(
-			_objectActionExecutorRegistry.getObjectActionExecutor(
 				ObjectActionExecutorConstants.KEY_WEBHOOK),
 			"_http", _originalHttp);
+		ReflectionTestUtil.setFieldValue(
+			_objectActionExecutorRegistry.getObjectActionExecutor(
+				ObjectActionExecutorConstants.KEY_GROOVY),
+			"_objectScriptingExecutor", _originalObjectScriptingExecutor);
 	}
 
 	@Test
@@ -416,8 +416,9 @@ public class ObjectActionLocalServiceTest {
 				"firstName", "João"
 			).build(),
 			arguments[0]);
-		Assert.assertEquals(Collections.emptySet(), arguments[1]);
-		Assert.assertEquals("println \"Hello World\"", arguments[2]);
+		Assert.assertEquals("groovy", arguments[1]);
+		Assert.assertEquals(Collections.emptySet(), arguments[2]);
+		Assert.assertEquals("println \"Hello World\"", arguments[3]);
 
 		_objectActionLocalService.deleteObjectAction(objectAction);
 	}
@@ -506,7 +507,7 @@ public class ObjectActionLocalServiceTest {
 
 					if (Objects.equals(
 							method.getDeclaringClass(),
-							GroovyScriptingExecutor.class) &&
+							ObjectScriptingExecutor.class) &&
 						Objects.equals(method.getName(), "execute")) {
 
 						return Collections.emptyMap();
@@ -541,7 +542,7 @@ public class ObjectActionLocalServiceTest {
 	@Inject
 	private ObjectEntryLocalService _objectEntryLocalService;
 
-	private GroovyScriptingExecutor _originalGroovyScriptingExecutor;
 	private Http _originalHttp;
+	private ObjectScriptingExecutor _originalObjectScriptingExecutor;
 
 }

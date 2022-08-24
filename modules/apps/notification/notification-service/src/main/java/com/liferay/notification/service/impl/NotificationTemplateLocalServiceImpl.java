@@ -64,6 +64,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
@@ -212,12 +213,25 @@ public class NotificationTemplateLocalServiceImpl
 
 		User user = _userLocalService.getUser(userId);
 
-		String body = _formatContent(
-			notificationTemplate.getBody(user.getLocale()), user.getLocale(),
-			null, notificationType, object);
+		String bcc = notificationTemplate.getBcc();
 
 		Locale siteDefaultLocale = _portal.getSiteDefaultLocale(
 			user.getGroupId());
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-159052"))) {
+			bcc = _formatContent(
+				bcc, user.getLocale(), null, notificationType, object);
+
+			if (Validator.isNull(bcc)) {
+				bcc = _formatContent(
+					notificationTemplate.getBcc(), siteDefaultLocale, null,
+					notificationType, object);
+			}
+		}
+
+		String body = _formatContent(
+			notificationTemplate.getBody(user.getLocale()), user.getLocale(),
+			null, notificationType, object);
 
 		if (Validator.isNull(body)) {
 			body = _formatContent(
@@ -225,10 +239,42 @@ public class NotificationTemplateLocalServiceImpl
 				siteDefaultLocale, null, notificationType, object);
 		}
 
-		String fromName = notificationTemplate.getFromName(
-			user.getLanguageId());
+		String cc = notificationTemplate.getCc();
+		String from = notificationTemplate.getFrom();
 
-		if (Validator.isNull(fromName)) {
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-159052"))) {
+			cc = _formatContent(
+				cc, user.getLocale(), null, notificationType, object);
+
+			if (Validator.isNull(cc)) {
+				cc = _formatContent(
+					notificationTemplate.getCc(), siteDefaultLocale, null,
+					notificationType, object);
+			}
+
+			from = _formatContent(
+				from, user.getLocale(), null, notificationType, object);
+
+			if (Validator.isNull(from)) {
+				from = _formatContent(
+					notificationTemplate.getFrom(), siteDefaultLocale, null,
+					notificationType, object);
+			}
+		}
+
+		String fromName = notificationTemplate.getFromName(user.getLocale());
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-159052"))) {
+			fromName = _formatContent(
+				fromName, user.getLocale(), null, notificationType, object);
+
+			if (Validator.isNull(fromName)) {
+				fromName = _formatContent(
+					notificationTemplate.getFromName(siteDefaultLocale),
+					siteDefaultLocale, null, notificationType, object);
+			}
+		}
+		else if (Validator.isNull(fromName)) {
 			fromName = notificationTemplate.getFromName(
 				_portal.getSiteDefaultLocale(user.getGroupId()));
 		}
@@ -286,25 +332,20 @@ public class NotificationTemplateLocalServiceImpl
 						addNotificationQueueEntry(
 							defaultUser.getUserId(),
 							notificationTemplate.getNotificationTemplateId(),
-							notificationTemplate.getBcc(), body,
-							notificationTemplate.getCc(),
+							bcc, body, cc,
 							notificationType.getClassName(object),
-							notificationType.getClassPK(object),
-							notificationTemplate.getFrom(), fromName, 0,
-							subject, emailAddressOrUserId, emailAddressOrUserId,
-							fileEntryIds);
+							notificationType.getClassPK(object), from, fromName,
+							0, subject, emailAddressOrUserId,
+							emailAddressOrUserId, fileEntryIds);
 
 					continue;
 				}
 			}
 
 			_notificationQueueEntryLocalService.addNotificationQueueEntry(
-				userId, notificationTemplate.getNotificationTemplateId(),
-				notificationTemplate.getBcc(), body,
-				notificationTemplate.getCc(),
-				notificationType.getClassName(object),
-				notificationType.getClassPK(object),
-				notificationTemplate.getFrom(), fromName, 0, subject,
+				userId, notificationTemplate.getNotificationTemplateId(), bcc,
+				body, cc, notificationType.getClassName(object),
+				notificationType.getClassPK(object), from, fromName, 0, subject,
 				toUser.getEmailAddress(), toUser.getFullName(), fileEntryIds);
 		}
 	}

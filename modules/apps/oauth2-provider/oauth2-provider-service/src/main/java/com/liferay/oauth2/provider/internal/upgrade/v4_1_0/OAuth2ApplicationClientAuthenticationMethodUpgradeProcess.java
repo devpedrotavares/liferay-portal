@@ -15,6 +15,8 @@
 package com.liferay.oauth2.provider.internal.upgrade.v4_1_0;
 
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
+import com.liferay.portal.kernel.upgrade.UpgradeStep;
 
 /**
  * @author Arthur Chan
@@ -24,10 +26,6 @@ public class OAuth2ApplicationClientAuthenticationMethodUpgradeProcess
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		alterTableAddColumn(
-			"OAuth2Application", "clientAuthenticationMethod",
-			"VARCHAR(75) null");
-
 		runSQL(
 			"update OAuth2Application set clientAuthenticationMethod = " +
 				"'client_secret_post' where (clientAuthenticationMethod is " +
@@ -35,8 +33,17 @@ public class OAuth2ApplicationClientAuthenticationMethodUpgradeProcess
 		runSQL(
 			"update OAuth2Application set clientAuthenticationMethod = " +
 				"'none' where (clientSecret is null OR clientSecret = '')");
+	}
 
-		alterTableAddColumn("OAuth2Application", "jwks", "VARCHAR(3999) null");
+	@Override
+	protected UpgradeStep[] getPreUpgradeSteps() {
+		return new UpgradeStep[] {
+			UpgradeProcessFactory.addColumns(
+				"OAuth2Application",
+				"clientAuthenticationMethod VARCHAR(75) null"),
+			UpgradeProcessFactory.addColumns(
+				"OAuth2Application", "jwks VARCHAR(3999) null")
+		};
 	}
 
 }

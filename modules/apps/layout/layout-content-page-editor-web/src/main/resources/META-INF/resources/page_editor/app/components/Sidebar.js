@@ -31,6 +31,7 @@ import {config} from '../config/index';
 import {useSelectItem} from '../contexts/ControlsContext';
 import {useDispatch, useSelector} from '../contexts/StoreContext';
 import selectAvailablePanels from '../selectors/selectAvailablePanels';
+import switchSidebarPanel from '../thunks/switchSidebarPanel';
 import {useDropClear} from '../utils/drag-and-drop/useDragAndDrop';
 import {useId} from '../utils/useId';
 
@@ -130,7 +131,7 @@ export default function Sidebar() {
 			}
 			else if (sidebarPanelId) {
 				dispatch(
-					Actions.switchSidebarPanel({
+					switchSidebarPanel({
 						sidebarOpen: false,
 						sidebarPanelId: null,
 					})
@@ -140,36 +141,6 @@ export default function Sidebar() {
 		/* eslint-disable react-hooks/exhaustive-deps */
 		[panel, sidebarOpen, sidebarPanelId]
 	);
-
-	useEffect(() => {
-		const sideNavigation = Liferay.SideNavigation.instance(
-			document.querySelector('.product-menu-toggle')
-		);
-
-		if (sideNavigation) {
-			const onHandleSidebar = (open) => {
-				dispatch(
-					Actions.switchSidebarPanel({
-						itemConfigurationOpen: open,
-						sidebarOpen: open,
-					})
-				);
-			};
-
-			if (!sideNavigation.visible()) {
-				onHandleSidebar(true);
-			}
-
-			const sideNavigationListener = sideNavigation.on(
-				'openStart.lexicon.sidenav',
-				() => onHandleSidebar(false)
-			);
-
-			return () => {
-				sideNavigationListener.removeListener();
-			};
-		}
-	}, []);
 
 	useEffect(() => {
 		const wrapper = document.getElementById('wrapper');
@@ -225,16 +196,9 @@ export default function Sidebar() {
 	const handleClick = (panel) => {
 		const open =
 			panel.sidebarPanelId === sidebarPanelId ? !sidebarOpen : true;
-		const productMenuToggle = document.querySelector(
-			'.product-menu-toggle'
-		);
-
-		if (productMenuToggle && !sidebarOpen) {
-			Liferay.SideNavigation.hide(productMenuToggle);
-		}
 
 		dispatch(
-			Actions.switchSidebarPanel({
+			switchSidebarPanel({
 				sidebarOpen: open,
 				sidebarPanelId: panel.sidebarPanelId,
 			})
@@ -334,7 +298,9 @@ export default function Sidebar() {
 							Liferay.Language.direction[
 								themeDisplay?.getLanguageId()
 							] === 'rtl',
-						[`page-editor__sidebar__content--panel-id-${sidebarPanelId}`]: sidebarPanelId,
+						[`page-editor__sidebar__content--panel-id-${sidebarPanelId}`]:
+							sidebarPanelId &&
+							!Liferay.FeatureFlags['LPS-153452'],
 					})}
 					onClick={deselectItem}
 				>
@@ -345,7 +311,7 @@ export default function Sidebar() {
 								displayType="secondary"
 								onClick={() => {
 									dispatch(
-										Actions.switchSidebarPanel({
+										switchSidebarPanel({
 											sidebarOpen: false,
 											sidebarPanelId:
 												panels[0] && panels[0][0],

@@ -54,11 +54,11 @@ public class ViewArticleMVCRenderCommand implements MVCRenderCommand {
 		}
 
 		if (rootPortletId.equals(KBPortletKeys.KNOWLEDGE_BASE_ARTICLE)) {
-			return "/article/view_article.jsp";
+			return "/article/view_kb_article.jsp";
 		}
 
 		if (rootPortletId.equals(KBPortletKeys.KNOWLEDGE_BASE_DISPLAY)) {
-			return "/display/view_article.jsp";
+			return "/display/view_kb_article.jsp";
 		}
 
 		return "/admin/common/view_kb_article.jsp";

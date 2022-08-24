@@ -25,7 +25,6 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.servlet.taglib.ui.BaseUIItem;
-import com.liferay.portal.kernel.servlet.taglib.ui.Menu;
 import com.liferay.portal.kernel.servlet.taglib.ui.ToolbarItem;
 import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.settings.Settings;
@@ -97,23 +96,6 @@ public class SharingDLViewFileVersionDisplayContext
 			_sharingDropdownItemFactory.createShareDropdownItem(
 				DLFileEntryConstants.getClassName(),
 				_fileEntry.getFileEntryId(), _httpServletRequest));
-	}
-
-	@Override
-	public Menu getMenu() throws PortalException {
-		Menu menu = super.getMenu();
-
-		if (!_isShowShareAction() || !_sharingConfiguration.isEnabled()) {
-			return menu;
-		}
-
-		_addSharingUIItem(
-			menu.getMenuItems(),
-			_sharingMenuItemFactory.createShareMenuItem(
-				DLFileEntryConstants.getClassName(),
-				_fileEntry.getFileEntryId(), _httpServletRequest));
-
-		return menu;
 	}
 
 	@Override

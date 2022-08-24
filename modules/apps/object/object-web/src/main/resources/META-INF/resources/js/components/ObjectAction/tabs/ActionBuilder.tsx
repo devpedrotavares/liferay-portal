@@ -25,6 +25,7 @@ import {
 	FormCustomSelect,
 	Input,
 	SelectWithOption,
+	SidebarCategory,
 	invalidateRequired,
 } from '@liferay/object-js-components-web';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -46,6 +47,7 @@ type ObjectsOptionsList = Array<
 
 export default function ActionBuilder({
 	errors,
+	objectActionCodeEditorElements,
 	objectActionExecutors,
 	objectActionTriggers,
 	objectDefinitionsRelationshipsURL,
@@ -362,7 +364,7 @@ export default function ActionBuilder({
 							)}
 							label={Liferay.Language.get('expression-builder')}
 							name="conditionExpression"
-							onChange={({target: {value}}: any) =>
+							onChange={({target: {value}}) =>
 								setValues({conditionExpression: value})
 							}
 							onOpenModal={() => {
@@ -495,7 +497,11 @@ export default function ActionBuilder({
 							currentObjectDefinitionFields={
 								currentObjectDefinitionFields
 							}
-							errors={errors.predefinedValues as any}
+							errors={
+								errors.predefinedValues as {
+									[key: string]: string;
+								}
+							}
 							objectFieldsMap={objectFieldsMap}
 							setValues={setValues}
 							validateExpressionURL={validateExpressionURL}
@@ -540,7 +546,6 @@ export default function ActionBuilder({
 				{values.objectActionExecutorKey === 'groovy' && (
 					<CodeEditor
 						error={errors.script}
-						fixed
 						mode="groovy"
 						onChange={(script, lineCount) =>
 							setValues({
@@ -551,6 +556,9 @@ export default function ActionBuilder({
 								},
 							})
 						}
+						sidebarElements={objectActionCodeEditorElements.filter(
+							(element) => element.label === 'Fields'
+						)}
 						value={values.parameters?.script ?? ''}
 					/>
 				)}
@@ -561,6 +569,7 @@ export default function ActionBuilder({
 
 interface IProps {
 	errors: ActionError;
+	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: CustomItem[];
 	objectActionTriggers: CustomItem[];
 	objectDefinitionsRelationshipsURL: string;

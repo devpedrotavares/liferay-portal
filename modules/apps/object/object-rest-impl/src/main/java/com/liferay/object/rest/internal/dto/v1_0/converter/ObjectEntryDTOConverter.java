@@ -302,7 +302,7 @@ public class ObjectEntryDTOConverter
 
 		List<ObjectField> objectFields =
 			_objectFieldLocalService.getObjectFields(
-				objectDefinition.getObjectDefinitionId());
+				objectDefinition.getObjectDefinitionId(), false);
 
 		for (ObjectField objectField : objectFields) {
 			long listTypeDefinitionId = objectField.getListTypeDefinitionId();

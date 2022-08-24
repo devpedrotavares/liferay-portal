@@ -9,10 +9,46 @@
  * distribution rights of the Software.
  */
 
-import React from 'react';
+import {ClayIconSpriteContext} from '@clayui/icon';
 import {Root, createRoot} from 'react-dom/client';
+import {SWRConfig} from 'swr';
 
-import App from './App';
+import {AppRouteType} from './common/enums/appRouteType';
+import getIconSpriteMap from './common/utils/getIconSpriteMap';
+import handleError from './common/utils/handleError';
+import MDFRequestForm from './routes/MDFRequestForm';
+import MDFRequestList from './routes/MDFRequestList';
+
+interface IProps {
+	route: AppRouteType;
+}
+
+type AppRouteComponent = {
+	[key in AppRouteType]?: JSX.Element;
+};
+
+const appRoutes: AppRouteComponent = {
+	[AppRouteType.MDF_REQUEST_FORM]: <MDFRequestForm />,
+	[AppRouteType.MDF_REQUEST_LIST]: <MDFRequestList />,
+};
+
+const PartnerPortalApp = ({route}: IProps) => {
+	return (
+		<SWRConfig
+			value={{
+				onError: (error) => handleError(error),
+				revalidateIfStale: false,
+				revalidateOnFocus: false,
+				revalidateOnReconnect: false,
+				shouldRetryOnError: false,
+			}}
+		>
+			<ClayIconSpriteContext.Provider value={getIconSpriteMap()}>
+				{appRoutes[route]}
+			</ClayIconSpriteContext.Provider>
+		</SWRConfig>
+	);
+};
 
 class PartnerPortalRemoteAppComponent extends HTMLElement {
 	private root: Root | undefined;
@@ -22,9 +58,9 @@ class PartnerPortalRemoteAppComponent extends HTMLElement {
 			this.root = createRoot(this);
 
 			this.root.render(
-				<React.StrictMode>
-					<App />
-				</React.StrictMode>
+				<PartnerPortalApp
+					route={super.getAttribute('route') as AppRouteType}
+				/>
 			);
 		}
 	}

@@ -93,6 +93,7 @@ definition {
 	@priority = "5"
 	test CanAddPastValidationUsingResponseDate {
 		property portal.acceptance = "true";
+		property portal.upstream = "quarantine";
 
 		var displayDateYear = DateUtil.getCurrentYear();
 

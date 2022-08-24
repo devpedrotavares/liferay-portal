@@ -50,7 +50,8 @@ public class EntityExtensionHandler {
 
 		for (ExtensionProvider extensionProvider : _extensionProviders) {
 			extendedProperties.putAll(
-				extensionProvider.getExtendedProperties(companyId, entity));
+				extensionProvider.getExtendedProperties(
+					companyId, _className, entity));
 		}
 
 		return extendedProperties;
@@ -82,7 +83,7 @@ public class EntityExtensionHandler {
 	}
 
 	public void setExtendedProperties(
-			long companyId, Object entity,
+			long companyId, long userId, Object entity,
 			Map<String, Serializable> extendedProperties)
 		throws Exception {
 
@@ -104,7 +105,8 @@ public class EntityExtensionHandler {
 			}
 
 			extensionProvider.setExtendedProperties(
-				companyId, entity, extensionProviderExtendedProperties);
+				companyId, userId, _className, entity,
+				extensionProviderExtendedProperties);
 		}
 	}
 

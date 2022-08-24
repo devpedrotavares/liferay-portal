@@ -14,13 +14,13 @@
 
 package com.liferay.commerce.shipping.engine.fixed.internal.upgrade.registry;
 
-import com.liferay.commerce.shipping.engine.fixed.internal.upgrade.v1_1_0.CommerceShippingFixedOptionRelUpgradeProcess;
 import com.liferay.commerce.shipping.engine.fixed.internal.upgrade.v2_2_0.util.CommerceShippingFixedOptionQualifierTable;
 import com.liferay.commerce.shipping.engine.fixed.internal.upgrade.v2_3_0.CommerceShippingFixedOptionUpgradeProcess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -44,12 +44,18 @@ public class CommerceShippingEngineFixedServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.0.0", "1.1.0",
-			new CommerceShippingFixedOptionRelUpgradeProcess());
+			UpgradeProcessFactory.alterColumnName(
+				"CShippingFixedOptionRel", "commerceWarehouseId",
+				"commerceInventoryWarehouseId LONG"));
 
 		registry.register(
 			"1.1.0", "2.0.0",
-			new com.liferay.commerce.shipping.engine.fixed.internal.upgrade.
-				v2_0_0.CommerceShippingFixedOptionRelUpgradeProcess());
+			UpgradeProcessFactory.alterColumnName(
+				"CShippingFixedOptionRel", "commerceCountryId",
+				"countryId LONG"),
+			UpgradeProcessFactory.alterColumnName(
+				"CShippingFixedOptionRel", "commerceRegionId",
+				"regionId LONG"));
 
 		registry.register(
 			"2.0.0", "2.1.0",

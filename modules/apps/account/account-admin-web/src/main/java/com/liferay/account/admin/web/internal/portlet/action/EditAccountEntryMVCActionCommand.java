@@ -22,9 +22,7 @@ import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryService;
 import com.liferay.account.service.AccountEntryUserRelService;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.object.exception.ObjectValidationRuleEngineException;
 import com.liferay.portal.aop.AopService;
-import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -37,13 +35,11 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.util.PropsUtil;
 
 import java.util.Objects;
 
@@ -121,17 +117,6 @@ public class EditAccountEntryMVCActionCommand
 				actionResponse.setRenderParameter(
 					"mvcRenderCommandName",
 					"/account_admin/edit_account_entry");
-			}
-			else if (GetterUtil.getBoolean(
-						PropsUtil.get("feature.flag.LPS-151671")) &&
-					 (exception instanceof ModelListenerException) &&
-					 (exception.getCause() instanceof
-						 ObjectValidationRuleEngineException)) {
-
-				Throwable throwable = exception.getCause();
-
-				SessionErrors.add(
-					actionRequest, throwable.getClass(), exception);
 			}
 
 			throw exception;

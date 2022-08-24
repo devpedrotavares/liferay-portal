@@ -23,8 +23,6 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.repository.model.FileVersion;
-import com.liferay.portal.kernel.servlet.taglib.ui.Menu;
-import com.liferay.portal.kernel.servlet.taglib.ui.MenuItem;
 import com.liferay.portal.kernel.servlet.taglib.ui.ToolbarItem;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -110,34 +108,6 @@ public class GoogleDocsDLViewFileVersionDisplayContext
 		}
 
 		return ddmStructures;
-	}
-
-	@Override
-	public Menu getMenu() throws PortalException {
-		Menu menu = super.getMenu();
-
-		if (!isActionsVisible()) {
-			return menu;
-		}
-
-		// See LPS-79987
-
-		if (Validator.isNull(
-				_googleDocsMetadataHelper.getFieldValue(
-					GoogleDocsConstants.DDM_FIELD_NAME_URL))) {
-
-			return menu;
-		}
-
-		List<MenuItem> menuItems = menu.getMenuItems();
-
-		menuItems.removeIf(
-			menuItem -> Objects.equals(
-				menuItem.getKey(), "#edit-with-image-editor"));
-
-		_googleDocsUIItemsProcessor.processMenuItems(menuItems);
-
-		return menu;
 	}
 
 	@Override

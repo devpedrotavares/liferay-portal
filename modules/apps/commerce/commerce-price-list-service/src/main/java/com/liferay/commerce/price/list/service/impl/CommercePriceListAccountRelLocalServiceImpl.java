@@ -63,9 +63,6 @@ public class CommercePriceListAccountRelLocalServiceImpl
 
 		reindexCommercePriceList(commercePriceListId);
 
-		commercePriceListLocalService.cleanPriceListCache(
-			serviceContext.getCompanyId());
-
 		return commercePriceListAccountRel;
 	}
 
@@ -83,9 +80,6 @@ public class CommercePriceListAccountRelLocalServiceImpl
 
 		reindexCommercePriceList(
 			commercePriceListAccountRel.getCommercePriceListId());
-
-		commercePriceListLocalService.cleanPriceListCache(
-			commercePriceListAccountRel.getCompanyId());
 
 		return commercePriceListAccountRel;
 	}

@@ -16,6 +16,7 @@ package com.liferay.object.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectFieldException;
 import com.liferay.object.exception.ObjectDefinitionLabelException;
@@ -26,6 +27,7 @@ import com.liferay.object.exception.ObjectDefinitionStatusException;
 import com.liferay.object.exception.ObjectDefinitionVersionException;
 import com.liferay.object.exception.ObjectFieldRelationshipTypeException;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntryTable;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -34,11 +36,14 @@ import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
 import com.liferay.object.util.LocalizedMapUtil;
+import com.liferay.object.util.ObjectFieldBuilder;
 import com.liferay.object.util.ObjectFieldUtil;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
@@ -50,15 +55,19 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.util.PropsUtil;
 
 import java.sql.Connection;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -926,6 +935,46 @@ public class ObjectDefinitionLocalServiceTest {
 	}
 
 	@Test
+	public void testSystemObjectFields() throws Exception {
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-158821", "true"
+			).build());
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.addCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"Test", null, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				ObjectDefinitionConstants.SCOPE_COMPANY,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+				Collections.emptyList());
+
+		_testSystemObjectFields(objectDefinition);
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+
+		objectDefinition =
+			_objectDefinitionLocalService.addSystemObjectDefinition(
+				TestPropsValues.getUserId(), "Test", null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"Test", null, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				ObjectDefinitionConstants.SCOPE_COMPANY, 1,
+				Collections.<ObjectField>emptyList());
+
+		_testSystemObjectFields(objectDefinition);
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+
+		PropsUtil.addProperties(
+			UnicodePropertiesBuilder.setProperty(
+				"feature.flag.LPS-158821", "false"
+			).build());
+	}
+
+	@Test
 	public void testUpdateCustomObjectDefinition() throws Exception {
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
@@ -1099,6 +1148,37 @@ public class ObjectDefinitionLocalServiceTest {
 		Assert.assertEquals(required, objectField.isRequired());
 	}
 
+	private void _assertSystemObjectFields(
+		ObjectField expectedObjectField, ObjectField objectField) {
+
+		Assert.assertEquals(
+			expectedObjectField.getDBColumnName(),
+			objectField.getDBColumnName());
+		Assert.assertEquals(
+			expectedObjectField.getDBTableName(), objectField.getDBTableName());
+		Assert.assertEquals(
+			expectedObjectField.getDBType(), objectField.getDBType());
+		Assert.assertEquals(
+			expectedObjectField.getDefaultValue(),
+			objectField.getDefaultValue());
+		Assert.assertEquals(
+			expectedObjectField.isIndexed(), objectField.isIndexed());
+		Assert.assertEquals(
+			expectedObjectField.isIndexedAsKeyword(),
+			objectField.isIndexedAsKeyword());
+		Assert.assertEquals(
+			expectedObjectField.getIndexedLanguageId(),
+			objectField.getIndexedLanguageId());
+		Assert.assertEquals(
+			expectedObjectField.getLabelMap(), objectField.getLabelMap());
+		Assert.assertEquals(
+			expectedObjectField.getName(), objectField.getName());
+		Assert.assertEquals(
+			expectedObjectField.isRequired(), objectField.isRequired());
+		Assert.assertEquals(
+			expectedObjectField.isState(), objectField.isState());
+	}
+
 	private boolean _hasColumn(String tableName, String columnName)
 		throws Exception {
 
@@ -1181,6 +1261,145 @@ public class ObjectDefinitionLocalServiceTest {
 					objectDefinition);
 			}
 		}
+	}
+
+	private void _testSystemObjectFields(ObjectDefinition objectDefinition)
+		throws Exception {
+
+		List<ObjectField> objectFields =
+			_objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId());
+
+		Assert.assertNotNull(objectFields);
+
+		boolean system = objectDefinition.isSystem();
+
+		Assert.assertEquals(
+			objectFields.toString(), system ? 5 : 6, objectFields.size());
+
+		ListIterator<ObjectField> iterator = objectFields.listIterator();
+
+		Assert.assertTrue(iterator.hasNext());
+
+		String dbColumnName = null;
+		String dbTableName = null;
+
+		ObjectEntryTable objectEntryTable = ObjectEntryTable.INSTANCE;
+
+		if (system) {
+			dbColumnName = TextFormatter.format(
+				objectDefinition.getShortName() + "Id", TextFormatter.I);
+			dbTableName = objectDefinition.getDBTableName();
+		}
+		else {
+			dbColumnName = objectEntryTable.objectEntryId.getName();
+			dbTableName = objectEntryTable.getTableName();
+		}
+
+		_assertSystemObjectFields(
+			new ObjectFieldBuilder().businessType(
+				ObjectFieldConstants.BUSINESS_TYPE_DATE
+			).dbColumnName(
+				objectEntryTable.createDate.getName()
+			).dbTableName(
+				dbTableName
+			).dbType(
+				ObjectFieldConstants.DB_TYPE_DATE
+			).defaultValue(
+				StringPool.BLANK
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(
+					LanguageUtil.get(LocaleUtil.getDefault(), "create-date"))
+			).name(
+				"createDate"
+			).build(),
+			iterator.next());
+
+		Assert.assertTrue(iterator.hasNext());
+
+		_assertSystemObjectFields(
+			new ObjectFieldBuilder().businessType(
+				ObjectFieldConstants.BUSINESS_TYPE_TEXT
+			).dbColumnName(
+				objectEntryTable.userName.getName()
+			).dbType(
+				ObjectFieldConstants.DB_TYPE_STRING
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(
+					LanguageUtil.get(LocaleUtil.getDefault(), "author"))
+			).name(
+				"creator"
+			).build(),
+			iterator.next());
+
+		if (!system) {
+			Assert.assertTrue(iterator.hasNext());
+
+			_assertSystemObjectFields(
+				new ObjectFieldBuilder().dbColumnName(
+					objectEntryTable.externalReferenceCode.getName()
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						LanguageUtil.get(
+							LocaleUtil.getDefault(), "external-reference-code"))
+				).name(
+					"externalReferenceCode"
+				).build(),
+				iterator.next());
+		}
+
+		Assert.assertTrue(iterator.hasNext());
+
+		_assertSystemObjectFields(
+			new ObjectFieldBuilder().businessType(
+				ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER
+			).dbColumnName(
+				dbColumnName
+			).dbType(
+				ObjectFieldConstants.DB_TYPE_LONG
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(
+					LanguageUtil.get(LocaleUtil.getDefault(), "id"))
+			).name(
+				"id"
+			).build(),
+			iterator.next());
+
+		Assert.assertTrue(iterator.hasNext());
+
+		_assertSystemObjectFields(
+			new ObjectFieldBuilder().businessType(
+				ObjectFieldConstants.BUSINESS_TYPE_DATE
+			).dbColumnName(
+				objectEntryTable.modifiedDate.getName()
+			).dbType(
+				ObjectFieldConstants.DB_TYPE_DATE
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(
+					LanguageUtil.get(LocaleUtil.getDefault(), "modified-date"))
+			).name(
+				"modifiedDate"
+			).build(),
+			iterator.next());
+
+		Assert.assertTrue(iterator.hasNext());
+
+		_assertSystemObjectFields(
+			new ObjectFieldBuilder().businessType(
+				ObjectFieldConstants.BUSINESS_TYPE_TEXT
+			).dbColumnName(
+				objectEntryTable.status.getName()
+			).dbType(
+				ObjectFieldConstants.DB_TYPE_STRING
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(
+					LanguageUtil.get(LocaleUtil.getDefault(), "status"))
+			).name(
+				"status"
+			).build(),
+			iterator.next());
+
+		Assert.assertFalse(iterator.hasNext());
 	}
 
 	private void

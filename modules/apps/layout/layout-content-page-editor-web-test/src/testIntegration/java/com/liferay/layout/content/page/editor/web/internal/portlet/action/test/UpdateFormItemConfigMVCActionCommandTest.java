@@ -82,6 +82,7 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeSet;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -181,27 +182,24 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
 						"classTypeId", "0"
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
 				updateFormJSONObject, _INFO_FIELDS.length + 1, StringPool.BLANK,
 				_language.format(
 					_portal.getSiteDefaultLocale(_group),
-					"some-fragments-are-missing.-x-fields-do-not-have-an-" +
-						"associated-fragment",
+					"some-fragments-are-missing.-x-fields-cannot-have-an-" +
+						"associated-fragment-or-cannot-be-available-in-master",
 					expectedFieldTypeLabel),
 				0);
 
@@ -239,19 +237,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
 						"classTypeId", "0"
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
@@ -294,19 +289,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			String formItemId = jsonObject.getString("addedItemId");
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
 						"classTypeId", "0"
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
@@ -345,24 +337,120 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
 						"classTypeId", "0"
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
 				updateFormJSONObject, _INFO_FIELDS.length + 1, StringPool.BLANK,
 				StringPool.BLANK, 0);
+
+			_assertFormStyledLayoutStructureItem(
+				classNameId, _INFO_FIELDS.length + 1, formItemId, _INFO_FIELDS,
+				true, true);
+		}
+	}
+
+	@Test
+	public void testUpdateFormItemConfigMVCActionCommandMoreThanOneFragmentEntryNotAvailable()
+		throws Exception {
+
+		TreeSet<String> expectedFieldTypeLabels = new TreeSet<>();
+
+		expectedFieldTypeLabels.add(RandomTestUtil.randomString());
+		expectedFieldTypeLabels.add(RandomTestUtil.randomString());
+
+		InfoFieldType infoFieldType1 = new InfoFieldType() {
+
+			@Override
+			public String getLabel(Locale locale) {
+				return expectedFieldTypeLabels.first();
+			}
+
+			@Override
+			public String getName() {
+				return RandomTestUtil.randomString();
+			}
+
+		};
+
+		InfoFieldType infoFieldType2 = new InfoFieldType() {
+
+			@Override
+			public String getLabel(Locale locale) {
+				return expectedFieldTypeLabels.last();
+			}
+
+			@Override
+			public String getName() {
+				return RandomTestUtil.randomString();
+			}
+
+		};
+
+		InfoField<?>[] allInfoFields = ArrayUtil.append(
+			_INFO_FIELDS,
+			new InfoField<?>[] {
+				_getInfoField(infoFieldType1), _getInfoField(infoFieldType2)
+			});
+
+		try (ComponentEnablerTemporarySwapper componentEnablerTemporarySwapper =
+				new ComponentEnablerTemporarySwapper(
+					_BUNDLE_SYMBOLIC_NAME, _COMPONENT_CLASS_NAME, true);
+			MockInfoServiceRegistrationHolder
+				mockInfoServiceRegistrationHolder =
+					new MockInfoServiceRegistrationHolder(
+						InfoFieldSet.builder(
+						).infoFieldSetEntries(
+							ListUtil.fromArray(allInfoFields)
+						).build(),
+						_editPageInfoItemCapability);
+			PropsTemporarySwapper propsTemporarySwapper =
+				new PropsTemporarySwapper("feature.flag.LPS-157738", true)) {
+
+			JSONObject addItemJSONObject =
+				ContentLayoutTestUtil.addItemToLayout(
+					_layout, "{}", LayoutDataItemTypeConstants.TYPE_FORM,
+					_segmentsExperienceId);
+
+			long classNameId = _portal.getClassNameId(
+				MockObject.class.getName());
+
+			String formItemId = addItemJSONObject.getString("addedItemId");
+
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
+				_getMockLiferayPortletActionRequest(
+					JSONUtil.put(
+						"classNameId", classNameId
+					).put(
+						"classTypeId", "0"
+					).toString(),
+					formItemId, _layout),
+				new MockLiferayPortletActionResponse());
+
+			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
+				updateFormJSONObject, _INFO_FIELDS.length + 1, StringPool.BLANK,
+				_language.format(
+					_portal.getSiteDefaultLocale(_group),
+					"some-fragments-are-missing.-x-and-x-fields-cannot-have-" +
+						"an-associated-fragment-or-cannot-be-available-in-" +
+							"master",
+					ArrayUtil.sortedUnique(
+						new String[] {
+							expectedFieldTypeLabels.first(),
+							expectedFieldTypeLabels.last()
+						})),
+				0);
 
 			_assertFormStyledLayoutStructureItem(
 				classNameId, _INFO_FIELDS.length + 1, formItemId, _INFO_FIELDS,
@@ -401,7 +489,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				classNameId, _INFO_FIELDS.length, formItemId, _INFO_FIELDS,
 				false, false);
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"successMessage",
@@ -412,12 +502,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 									LocaleUtil.getMostRelevantLocale()),
 								RandomTestUtil.randomString()))
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(
@@ -460,19 +545,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				classNameId, _INFO_FIELDS.length, formItemId, _INFO_FIELDS,
 				false, false);
 
-			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
+				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
+				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
 					JSONUtil.put(
 						"classNameId", "0"
 					).put(
 						"classTypeId", "0"
 					).toString(),
-					formItemId, _layout);
-
-			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
-				new Class<?>[] {ActionRequest.class, ActionResponse.class},
-				mockLiferayPortletActionRequest,
+					formItemId, _layout),
 				new MockLiferayPortletActionResponse());
 
 			_assertUpdateFormStyledLayoutStructureItemConfigJSONObject(

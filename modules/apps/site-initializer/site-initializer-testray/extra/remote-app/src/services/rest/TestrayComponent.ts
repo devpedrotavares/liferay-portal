@@ -12,7 +12,9 @@
  * details.
  */
 
+import {State} from '../../pages/Standalone/Teams/TeamsFormModal';
 import yupSchema from '../../schema/yup';
+import {searchUtil} from '../../util/search';
 import fetcher from '../fetcher';
 import {APIResponse, TestrayComponent} from './types';
 
@@ -31,12 +33,37 @@ const adapter = ({
 const createComponent = (component: Component) =>
 	fetcher.post('/components', adapter(component));
 
-const updateComponent = (id: number, component: Component) =>
-	fetcher.put(`/components/${id}`, adapter(component));
+const updateComponent = (id: number, component: Partial<Component>) =>
+	fetcher.patch(`/components/${id}`, adapter(component as Component));
 
 const nestedFieldsParam = 'nestedFields=project,team';
 
 const componentsResource = `/components?${nestedFieldsParam}`;
+
+const assignTeamsToComponents = async (teamId: number, state: State) => {
+	const [unassignedItems = [], currentItems = []] = state;
+
+	for (const unassigned of unassignedItems) {
+		if (unassigned.teamId !== 0) {
+			await updateComponent(Number(unassigned.value), {
+				name: unassigned.label,
+				teamId: '0',
+			});
+		}
+	}
+
+	for (const current of currentItems) {
+		if (current.teamId === 0) {
+			await updateComponent(Number(current.value), {
+				name: current.label,
+				teamId: teamId?.toString(),
+			});
+		}
+	}
+};
+
+const getTeamsComponentsQuery = (teamId: number) =>
+	fetcher(`/components?filter=${searchUtil.eq('teamId', teamId)}`);
 
 const getComponentQuery = (componentId: number | string) =>
 	`/components/${componentId}?${nestedFieldsParam}`;
@@ -47,6 +74,7 @@ const getComponentTransformData = (
 	...testrayComponent,
 	project: testrayComponent?.r_projectToComponents_c_project,
 	team: testrayComponent?.r_teamToComponents_c_team,
+	teamId: testrayComponent.r_teamToComponents_c_teamId,
 });
 
 const getComponentsTransformData = (
@@ -57,10 +85,12 @@ const getComponentsTransformData = (
 });
 
 export {
+	assignTeamsToComponents,
 	componentsResource,
 	createComponent,
 	updateComponent,
 	getComponentQuery,
 	getComponentTransformData,
 	getComponentsTransformData,
+	getTeamsComponentsQuery,
 };

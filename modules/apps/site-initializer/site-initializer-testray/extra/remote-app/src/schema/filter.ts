@@ -256,6 +256,13 @@ const filters = {
 		},
 	],
 	routines: [baseFilters.priority, baseFilters.caseType, baseFilters.team],
+	team: [
+		{
+			label: i18n.translate('team-name'),
+			name: 'team',
+			type: 'text',
+		},
+	],
 };
 
 export {filters};

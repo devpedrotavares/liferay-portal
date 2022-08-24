@@ -20,12 +20,16 @@ import {
 	openToast,
 	saveAndReload,
 } from '@liferay/object-js-components-web';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {TabsVisitor} from '../../utils/visitor';
 import InfoScreen from './InfoScreen/InfoScreen';
 import LayoutScreen from './LayoutScreen/LayoutScreen';
-import LayoutContext, {LayoutContextProvider, TYPES} from './context';
+import {
+	LayoutContextProvider,
+	TYPES,
+	useLayoutContext,
+} from './objectLayoutContext';
 import {
 	TObjectField,
 	TObjectLayout,
@@ -107,7 +111,7 @@ const Layout: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 	const [
 		{isViewOnly, objectFields, objectLayout, objectLayoutId},
 		dispatch,
-	] = useContext(LayoutContext);
+	] = useLayoutContext();
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(true);
 
@@ -189,6 +193,17 @@ const Layout: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 		if (!hasFieldsInLayout) {
 			openToast({
 				message: Liferay.Language.get('please-add-at-least-one-field'),
+				type: 'danger',
+			});
+
+			return;
+		}
+
+		if (objectLayout.objectLayoutTabs[0].objectRelationshipId > 0) {
+			openToast({
+				message: Liferay.Language.get(
+					'the-layouts-first-tab-must-be-a-field-tab'
+				),
 				type: 'danger',
 			});
 

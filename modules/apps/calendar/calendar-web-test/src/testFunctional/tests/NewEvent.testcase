@@ -587,6 +587,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-56337."
+	@ignore = "True"
 	@priority = "3"
 	test AddRepeatingWithEndDateBeforeStartDate {
 		CalendarNavigator.gotoAddEvent();
@@ -655,6 +656,8 @@ definition {
 
 	@priority = "3"
 	test AddRepeatingWithUserInviteAccept {
+		property portal.upstream = "quarantine";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Users",
 			panel = "Control Panel",
@@ -953,6 +956,8 @@ definition {
 	@description = "This is a use case for LPS-45616."
 	@priority = "4"
 	test CancelRepeatingDialog {
+		property portal.upstream = "quarantine";
+
 		CalendarNavigator.gotoAddEvent();
 
 		CalendarEvent.editTitle(eventTitle = "Calendar Non-Repeating Event 1");

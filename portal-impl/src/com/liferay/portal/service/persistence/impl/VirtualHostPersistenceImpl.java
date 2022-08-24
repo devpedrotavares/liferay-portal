@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.model.VirtualHostTable;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.persistence.VirtualHostPersistence;
 import com.liferay.portal.kernel.service.persistence.VirtualHostUtil;
 import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelperUtil;
@@ -1948,7 +1947,7 @@ public class VirtualHostPersistenceImpl
 	 * </p>
 	 *
 	 * @param layoutSetId the layout set ID
-	 * @param hostname the hostname
+	 * @param hostnames the hostnames
 	 * @param start the lower bound of the range of virtual hosts
 	 * @param end the upper bound of the range of virtual hosts (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
@@ -2734,8 +2733,6 @@ public class VirtualHostPersistenceImpl
 
 		virtualHost.setNew(true);
 		virtualHost.setPrimaryKey(virtualHostId);
-
-		virtualHost.setCompanyId(CompanyThreadLocal.getCompanyId());
 
 		return virtualHost;
 	}

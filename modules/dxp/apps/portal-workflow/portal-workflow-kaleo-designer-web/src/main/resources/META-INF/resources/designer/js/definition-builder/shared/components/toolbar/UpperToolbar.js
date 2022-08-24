@@ -33,7 +33,12 @@ import {
 } from '../../../util/fetchUtil';
 import {isObjectEmpty} from '../../../util/utils';
 
-export default function UpperToolbar({displayNames, isView, languageIds}) {
+export default function UpperToolbar({
+	displayNames,
+	isView,
+	languageIds,
+	portletNamespace,
+}) {
 	const {
 		active,
 		alertMessage,
@@ -153,6 +158,18 @@ export default function UpperToolbar({displayNames, isView, languageIds}) {
 
 	const definitionNotPublished = version === 0 || !active;
 
+	const redirectToSavedDefinition = (name, version) => {
+		const definitionURL = new URL(window.location.href);
+
+		definitionURL.searchParams.set(
+			portletNamespace + 'draftVersion',
+			Number.parseFloat(version).toFixed(1)
+		);
+		definitionURL.searchParams.set(portletNamespace + 'name', name);
+
+		window.location.replace(definitionURL);
+	};
+
 	const publishDefinition = () => {
 		let alertMessage;
 
@@ -198,11 +215,16 @@ export default function UpperToolbar({displayNames, isView, languageIds}) {
 				version,
 			}).then((response) => {
 				if (response.ok) {
-					setAlert(alertMessage, 'success', true);
-
 					response.json().then(({name, version}) => {
 						setDefinitionId(name);
 						setVersion(parseInt(version, 10));
+						if (version === '1') {
+							localStorage.setItem('firstPublished', true);
+							redirectToSavedDefinition(name, version);
+						}
+						else {
+							setAlert(alertMessage, 'success', true);
+						}
 					});
 				}
 				else {
@@ -241,11 +263,16 @@ export default function UpperToolbar({displayNames, isView, languageIds}) {
 				version,
 			}).then((response) => {
 				if (response.ok) {
-					setAlert(successMessage, 'success', true);
-
 					response.json().then(({name, version}) => {
 						setDefinitionId(name);
 						setVersion(parseInt(version, 10));
+						if (version === '1') {
+							localStorage.setItem('firstSaved', true);
+							redirectToSavedDefinition(name, version);
+						}
+						else {
+							setAlert(successMessage, 'success', true);
+						}
 					});
 				}
 			});
@@ -263,6 +290,22 @@ export default function UpperToolbar({displayNames, isView, languageIds}) {
 			setDefinitionTitle(translations[selectedLanguageId]);
 		}
 	}, [selectedLanguageId, setDefinitionTitle, setTranslations, translations]);
+
+	useEffect(() => {
+		if (localStorage.getItem('firstSaved')) {
+			setAlert(Liferay.Language.get('workflow-saved'), 'success', true);
+			localStorage.removeItem('firstSaved');
+		}
+		else if (localStorage.getItem('firstPublished')) {
+			setAlert(
+				Liferay.Language.get('workflow-published-successfully'),
+				'success',
+				true
+			);
+			localStorage.removeItem('firstPublished');
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<>

@@ -76,6 +76,8 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServ
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.util.LayoutCopyHelper;
 import com.liferay.layout.util.structure.LayoutStructure;
+import com.liferay.notification.rest.dto.v1_0.NotificationTemplate;
+import com.liferay.notification.rest.resource.v1_0.NotificationTemplateResource;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectRelationship;
 import com.liferay.object.admin.rest.dto.v1_0.util.ObjectActionUtil;
@@ -135,7 +137,7 @@ import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
@@ -158,6 +160,8 @@ import com.liferay.portal.vulcan.multipart.BinaryFile;
 import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
+import com.liferay.segments.model.SegmentsEntry;
+import com.liferay.segments.service.SegmentsEntryLocalService;
 import com.liferay.site.exception.InitializationException;
 import com.liferay.site.initializer.SiteInitializer;
 import com.liferay.site.initializer.extender.internal.util.SiteInitializerUtil;
@@ -181,6 +185,7 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -230,6 +235,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 		ListTypeDefinitionResource.Factory listTypeDefinitionResourceFactory,
 		ListTypeEntryResource listTypeEntryResource,
 		ListTypeEntryResource.Factory listTypeEntryResourceFactory,
+		NotificationTemplateResource.Factory
+			notificationTemplateResourceFactory,
 		ObjectActionLocalService objectActionLocalService,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectDefinitionResource.Factory objectDefinitionResourceFactory,
@@ -241,6 +248,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		ResourcePermissionLocalService resourcePermissionLocalService,
 		RoleLocalService roleLocalService,
 		SAPEntryLocalService sapEntryLocalService,
+		SegmentsEntryLocalService segmentsEntryLocalService,
 		SettingsFactory settingsFactory,
 		SiteNavigationMenuItemLocalService siteNavigationMenuItemLocalService,
 		SiteNavigationMenuItemTypeRegistry siteNavigationMenuItemTypeRegistry,
@@ -291,6 +299,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_listTypeDefinitionResourceFactory = listTypeDefinitionResourceFactory;
 		_listTypeEntryResource = listTypeEntryResource;
 		_listTypeEntryResourceFactory = listTypeEntryResourceFactory;
+		_notificationTemplateResourceFactory =
+			notificationTemplateResourceFactory;
 		_objectActionLocalService = objectActionLocalService;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
 		_objectDefinitionResourceFactory = objectDefinitionResourceFactory;
@@ -303,6 +313,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_resourcePermissionLocalService = resourcePermissionLocalService;
 		_roleLocalService = roleLocalService;
 		_sapEntryLocalService = sapEntryLocalService;
+		_segmentsEntryLocalService = segmentsEntryLocalService;
 		_settingsFactory = settingsFactory;
 		_siteNavigationMenuItemLocalService =
 			siteNavigationMenuItemLocalService;
@@ -419,6 +430,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 			_invoke(() -> _addKnowledgeBaseArticles(serviceContext));
 			_invoke(() -> _addOrganizations(serviceContext));
 			_invoke(() -> _addSAPEntries(serviceContext));
+			_invoke(() -> _addSegmentsEntries(serviceContext));
 			_invoke(() -> _addSiteConfiguration(serviceContext));
 			_invoke(() -> _addSiteSettings(serviceContext));
 			_invoke(() -> _addStyleBookEntries(serviceContext));
@@ -473,6 +485,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 			_invoke(
 				() -> _addCPDefinitions(
+					documentsStringUtilReplaceValues,
+					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+					serviceContext));
+			_invoke(
+				() -> _addNotificationTemplates(
 					documentsStringUtilReplaceValues,
 					objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
 					serviceContext));
@@ -1532,6 +1549,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 			type, null, jsonObject.getBoolean("hidden"),
 			jsonObject.getBoolean("system"), friendlyURLMap, serviceContext);
 
+		_setResourcePermissions(
+			layout.getCompanyId(), layout.getModelClassName(),
+			jsonObject.getJSONArray("permissions"),
+			String.valueOf(layout.getPlid()));
+
 		if (jsonObject.has("priority")) {
 			layout = _layoutLocalService.updatePriority(
 				layout.getPlid(), jsonObject.getInt("priority"));
@@ -1958,6 +1980,135 @@ public class BundleSiteInitializer implements SiteInitializer {
 		}
 
 		return listTypeDefinitionIdsStringUtilReplaceValues;
+	}
+
+	private void _addNotificationTemplate(
+			Map<String, String> documentsStringUtilReplaceValues,
+			Map<String, String>
+				objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+			String resourcePath, ServiceContext serviceContext)
+		throws Exception {
+
+		String json = SiteInitializerUtil.read(
+			resourcePath + "notification-template.json", _servletContext);
+
+		if (json == null) {
+			return;
+		}
+
+		JSONObject bodyJSONObject = _jsonFactory.createJSONObject();
+
+		Enumeration<URL> enumeration = _bundle.findEntries(
+			resourcePath, "*.html", false);
+
+		if (enumeration == null) {
+			return;
+		}
+
+		while (enumeration.hasMoreElements()) {
+			URL url = enumeration.nextElement();
+
+			bodyJSONObject.put(
+				FileUtil.getShortFileName(
+					FileUtil.stripExtension(url.getPath())),
+				_replace(
+					StringUtil.read(url.openStream()), "[$", "$]",
+					documentsStringUtilReplaceValues));
+		}
+
+		JSONObject notificationTemplateJSONObject =
+			JSONFactoryUtil.createJSONObject(json);
+
+		notificationTemplateJSONObject.put("body", bodyJSONObject);
+
+		NotificationTemplate notificationTemplate = NotificationTemplate.toDTO(
+			notificationTemplateJSONObject.toString());
+
+		NotificationTemplateResource.Builder
+			notificationTemplateResourceBuilder =
+				_notificationTemplateResourceFactory.create();
+
+		NotificationTemplateResource notificationTemplateResource =
+			notificationTemplateResourceBuilder.user(
+				serviceContext.fetchUser()
+			).build();
+
+		Page<NotificationTemplate> notificationTemplatesPage =
+			notificationTemplateResource.getNotificationTemplatesPage(
+				null, null,
+				notificationTemplateResource.toFilter(
+					StringBundler.concat(
+						"name eq '", notificationTemplate.getName(), "'")),
+				null, null);
+
+		NotificationTemplate existingNotificationTemplate =
+			notificationTemplatesPage.fetchFirstItem();
+
+		if (existingNotificationTemplate == null) {
+			notificationTemplate =
+				notificationTemplateResource.postNotificationTemplate(
+					notificationTemplate);
+		}
+		else {
+			notificationTemplate =
+				notificationTemplateResource.putNotificationTemplate(
+					existingNotificationTemplate.getId(), notificationTemplate);
+		}
+
+		json = SiteInitializerUtil.read(
+			resourcePath + "notification-template.object-actions.json",
+			_servletContext);
+
+		if (json == null) {
+			return;
+		}
+
+		json = _replace(
+			json, "[$", "$]",
+			objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues);
+
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray(json);
+
+		Map<String, Long> parametersMap = HashMapBuilder.put(
+			"notificationTemplateId", notificationTemplate.getId()
+		).build();
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+			_objectActionLocalService.addObjectAction(
+				serviceContext.getUserId(),
+				jsonObject.getLong("objectDefinitionId"),
+				jsonObject.getBoolean("active"),
+				jsonObject.getString("conditionExpression"),
+				jsonObject.getString("description"),
+				jsonObject.getString("name"),
+				jsonObject.getString("objectActionExecutorKey"),
+				jsonObject.getString("objectActionTriggerKey"),
+				ObjectActionUtil.toParametersUnicodeProperties(parametersMap));
+		}
+	}
+
+	private void _addNotificationTemplates(
+			Map<String, String> documentsStringUtilReplaceValues,
+			Map<String, String>
+				objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		Set<String> resourcePaths = _servletContext.getResourcePaths(
+			"/site-initializer/notification-templates");
+
+		if (SetUtil.isEmpty(resourcePaths)) {
+			return;
+		}
+
+		for (String resourcePath : resourcePaths) {
+			_addNotificationTemplate(
+				documentsStringUtilReplaceValues,
+				objectDefinitionIdsAndObjectEntryIdsStringUtilReplaceValues,
+				resourcePath, serviceContext);
+		}
 	}
 
 	private Map<String, String> _addObjectDefinitions(
@@ -2732,6 +2883,47 @@ public class BundleSiteInitializer implements SiteInitializer {
 		}
 	}
 
+	private void _addSegmentsEntries(ServiceContext serviceContext)
+		throws Exception {
+
+		String json = SiteInitializerUtil.read(
+			"/site-initializer/segments-entries.json", _servletContext);
+
+		if (json == null) {
+			return;
+		}
+
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray(json);
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+			SegmentsEntry segmentsEntry =
+				_segmentsEntryLocalService.fetchSegmentsEntry(
+					serviceContext.getScopeGroupId(),
+					jsonObject.getString("segmentsEntryKey"), true);
+
+			if (segmentsEntry == null) {
+				_segmentsEntryLocalService.addSegmentsEntry(
+					jsonObject.getString("segmentsEntryKey"),
+					SiteInitializerUtil.toMap(
+						jsonObject.getString("name_i18n")),
+					null, jsonObject.getBoolean("active", true),
+					jsonObject.getString("criteria"),
+					jsonObject.getString("type"), serviceContext);
+			}
+			else {
+				_segmentsEntryLocalService.updateSegmentsEntry(
+					segmentsEntry.getSegmentsEntryId(),
+					jsonObject.getString("segmentsEntryKey"),
+					SiteInitializerUtil.toMap(
+						jsonObject.getString("name_i18n")),
+					null, jsonObject.getBoolean("active", true),
+					jsonObject.getString("criteria"), serviceContext);
+			}
+		}
+	}
+
 	private void _addSiteConfiguration(ServiceContext serviceContext)
 		throws Exception {
 
@@ -2915,14 +3107,22 @@ public class BundleSiteInitializer implements SiteInitializer {
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject jsonObject = jsonArray.getJSONObject(i);
 
+			Dictionary<String, Object> properties = new HashMapDictionary<>();
+
 			JSONObject propertiesJSONObject = jsonObject.getJSONObject(
 				"properties");
 
+			Iterator<String> iterator = propertiesJSONObject.keys();
+
+			while (iterator.hasNext()) {
+				String key = iterator.next();
+
+				properties.put(key, propertiesJSONObject.getString(key));
+			}
+
 			_configurationProvider.saveGroupConfiguration(
 				serviceContext.getScopeGroupId(), jsonObject.getString("pid"),
-				HashMapDictionaryBuilder.<String, Object>create(
-					propertiesJSONObject.toMap()
-				).build());
+				properties);
 		}
 	}
 
@@ -3696,6 +3896,42 @@ public class BundleSiteInitializer implements SiteInitializer {
 		return StringUtil.replace(s, oldSubs, newSubs);
 	}
 
+	private void _setResourcePermissions(
+			long companyId, String name, JSONArray permissionsJSONArray,
+			String primKey)
+		throws Exception {
+
+		if (permissionsJSONArray == null) {
+			return;
+		}
+
+		for (int i = 0; i < permissionsJSONArray.length(); i++) {
+			JSONObject permissionsJSONObject =
+				permissionsJSONArray.getJSONObject(i);
+
+			int scope = permissionsJSONObject.getInt("scope");
+
+			String roleName = permissionsJSONObject.getString("roleName");
+
+			Role role = _roleLocalService.getRole(companyId, roleName);
+
+			String[] actionIds = new String[0];
+
+			JSONArray actionIdsJSONArray = permissionsJSONObject.getJSONArray(
+				"actionIds");
+
+			if (actionIdsJSONArray != null) {
+				for (int j = 0; j < actionIdsJSONArray.length(); j++) {
+					actionIds = ArrayUtil.append(
+						actionIds, actionIdsJSONArray.getString(j));
+				}
+			}
+
+			_resourcePermissionLocalService.setResourcePermissions(
+				companyId, name, scope, primKey, role.getRoleId(), actionIds);
+		}
+	}
+
 	private Layout _updateDraftLayout(
 			Layout draftLayout, JSONObject settingsJSONObject)
 		throws Exception {
@@ -3878,6 +4114,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_listTypeDefinitionResourceFactory;
 	private final ListTypeEntryResource _listTypeEntryResource;
 	private final ListTypeEntryResource.Factory _listTypeEntryResourceFactory;
+	private final NotificationTemplateResource.Factory
+		_notificationTemplateResourceFactory;
 	private final ObjectActionLocalService _objectActionLocalService;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
 	private final ObjectDefinitionResource.Factory
@@ -3894,6 +4132,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_resourcePermissionLocalService;
 	private final RoleLocalService _roleLocalService;
 	private final SAPEntryLocalService _sapEntryLocalService;
+	private final SegmentsEntryLocalService _segmentsEntryLocalService;
 	private ServletContext _servletContext;
 	private final SettingsFactory _settingsFactory;
 	private final SiteNavigationMenuItemLocalService

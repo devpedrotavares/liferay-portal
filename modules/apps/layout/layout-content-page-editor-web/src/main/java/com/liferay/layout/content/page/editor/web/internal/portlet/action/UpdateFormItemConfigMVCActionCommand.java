@@ -14,7 +14,6 @@
 
 package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
-import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
 import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
@@ -35,11 +34,14 @@ import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.item.provider.InfoItemFormProvider;
+import com.liferay.info.search.InfoSearchClassMapperTracker;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkManager;
+import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureService;
+import com.liferay.layout.util.structure.DropZoneLayoutStructureItem;
 import com.liferay.layout.util.structure.FormStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
@@ -51,10 +53,10 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -66,6 +68,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.segments.constants.SegmentsExperienceConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -182,6 +185,8 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		List<FragmentEntryLink> addedFragmentEntryLinks = new ArrayList<>();
+		DropZoneLayoutStructureItem masterDropZoneLayoutStructureItem =
+			_getMasterDropZoneLayoutStructureItem(themeDisplay.getLayout());
 		TreeSet<String> missingInputTypes = new TreeSet<>();
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			httpServletRequest);
@@ -201,7 +206,11 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 				_fragmentCollectionContributorTracker.getFragmentEntry(
 					_getFragmentEntryKey(infoFieldType));
 
-			if (fragmentEntry == null) {
+			if ((fragmentEntry == null) ||
+				!_isAllowedFragmentEntryKey(
+					fragmentEntry.getFragmentEntryKey(),
+					masterDropZoneLayoutStructureItem)) {
+
 				missingInputTypes.add(
 					infoFieldType.getLabel(themeDisplay.getLocale()));
 
@@ -219,7 +228,11 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 			_fragmentCollectionContributorTracker.getFragmentEntry(
 				"INPUTS-submit-button");
 
-		if (fragmentEntry == null) {
+		if ((fragmentEntry == null) ||
+			!_isAllowedFragmentEntryKey(
+				fragmentEntry.getFragmentEntryKey(),
+				masterDropZoneLayoutStructureItem)) {
+
 			missingInputTypes.add(
 				_language.get(themeDisplay.getLocale(), "submit-button"));
 		}
@@ -236,8 +249,8 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 				"errorMessage",
 				_language.format(
 					themeDisplay.getLocale(),
-					"some-fragments-are-missing.-x-fields-do-not-have-an-" +
-						"associated-fragment",
+					"some-fragments-are-missing.-x-fields-cannot-have-an-" +
+						"associated-fragment-or-cannot-be-available-in-master",
 					missingInputTypes.first()));
 		}
 		else if (missingInputTypes.size() > 1) {
@@ -245,8 +258,9 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 				"errorMessage",
 				_language.format(
 					themeDisplay.getLocale(),
-					"some-fragments-are-missing.-x-and-x-fields-do-not-have-" +
-						"an-associated-fragment",
+					"some-fragments-are-missing.-x-and-x-fields-cannot-have-" +
+						"an-associated-fragment-or-cannot-be-available-in-" +
+							"master",
 					new String[] {
 						StringUtil.merge(
 							missingInputTypes.headSet(missingInputTypes.last()),
@@ -293,16 +307,9 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 			long groupId)
 		throws Exception {
 
-		String itemClassName = _portal.getClassName(
-			formStyledLayoutStructureItem.getClassNameId());
-
-		// LPS-111037
-
-		if (Objects.equals(
-				DLFileEntryConstants.getClassName(), itemClassName)) {
-
-			itemClassName = FileEntry.class.getName();
-		}
+		String itemClassName = _infoSearchClassMapperTracker.getClassName(
+			_portal.getClassName(
+				formStyledLayoutStructureItem.getClassNameId()));
 
 		InfoItemFormProvider<?> infoItemFormProvider =
 			_infoItemServiceTracker.getFirstInfoItemService(
@@ -323,6 +330,61 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 			groupId);
 
 		return infoForm.getAllInfoFields();
+	}
+
+	private DropZoneLayoutStructureItem _getMasterDropZoneLayoutStructureItem(
+		Layout layout) {
+
+		if (layout.getMasterLayoutPlid() <= 0) {
+			return null;
+		}
+
+		try {
+			LayoutStructure masterLayoutStructure =
+				LayoutStructureUtil.getLayoutStructure(
+					layout.getGroupId(), layout.getMasterLayoutPlid(),
+					SegmentsExperienceConstants.KEY_DEFAULT);
+
+			return (DropZoneLayoutStructureItem)
+				masterLayoutStructure.getDropZoneLayoutStructureItem();
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to get master layout structure", exception);
+			}
+		}
+
+		return null;
+	}
+
+	private boolean _isAllowedFragmentEntryKey(
+		String fragmentEntryKey,
+		DropZoneLayoutStructureItem masterDropZoneLayoutStructureItem) {
+
+		if (masterDropZoneLayoutStructureItem == null) {
+			return true;
+		}
+
+		List<String> fragmentEntryKeys =
+			masterDropZoneLayoutStructureItem.getFragmentEntryKeys();
+
+		if (masterDropZoneLayoutStructureItem.isAllowNewFragmentEntries()) {
+			if (ListUtil.isEmpty(fragmentEntryKeys) ||
+				!fragmentEntryKeys.contains(fragmentEntryKey)) {
+
+				return true;
+			}
+
+			return false;
+		}
+
+		if (ListUtil.isNotEmpty(fragmentEntryKeys) &&
+			fragmentEntryKeys.contains(fragmentEntryKey)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private JSONArray _removeLayoutStructureItemsJSONArray(
@@ -509,6 +571,9 @@ public class UpdateFormItemConfigMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private InfoItemServiceTracker _infoItemServiceTracker;
+
+	@Reference
+	private InfoSearchClassMapperTracker _infoSearchClassMapperTracker;
 
 	@Reference
 	private Language _language;

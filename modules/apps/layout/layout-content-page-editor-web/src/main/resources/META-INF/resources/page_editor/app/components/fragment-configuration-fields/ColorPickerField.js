@@ -25,6 +25,7 @@ import {useActiveItemId} from '../../contexts/ControlsContext';
 import {useGlobalContext} from '../../contexts/GlobalContext';
 import {useSelector} from '../../contexts/StoreContext';
 import selectCanDetachTokenValues from '../../selectors/selectCanDetachTokenValues';
+import {convertRGBtoHex} from '../../utils/convertRGBtoHex';
 import getLayoutDataItemUniqueClassName from '../../utils/getLayoutDataItemUniqueClassName';
 import {ColorPaletteField} from './ColorPaletteField';
 
@@ -33,6 +34,9 @@ export function ColorPickerField({field, onValueSelect, value}) {
 	const canDetachTokenValues = useSelector(selectCanDetachTokenValues);
 	const [computedValue, setComputedValue] = useState(null);
 	const globalContext = useGlobalContext();
+	const selectedViewportSize = useSelector(
+		(state) => state.selectedViewportSize
+	);
 	const {tokenValues} = useStyleBook();
 
 	useEffect(() => {
@@ -58,11 +62,11 @@ export function ColorPickerField({field, onValueSelect, value}) {
 			return;
 		}
 
-		setComputedValue(
-			globalContext.window
-				.getComputedStyle(element)
-				.getPropertyValue(field.cssProperty) || null
-		);
+		const propertyValue = globalContext.window
+			.getComputedStyle(element)
+			.getPropertyValue(field.cssProperty);
+
+		setComputedValue(propertyValue ? convertRGBtoHex(propertyValue) : null);
 	}, [activeItemId, field.cssProperty, globalContext, value]);
 
 	return Object.keys(tokenValues).length ? (
@@ -76,6 +80,7 @@ export function ColorPickerField({field, onValueSelect, value}) {
 			defaultTokenValue={computedValue}
 			field={field}
 			onValueSelect={onValueSelect}
+			selectedViewportSize={selectedViewportSize}
 			showLabel={!Liferay.FeatureFlags['LPS-143206']}
 			tokenValues={tokenValues}
 			value={value}

@@ -14,6 +14,12 @@
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+
+import java.io.IOException;
+
+import java.net.URL;
+
 import java.util.Properties;
 
 import org.junit.After;
@@ -96,6 +102,20 @@ public class SystemPropertiesTest {
 
 		Assert.assertEquals(
 			_TEST_VALUE, SystemProperties.get(_TEST_KEY, "defaultValue"));
+	}
+
+	@Test
+	public void testLoad() throws IOException {
+		Properties properties = new Properties();
+
+		ReflectionTestUtil.invoke(
+			SystemProperties.class, "_load",
+			new Class<?>[] {URL.class, Properties.class},
+			SystemProperties.class.getResource(
+				"dependencies/system.properties"),
+			properties);
+
+		Assert.assertEquals(_TEST_VALUE, properties.get(_TEST_KEY));
 	}
 
 	private static final String _TEST_KEY =

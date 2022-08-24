@@ -21,21 +21,19 @@ import i18n from '../../../i18n';
 import {filters} from '../../../schema/filter';
 import {getTimeFromNow} from '../../../util/date';
 import {searchUtil} from '../../../util/search';
-import RoutineModal from './RoutineModal';
 import useRoutineActions from './useRoutineActions';
 
 const Routines = () => {
 	const {projectId: _projectId} = useParams();
-	const {actions, formModal} = useRoutineActions();
+	const {actions, navigate} = useRoutineActions();
 
 	const projectId = Number(_projectId);
 
 	return (
 		<Container>
 			<ListViewRest
-				forceRefetch={formModal.forceRefetch}
 				managementToolbarProps={{
-					addButton: () => formModal.modal.open(),
+					addButton: () => navigate('create'),
 					filterFields: filters.routines,
 					title: i18n.translate('routines'),
 				}}
@@ -95,8 +93,6 @@ const Routines = () => {
 					filter: searchUtil.eq('projectId', projectId),
 				}}
 			/>
-
-			<RoutineModal modal={formModal.modal} projectId={projectId} />
 		</Container>
 	);
 };

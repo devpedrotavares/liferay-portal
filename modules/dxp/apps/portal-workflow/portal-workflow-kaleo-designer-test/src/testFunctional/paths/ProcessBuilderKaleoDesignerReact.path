@@ -33,6 +33,11 @@
 	<td>//div[contains(@class, 'alert-notifications')]</td>
 	<td></td>
 </tr>
+<tr>
+	<td>BUTTON_DONE_MODAL</td>
+	<td>//div[contains(@class, 'modal-content')]//button[contains(.,'Done')]</td>
+	<td></td>
+</tr>
 
 <!-- SOURCE_VIEW_PATHS -->
 
@@ -54,6 +59,11 @@
 <tr>
 	<td>XML_CODE_SPECIFIC_ELEMENT</td>
 	<td>//div[contains(@class,'CodeMirror-gutter-wrapper')]//..//pre[@class=' CodeMirror-line ']//span[contains(.,'${key_elementOption}')]//..//*[normalize-space(text())='${key_elementValue}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>INFORMATION_DETAILS</td>
+	<td>//div[@class='info-group']//label[contains(text() ,'${key_fieldOption}')]/..//span[contains(text() ,'${key_fieldInformation}')]</td>
 	<td></td>
 </tr>
 
@@ -82,6 +92,26 @@
 <tr>
 	<td>MANAGE_TRANSLATIONS_MODAL</td>
 	<td>//div[contains(text() ,'${key_modalTitle}')]/../../../..//*[contains(@class,'modal-dialog')]//*[contains(@class,'modal-body')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LANGUAGE_MANAGE_TRANSLATIONS_BUTTON</td>
+	<td>//button[@class='dropdown-item']//span[@class='dropdown-item-indicator-start']//*[contains(@class,'lexicon-icon-${key_translationOptionSelected}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LANGUAGE_OPTION</td>
+	<td>//tr//td[contains(text(),'${key_language}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SEARCH_BAR_INPUT</td>
+	<td>//input[contains(@class, 'input-group')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LANGUAGE_NAME_RESULT</td>
+	<td>//td[contains(@class,'table-cell-expand') and contains(.,'${key_result}')]</td>
 	<td></td>
 </tr>
 
@@ -213,7 +243,7 @@
 </tr>
 <tr>
 	<td>SIDEBAR_PROPERTY</td>
-	<td>//span[contains(., '${key_propertyName}')]/../..//div[@class='panel-body']/..//span[contains(.,'${key_propertyValue}')]</td>
+	<td>//span[contains(., '${key_propertyName}')]/../..//div[@class='panel-body']/..//span[contains(.,'${key_propertyValue}')] | //span[contains(., '${key_propertyName}')]/../..//div[@class='panel-body']//*[contains(@class,'d-flex') and contains(., '${key_propertyValue}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -248,7 +278,12 @@
 </tr>
 <tr>
 	<td>PROPERTIES_INPUT_BY_POSITION</td>
-	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., '${key_inputOption}')]/..//input | //div[@class='panel']/../../div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., '${key_inputOption}')]/..//input</td>
+	<td>//div[@class='panel']/../../div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., '${key_inputOption}')]/..//input</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PROPERTIES_INPUT_TIMERS_BY_POSITION</td>
+	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., '${key_inputOption}')]/..//input</td>
 	<td></td>
 </tr>
 <tr>
@@ -258,7 +293,12 @@
 </tr>
 <tr>
 	<td>PROPERTIES_SELECTORS_BY_POSITION</td>
-	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., '${key_selectorField}')]/..//select | //div[@class='panel']/../..//div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., '${key_selectorField}')]/..//select</td>
+	<td>//div[@class='panel']/../..//div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., '${key_selectorField}')]/..//select</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PROPERTIES_SELECTORS_TIMERS_BY_POSITION</td>
+	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., '${key_selectorField}')]/..//select</td>
 	<td></td>
 </tr>
 <tr>
@@ -278,7 +318,12 @@
 </tr>
 <tr>
 	<td>PROPERTIES_TEMPLATE_TEXTAREA_BY_POSITION</td>
-	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., 'Script')]/..//textarea | //div[@class='panel']/../..//div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., 'Template')]/..//textarea | //label[contains(., 'Script')]/..//textarea</td>
+	<td>//div[@class='panel']/../..//div[@class='panel-group panel-group-flush'][${key_sectionOption}]//label[contains(., 'Template')]/..//textarea | //label[contains(., 'Script')]/..//textarea</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PROPERTIES_TEMPLATE_TEXTAREA_TIMERS_BY_POSITION</td>
+	<td>//div[@class='panel'][div[@class='panel-group panel-group-flush']][${key_sectionOption}]//label[contains(., 'Script')]/..//textarea</td>
 	<td></td>
 </tr>
 <tr>
@@ -322,8 +367,23 @@
 	<td></td>
 </tr>
 <tr>
+	<td>ROLE_NAME_FIELD</td>
+	<td>//input[contains(@id,'role-name')]/..//input[@type='text' and @value ='${key_roleName}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>NOTIFICATIONS_TYPE_DROPDOWN</td>
 	<td>//label[contains(., 'Notification Types')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>REVISION_HISTORY_VERSION</td>
+	<td>//div[contains(@class,'version-row')and contains(.,'Version ${key_number}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>CURRENT_VERSION_FIELD</td>
+	<td>//div[@class='info-group']//label[contains(text() ,'Current Version') and contains(.,'${key_number}')]</td>
 	<td></td>
 </tr>
 <tr>

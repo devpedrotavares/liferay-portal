@@ -26,13 +26,11 @@ import {
 	openToast,
 	saveAndReload,
 } from '@liferay/object-js-components-web';
-import {fetch, sub} from 'frontend-js-web';
+import {sub} from 'frontend-js-web';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {createTextMaskInputElement} from 'text-mask-core';
 
-import {HEADERS} from '../utils/constants';
 import {createAutoCorrectedNumberPipe} from '../utils/createAutoCorrectedNumberPipe';
-import {ERRORS} from '../utils/errors';
 import {
 	normalizeFieldSettings,
 	updateFieldSettings,
@@ -50,6 +48,7 @@ const languages = Liferay.Language.available;
 const languageLabels = Object.values(languages);
 
 export default function EditObjectField({
+	filterOperators,
 	forbiddenChars,
 	forbiddenLastChars,
 	forbiddenNames,
@@ -62,7 +61,10 @@ export default function EditObjectField({
 	readOnly,
 	workflowStatusJSONArray,
 }: IProps) {
-	const [editingObjectFieldName, setEditingObjectFieldName] = useState('');
+	const [editingObjectFieldName, setEditingObjectFieldName] = useState<
+		string
+	>('');
+
 	const [editingFilter, setEditingFilter] = useState(false);
 	const [objectFields, setObjectFields] = useState<ObjectField[]>();
 	const [objectDefinitionId2, setObjectDefinitionId2] = useState<number>();
@@ -81,16 +83,12 @@ export default function EditObjectField({
 	const onSubmit = async ({id, ...objectField}: ObjectField) => {
 		delete objectField.system;
 
-		const response = await fetch(
-			`/o/object-admin/v1.0/object-fields/${id}`,
-			{
-				body: JSON.stringify(objectField),
-				headers: HEADERS,
-				method: 'PUT',
-			}
-		);
+		try {
+			await API.save(
+				`/o/object-admin/v1.0/object-fields/${id}`,
+				objectField
+			);
 
-		if (response.ok) {
 			saveAndReload();
 			openToast({
 				message: Liferay.Language.get(
@@ -98,14 +96,8 @@ export default function EditObjectField({
 				),
 			});
 		}
-		else {
-			const error: {type?: string} | undefined = await response.json();
-
-			const message =
-				(error?.type && ERRORS[error.type]) ??
-				Liferay.Language.get('an-error-occurred');
-
-			openToast({message, type: 'danger'});
+		catch (error) {
+			openToast({message: (error as Error).message, type: 'danger'});
 		}
 	};
 
@@ -138,7 +130,7 @@ export default function EditObjectField({
 			),
 		});
 
-	const handleDeleteFilterColumn = (objectFieldName: string) => {
+	const handleDeleteFilterColumn = (objectFieldName?: string) => {
 		const {objectFieldSettings} = values;
 
 		const [filter] = objectFieldSettings?.filter(
@@ -178,11 +170,11 @@ export default function EditObjectField({
 	};
 
 	const handleSaveFilterColumn = (
+		objectFieldName: string,
 		filterBy?: string,
 		fieldLabel?: LocalizedValue<string>,
 		objectFieldBusinessType?: string,
 		filterType?: string,
-		objectFieldName?: string,
 		valueList?: IItem[],
 		value?: string
 	) => {
@@ -206,8 +198,10 @@ export default function EditObjectField({
 			({name}) => name === 'filters'
 		);
 
-		if (filterSetting?.length === 0 && objectFieldSettings) {
-			let newObjectFieldSettings: ObjectFieldSetting[] | undefined = [];
+		if (filterSetting) {
+			const [filter] = filterSetting;
+
+			let newFilterValues: ObjectFieldFilterSetting[] = [];
 
 			if (objectFieldBusinessType === 'Date') {
 				const dateJson: ObjectFieldDateRangeFilterSettings = {};
@@ -216,139 +210,80 @@ export default function EditObjectField({
 					dateJson[value] = label;
 				});
 
-				newObjectFieldSettings = [
-					...objectFieldSettings,
+				newFilterValues = [
+					...(filter.value as ObjectFieldFilterSetting[]),
 					{
-						name: 'filters',
-						value: [
-							{
-								filterBy: objectFieldName,
-								filterType,
-								json: {
-									[filterType as string]: value
-										? value
-										: dateJson,
-								},
-							},
-						],
+						filterBy: objectFieldName,
+						filterType,
+						json: dateJson,
+					},
+				];
+			}
+			else if (
+				objectFieldBusinessType === 'Picklist' ||
+				objectFieldName === 'status'
+			) {
+				let picklistJson:
+					| ExcludesFilterOperator
+					| IncludesFilterOperator;
+
+				if (filterType === 'excludes') {
+					picklistJson = {
+						not: {
+							in: valueList?.map(({value}) => value) as
+								| string[]
+								| number[],
+						},
+					};
+				}
+				else {
+					picklistJson = {
+						in: valueList?.map(({value}) => value) as
+							| string[]
+							| number[],
+					};
+				}
+
+				newFilterValues = [
+					...(filter.value as ObjectFieldFilterSetting[]),
+					{
+						filterBy: objectFieldName,
+						filterType,
+						json: picklistJson,
 					},
 				];
 			}
 			else {
-				newObjectFieldSettings = [
-					...objectFieldSettings,
+				newFilterValues = [
+					...(filter.value as ObjectFieldFilterSetting[]),
 					{
-						name: 'filters',
-						value: [
-							{
-								filterBy: objectFieldName,
-								filterType,
-								json: {
-									[filterType as string]: value
-										? value
-										: valueList?.map(({value}) => value),
-								},
-							},
-						],
+						filterBy: objectFieldName,
+						filterType,
+						json: {
+							[filterType as string]: value
+								? value
+								: valueList?.map(({value}) => value),
+						},
 					},
 				];
 			}
+
+			const newFilter: ObjectFieldSetting = {
+				name: filter.name,
+				value: newFilterValues,
+			};
+
+			const newObjectFieldSettings: ObjectFieldSetting[] | undefined = [
+				...(objectFieldSettings?.filter(
+					(fieldSetting) => fieldSetting.name !== 'filters'
+				) as ObjectFieldSetting[]),
+				newFilter,
+			];
 
 			setAggregationFilters(newAggregationFilters);
 			setValues({
 				objectFieldSettings: newObjectFieldSettings,
 			});
-		}
-		else {
-			if (filterSetting) {
-				const [filter] = filterSetting;
-
-				let newFilterValues: ObjectFieldFilterSetting[] = [];
-
-				if (objectFieldBusinessType === 'Date') {
-					const dateJson: ObjectFieldDateRangeFilterSettings = {};
-
-					valueList?.forEach(({label, value}) => {
-						dateJson[value] = label;
-					});
-
-					newFilterValues = [
-						...(filter.value as ObjectFieldFilterSetting[]),
-						{
-							filterBy: objectFieldName,
-							filterType,
-							json: dateJson,
-						},
-					];
-				}
-				else if (
-					objectFieldBusinessType === 'Picklist' ||
-					objectFieldName === 'status'
-				) {
-					let picklistJson:
-						| ExcludesFilterOperator
-						| IncludesFilterOperator;
-
-					if (filterType === 'excludes') {
-						picklistJson = {
-							not: {
-								in: valueList?.map(({value}) => value) as
-									| string[]
-									| number[],
-							},
-						};
-					}
-					else {
-						picklistJson = {
-							in: valueList?.map(({value}) => value) as
-								| string[]
-								| number[],
-						};
-					}
-
-					newFilterValues = [
-						...(filter.value as ObjectFieldFilterSetting[]),
-						{
-							filterBy: objectFieldName,
-							filterType,
-							json: picklistJson,
-						},
-					];
-				}
-				else {
-					newFilterValues = [
-						...(filter.value as ObjectFieldFilterSetting[]),
-						{
-							filterBy: objectFieldName,
-							filterType,
-							json: {
-								[filterType as string]: value
-									? value
-									: valueList?.map(({value}) => value),
-							},
-						},
-					];
-				}
-
-				const newFilter: ObjectFieldSetting = {
-					name: filter.name,
-					value: newFilterValues,
-				};
-
-				const newObjectFieldSettings:
-					| ObjectFieldSetting[]
-					| undefined = [
-					...(objectFieldSettings?.filter(
-						(fieldSetting) => fieldSetting.name !== 'filters'
-					) as ObjectFieldSetting[]),
-					newFilter,
-				];
-
-				setAggregationFilters(newAggregationFilters);
-				setValues({
-					objectFieldSettings: newObjectFieldSettings,
-				});
-			}
 		}
 	};
 
@@ -399,7 +334,7 @@ export default function EditObjectField({
 			) {
 				const newAggregationFilters = filterValues.map(
 					(parsedFilter) => {
-						const objectField = objectFields?.find(
+						const objectField = objectFields.find(
 							(objectField) =>
 								objectField.name === parsedFilter.filterBy
 						);
@@ -419,9 +354,9 @@ export default function EditObjectField({
 								value:
 									objectField.businessType === 'Integer' ||
 									objectField.businessType === 'LongInteger'
-										? // @ts-ignore
-
-										  parsedFilter.json[filterType]
+										? (parsedFilter.json as {
+												[key: string]: string;
+										  })[filterType]
 										: undefined,
 							};
 
@@ -530,6 +465,7 @@ export default function EditObjectField({
 		>
 			<Card title={Liferay.Language.get('basic-info')}>
 				<InputLocalized
+					disableFlag={values.system && objectName !== 'AccountEntry'}
 					disabled={
 						values.system && objectName !== 'AccountEntry'
 							? disabled
@@ -616,6 +552,7 @@ export default function EditObjectField({
 					currentFilters={[]}
 					editingFilter={editingFilter}
 					editingObjectFieldName={editingObjectFieldName}
+					filterOperators={filterOperators}
 					header={Liferay.Language.get('filter')}
 					objectFields={
 						objectFields?.filter((objectField) => {
@@ -949,6 +886,7 @@ interface IMaxLengthPropertiesProps {
 }
 
 interface IProps {
+	filterOperators: TFilterOperators;
 	forbiddenChars: string[];
 	forbiddenLastChars: string[];
 	forbiddenNames: string[];

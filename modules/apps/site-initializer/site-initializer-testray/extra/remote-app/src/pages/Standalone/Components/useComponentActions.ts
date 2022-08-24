@@ -15,8 +15,7 @@
 import useFormModal from '../../../hooks/useFormModal';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
-import {TestrayTeam, deleteResource} from '../../../services/rest';
+import {TestrayComponent, deleteResource} from '../../../services/rest';
 import {Action} from '../../../types';
 
 const useComponentActions = () => {
@@ -26,23 +25,25 @@ const useComponentActions = () => {
 
 	const actions: Action[] = [
 		{
-			action: (item: TestrayTeam) => modal.open(item),
+			action: (component: TestrayComponent) => modal.open(component),
+			icon: 'pencil',
 			name: i18n.translate('edit'),
 			permission: 'UPDATE',
 		},
 		{
-			action: ({id}: TestrayTeam, mutate) =>
+			action: ({id}: TestrayComponent, mutate) =>
 				deleteResource(`/components/${id}`)
-					.then(() => removeItemFromList(mutate, id))
+					?.then(() => removeItemFromList(mutate, id))
 					.then(modal.onSave)
 					.catch(modal.onError),
+			icon: 'trash',
 			name: i18n.translate('delete'),
 			permission: 'DELETE',
 		},
 	];
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
+		actions,
 		formModal,
 	};
 };

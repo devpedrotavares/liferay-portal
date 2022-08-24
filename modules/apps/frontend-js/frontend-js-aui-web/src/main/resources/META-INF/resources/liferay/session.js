@@ -152,9 +152,9 @@ AUI.add(
 					const instance = this;
 
 					return (
-						A.Cookie.get(
+						Liferay.Util.Cookie.get(
 							instance._cookieKey,
-							instance._cookieOptions
+							Liferay.Util.Cookie.TYPES.NECESSARY
 						) || instance._initTimestamp
 					);
 				},
@@ -227,9 +227,10 @@ AUI.add(
 					instance._initTimestamp = value;
 
 					if (navigator.cookieEnabled) {
-						A.Cookie.set(
+						Liferay.Util.Cookie.set(
 							instance._cookieKey,
 							value,
+							Liferay.Util.Cookie.TYPES.NECESSARY,
 							instance._cookieOptions
 						);
 					}

@@ -12,19 +12,14 @@
  * details.
  */
 
-import React from 'react';
-
-import useFormModal from '../../hooks/useFormModal';
 import useModalContext from '../../hooks/useModalContext';
 import i18n from '../../i18n';
-import ProjectModal from '../../pages/Project';
 import CaseTypeModal from '../../pages/Standalone/CaseType/CaseTypeModal';
 import FactorCategoryModal from '../../pages/Standalone/FactorCategory/FactorCategoryModal';
 import OptionsModal from '../../pages/Standalone/FactorOptions/FactorOptionsModal';
 import {LIFERAY_URLS} from '../../services/liferay';
 
 const useSidebarActions = () => {
-	const {modal} = useFormModal();
 	const {onOpenModal} = useModalContext();
 
 	const MANAGE_DROPDOWN = [
@@ -33,18 +28,7 @@ const useSidebarActions = () => {
 				{
 					icon: 'plus',
 					label: i18n.translate('add-project'),
-					onClick: () => {
-						modal.setVisible(true);
-
-						onOpenModal({
-							body: (
-								<ProjectModal PageContainer={React.Fragment} />
-							),
-							size: 'full-screen',
-							title: i18n.translate('projects'),
-						});
-					},
-					path: '/',
+					path: '/project/create',
 				},
 				{
 					icon: 'cog',
@@ -55,7 +39,6 @@ const useSidebarActions = () => {
 							size: 'full-screen',
 							title: i18n.translate('case-types'),
 						}),
-					path: '/',
 				},
 			],
 			title: i18n.translate('system'),
@@ -71,7 +54,6 @@ const useSidebarActions = () => {
 							size: 'full-screen',
 							title: i18n.translate('categories'),
 						}),
-					path: '/',
 				},
 				{
 					icon: 'cog',
@@ -82,7 +64,6 @@ const useSidebarActions = () => {
 							size: 'full-screen',
 							title: i18n.translate('options'),
 						}),
-					path: '/',
 				},
 			],
 			title: i18n.translate('environment-factors'),

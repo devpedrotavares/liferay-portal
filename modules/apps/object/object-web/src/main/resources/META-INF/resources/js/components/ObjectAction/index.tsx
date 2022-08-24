@@ -20,15 +20,14 @@ import {
 	CustomItem,
 	FormError,
 	SidePanelForm,
+	SidebarCategory,
 	invalidateRequired,
 	openToast,
 	saveAndReload,
 	useForm,
 } from '@liferay/object-js-components-web';
-import {fetch} from 'frontend-js-web';
 import React, {useEffect, useMemo, useState} from 'react';
 
-import {HEADERS} from '../../utils/constants';
 import ActionBuilder from './tabs/ActionBuilder';
 import BasicInfo from './tabs/BasicInfo';
 
@@ -41,6 +40,7 @@ const TABS = [
 
 export default function Action({
 	objectAction: initialValues,
+	objectActionCodeEditorElements,
 	objectActionExecutors,
 	objectActionTriggers,
 	objectDefinitionsRelationshipsURL,
@@ -58,70 +58,59 @@ export default function Action({
 			delete objectAction?.parameters['lineCount'];
 		}
 
-		const response = await fetch(url, {
-			body: JSON.stringify(objectAction),
-			headers: HEADERS,
-			method,
-		});
-
-		if (response.status === 401) {
-			window.location.reload();
-		}
-		else if (response.ok) {
+		try {
+			await API.save(url, objectAction, method);
 			saveAndReload();
 			openToast({message: successMessage});
-
-			return;
 		}
+		catch (error) {
+			const {detail} = error as {detail?: string};
+			const details = JSON.parse(detail as string);
+			const newErrors: Error = {};
 
-		const {detail}: {detail: string} = await response.json();
-
-		const newErrors: Error = {};
-
-		const details = JSON.parse(detail);
-
-		const parseError = (details: ErrorMessage[], errors: Error) => {
-			details.forEach(({fieldName, message, messages}) => {
-				if (message) {
-					errors[fieldName] = message;
-				}
-				else {
-					errors[fieldName] = {};
-					parseError(
-						messages as ErrorMessage[],
-						errors[fieldName] as Error
-					);
-				}
-			});
-		};
-
-		parseError(details, newErrors);
-
-		setBackEndErrors(newErrors);
-
-		const errorMessages = new Set<string>();
-
-		const getErrorMessage = (errors: Error) => {
-			Object.values(errors).forEach((value) => {
-				if (typeof value === 'string') {
-					if (!errorMessages.has(value)) {
-						errorMessages.add(value);
+			const parseError = (details: ErrorMessage[], errors: Error) => {
+				details.forEach(({fieldName, message, messages}) => {
+					if (message) {
+						errors[fieldName] = message;
 					}
-				}
-				else {
-					getErrorMessage(value);
-				}
-			});
-		};
-
-		if (newErrors) {
-			getErrorMessage(newErrors);
-			errorMessages.forEach((message) => {
-				openToast({
-					message,
-					type: 'danger',
+					else {
+						errors[fieldName] = {};
+						parseError(
+							messages as ErrorMessage[],
+							errors[fieldName] as Error
+						);
+					}
 				});
-			});
+			};
+
+			parseError(details, newErrors);
+
+			setBackEndErrors(newErrors);
+
+			const errorMessages = new Set<string>();
+
+			const getErrorMessage = (errors: Error) => {
+				Object.values(errors).forEach((value) => {
+					if (typeof value === 'string') {
+						if (!errorMessages.has(value)) {
+							errorMessages.add(value);
+						}
+					}
+					else {
+						getErrorMessage(value);
+					}
+				});
+			};
+
+			if (newErrors) {
+				getErrorMessage(newErrors);
+				errorMessages.forEach((message) => {
+					openToast({
+						message,
+						type: 'danger',
+					});
+				});
+			}
 		}
 	};
 
@@ -180,6 +169,9 @@ export default function Action({
 					<ActionBuilder
 						errors={
 							Object.keys(errors).length ? errors : backEndErrors
+						}
+						objectActionCodeEditorElements={
+							objectActionCodeEditorElements
 						}
 						objectActionExecutors={objectActionExecutors}
 						objectActionTriggers={objectActionTriggers}
@@ -310,12 +302,13 @@ function useObjectActionForm({initialValues, onSubmit}: IUseObjectActionForm) {
 
 interface IProps {
 	objectAction: Partial<ObjectAction>;
+	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: CustomItem[];
 	objectActionTriggers: CustomItem[];
 	objectDefinitionsRelationshipsURL: string;
 	readOnly?: boolean;
 	requestParams: {
-		method: 'GET' | 'POST' | 'DELETE' | 'PUT';
+		method: 'POST' | 'PUT';
 		url: string;
 	};
 	successMessage: string;

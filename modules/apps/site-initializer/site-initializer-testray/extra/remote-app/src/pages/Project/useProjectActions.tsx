@@ -12,25 +12,26 @@
  * details.
  */
 
-import useFormModal from '../../hooks/useFormModal';
+import {useRef} from 'react';
+import {useNavigate} from 'react-router-dom';
+
+import useFormActions from '../../hooks/useFormActions';
 import useModalContext from '../../hooks/useModalContext';
 import useMutate from '../../hooks/useMutate';
 import i18n from '../../i18n';
-import {Security} from '../../security';
 import {TestrayProject, deleteResource} from '../../services/rest';
-import {Action} from '../../types';
+import {Action, ActionsHookParameter} from '../../types';
 import ComponentsModal from '../Standalone/Components/ComponentsModal';
 import ProductVersionModal from '../Standalone/ProductVersions/ProductVersionModal';
 import TeamsModal from '../Standalone/Teams/TeamsModal';
 
-const useProjectActions = () => {
-	const formModal = useFormModal();
+const useProjectActions = ({isHeaderActions}: ActionsHookParameter = {}) => {
+	const {form} = useFormActions();
+	const navigate = useNavigate();
 	const {removeItemFromList} = useMutate();
 	const {onOpenModal} = useModalContext();
 
-	const modal = formModal.modal;
-
-	const actions: Action[] = [
+	const actionsRef = useRef([
 		{
 			action: (project: TestrayProject) =>
 				onOpenModal({
@@ -38,6 +39,7 @@ const useProjectActions = () => {
 					size: 'full-screen',
 					title: `${i18n.translate('components')} - ${project.name}`,
 				}),
+			icon: 'order-form-cog',
 			name: i18n.translate('manage-components'),
 		},
 		{
@@ -47,6 +49,7 @@ const useProjectActions = () => {
 					size: 'full-screen',
 					title: `${i18n.translate('teams')} - ${project.name}`,
 				}),
+			icon: 'community',
 			name: i18n.translate('manage-teams'),
 		},
 		{
@@ -58,27 +61,31 @@ const useProjectActions = () => {
 						project.name
 					}`,
 				}),
+			icon: 'cog',
 			name: i18n.translate('manage-product-versions'),
 		},
 		{
-			action: (project: TestrayProject) => modal.open(project),
-			name: i18n.translate('edit'),
+			action: (project: TestrayProject) =>
+				navigate(`/project/${project.id}/update`),
+			icon: 'pencil',
+			name: i18n.translate(isHeaderActions ? 'edit-project' : 'edit'),
 			permission: 'UPDATE',
 		},
 		{
 			action: ({id}: TestrayProject, mutate) =>
 				deleteResource(`/projects/${id}`)
-					.then(() => removeItemFromList(mutate, id))
-					.then(modal.onSuccess)
-					.catch(modal.onError),
-			name: i18n.translate('delete'),
+					?.then(() => removeItemFromList(mutate, id))
+					.then(form.onSuccess)
+					.catch(form.onError),
+			icon: 'trash',
+			name: i18n.translate(isHeaderActions ? 'delete-project' : 'delete'),
 			permission: 'DELETE',
 		},
-	];
+	] as Action[]);
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
-		formModal,
+		actions: actionsRef.current,
+		navigate,
 	};
 };
 

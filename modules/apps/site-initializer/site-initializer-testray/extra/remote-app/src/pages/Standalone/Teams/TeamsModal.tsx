@@ -14,7 +14,8 @@
 
 import ListView from '../../../components/ListView';
 import i18n from '../../../i18n';
-import {getTeamsTransformData, teamsResource} from '../../../services/rest';
+import {filters} from '../../../schema/filter';
+import {testrayTeamRest} from '../../../services/rest';
 import {searchUtil} from '../../../util/search';
 import TeamFormModal from './TeamsFormModal';
 import useTeamActions from './useTeamActions';
@@ -32,8 +33,9 @@ const TeamsModal: React.FC<TeamsModalProps> = ({projectId}) => {
 				forceRefetch={formModal.forceRefetch}
 				managementToolbarProps={{
 					addButton: () => formModal.modal.open(),
+					filterFields: filters.team as any,
 				}}
-				resource={teamsResource}
+				resource={testrayTeamRest.resource}
 				tableProps={{
 					actions,
 					columns: [
@@ -43,7 +45,9 @@ const TeamsModal: React.FC<TeamsModalProps> = ({projectId}) => {
 						},
 					],
 				}}
-				transformData={getTeamsTransformData}
+				transformData={(response) =>
+					testrayTeamRest.transformDataFromList(response)
+				}
 				variables={{filter: searchUtil.eq('projectId', projectId)}}
 			/>
 

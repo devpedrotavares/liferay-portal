@@ -15,9 +15,14 @@
 /// <reference types="react" />
 
 import 'codemirror/mode/groovy/groovy';
-import {CustomItem, FormError} from '@liferay/object-js-components-web';
+import {
+	CustomItem,
+	FormError,
+	SidebarCategory,
+} from '@liferay/object-js-components-web';
 export default function Action({
 	objectAction: initialValues,
+	objectActionCodeEditorElements,
 	objectActionExecutors,
 	objectActionTriggers,
 	objectDefinitionsRelationshipsURL,
@@ -28,12 +33,13 @@ export default function Action({
 }: IProps): JSX.Element;
 interface IProps {
 	objectAction: Partial<ObjectAction>;
+	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: CustomItem[];
 	objectActionTriggers: CustomItem[];
 	objectDefinitionsRelationshipsURL: string;
 	readOnly?: boolean;
 	requestParams: {
-		method: 'GET' | 'POST' | 'DELETE' | 'PUT';
+		method: 'POST' | 'PUT';
 		url: string;
 	};
 	successMessage: string;

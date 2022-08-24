@@ -23,7 +23,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  */
 @ExtendedObjectClassDefinition(
 	category = "frontend-walkthrough",
-	scope = ExtendedObjectClassDefinition.Scope.GROUP
+	scope = ExtendedObjectClassDefinition.Scope.GROUP, strictScope = true
 )
 @Meta.OCD(
 	id = "com.liferay.frontend.js.walkthrough.web.internal.configuration.WalkthroughConfiguration",
@@ -32,7 +32,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public @interface WalkthroughConfiguration {
 
 	@Meta.AD(deflt = "false", name = "enable-walkthrough", required = false)
-	public boolean enableWalkthrough();
+	public boolean enabled();
 
 	@Meta.AD(name = "steps-walkthrough", required = false)
 	public String steps();

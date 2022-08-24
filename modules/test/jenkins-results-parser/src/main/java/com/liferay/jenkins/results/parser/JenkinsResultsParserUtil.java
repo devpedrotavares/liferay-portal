@@ -4296,22 +4296,7 @@ public class JenkinsResultsParserUtil {
 	}
 
 	public static JSONObject toJSONObject(String url) throws IOException {
-		if ((url != null) && url.startsWith("file:")) {
-			try {
-				return toJSONObject(url, false, 1, null, null, 0, 5, null);
-			}
-			catch (IOException ioException) {
-				if (!url.contains("[qt]")) {
-					throw ioException;
-				}
-
-				return toJSONObject(url.substring(0, url.indexOf("[qt]")));
-			}
-		}
-
-		return toJSONObject(
-			url, true, _RETRIES_SIZE_MAX_DEFAULT, null, null,
-			_SECONDS_RETRY_PERIOD_DEFAULT, _MILLIS_TIMEOUT_DEFAULT, null);
+		return toJSONObject(url, (HTTPAuthorization)null);
 	}
 
 	public static JSONObject toJSONObject(String url, boolean checkCache)
@@ -4320,6 +4305,16 @@ public class JenkinsResultsParserUtil {
 		return toJSONObject(
 			url, checkCache, _RETRIES_SIZE_MAX_DEFAULT, null, null,
 			_SECONDS_RETRY_PERIOD_DEFAULT, _MILLIS_TIMEOUT_DEFAULT, null);
+	}
+
+	public static JSONObject toJSONObject(
+			String url, boolean checkCache, HTTPAuthorization httpAuthorization)
+		throws IOException {
+
+		return toJSONObject(
+			url, checkCache, _RETRIES_SIZE_MAX_DEFAULT, null, null,
+			_SECONDS_RETRY_PERIOD_DEFAULT, _MILLIS_TIMEOUT_DEFAULT,
+			httpAuthorization);
 	}
 
 	public static JSONObject toJSONObject(
@@ -4391,12 +4386,47 @@ public class JenkinsResultsParserUtil {
 	}
 
 	public static JSONObject toJSONObject(
+			String url, HTTPAuthorization httpAuthorization)
+		throws IOException {
+
+		if ((url != null) && url.startsWith("file:")) {
+			try {
+				return toJSONObject(
+					url, false, 1, null, null, 0, 5, httpAuthorization);
+			}
+			catch (IOException ioException) {
+				if (!url.contains("[qt]")) {
+					throw ioException;
+				}
+
+				return toJSONObject(
+					url.substring(0, url.indexOf("[qt]")), httpAuthorization);
+			}
+		}
+
+		return toJSONObject(
+			url, true, _RETRIES_SIZE_MAX_DEFAULT, null, null,
+			_SECONDS_RETRY_PERIOD_DEFAULT, _MILLIS_TIMEOUT_DEFAULT,
+			httpAuthorization);
+	}
+
+	public static JSONObject toJSONObject(
 			String url, int maxRetries, int retryPeriod, String postContent)
 		throws IOException {
 
 		return toJSONObject(
 			url, true, maxRetries, null, postContent, retryPeriod,
 			_MILLIS_TIMEOUT_DEFAULT, null);
+	}
+
+	public static JSONObject toJSONObject(
+			String url, int maxRetries, int retryPeriod, String postContent,
+			HTTPAuthorization httpAuthorization)
+		throws IOException {
+
+		return toJSONObject(
+			url, true, maxRetries, null, postContent, retryPeriod,
+			_MILLIS_TIMEOUT_DEFAULT, httpAuthorization);
 	}
 
 	public static JSONObject toJSONObject(String url, String postContent)
@@ -4512,48 +4542,63 @@ public class JenkinsResultsParserUtil {
 			HTTPAuthorization httpAuthorizationHeader, boolean expectResponse)
 		throws IOException {
 
-		for (int i = 0; i < 2; i++) {
-			try (BufferedReader bufferedReader = toBufferedReader(
-					url, checkCache, maxRetries, httpRequestMethod, postContent,
-					retryPeriod, timeout, httpAuthorizationHeader)) {
+		long start = System.currentTimeMillis();
 
-				StringBuilder sb = new StringBuilder();
+		try {
+			for (int i = 0; i < 2; i++) {
+				try (BufferedReader bufferedReader = toBufferedReader(
+						url, checkCache, maxRetries, httpRequestMethod,
+						postContent, retryPeriod, timeout,
+						httpAuthorizationHeader)) {
 
-				String line = bufferedReader.readLine();
+					StringBuilder sb = new StringBuilder();
 
-				while (line != null) {
-					sb.append(line);
-					sb.append("\n");
+					String line = bufferedReader.readLine();
 
-					line = bufferedReader.readLine();
+					while (line != null) {
+						sb.append(line);
+						sb.append("\n");
+
+						line = bufferedReader.readLine();
+					}
+
+					int bytes = sb.length();
+
+					if (expectResponse && (bytes == 0) && (i < 1)) {
+						System.out.println(
+							"Unable to get response, retrying request");
+
+						continue;
+					}
+
+					String content = sb.toString();
+
+					if (checkCache && !url.startsWith("file:") &&
+						(bytes < (3 * 1024 * 1024))) {
+
+						url = fixURL(url);
+
+						String key = url.replace("//", "/");
+
+						saveToCacheFile(_PREFIX_TO_STRING_CACHE + key, content);
+					}
+
+					return content;
 				}
+			}
 
-				int bytes = sb.length();
+			return "";
+		}
+		finally {
+			long duration = System.currentTimeMillis() - start;
 
-				if (expectResponse && (bytes == 0) && (i < 1)) {
-					System.out.println(
-						"Unable to get response, retrying request");
-
-					continue;
-				}
-
-				String content = sb.toString();
-
-				if (checkCache && !url.startsWith("file:") &&
-					(bytes < (3 * 1024 * 1024))) {
-
-					url = fixURL(url);
-
-					String key = url.replace("//", "/");
-
-					saveToCacheFile(_PREFIX_TO_STRING_CACHE + key, content);
-				}
-
-				return content;
+			if (duration > (1000 * 60 * 5)) {
+				System.out.println(
+					combine(
+						"HTTP call took ", toDurationString(duration),
+						". URL: ", url));
 			}
 		}
-
-		return "";
 	}
 
 	public static String toString(

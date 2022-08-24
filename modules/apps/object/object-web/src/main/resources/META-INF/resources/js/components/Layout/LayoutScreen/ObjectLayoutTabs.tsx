@@ -16,10 +16,10 @@ import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import {useModal} from '@clayui/modal';
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 
 import Panel from '../../Panel/Panel';
-import LayoutContext, {TYPES} from '../context';
+import {TYPES, useLayoutContext} from '../objectLayoutContext';
 import HeaderDropdown from './HeaderDropdown';
 import ModalAddObjectLayoutBox from './ModalAddObjectLayoutBox';
 import ObjectLayoutBox from './ObjectLayoutBox';
@@ -28,7 +28,7 @@ import ObjectLayoutRelationship from './ObjectLayoutRelationship';
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 
 const ObjectLayoutTabs: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
-	const [{isViewOnly, objectLayout}, dispatch] = useContext(LayoutContext);
+	const [{isViewOnly, objectLayout}, dispatch] = useLayoutContext();
 	const [visibleModal, setVisibleModal] = useState(false);
 	const [selectedTabIndex, setSelectedTabIndex] = useState(0);
 	const {observer, onClose} = useModal({
@@ -39,7 +39,8 @@ const ObjectLayoutTabs: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 		<>
 			{objectLayout?.objectLayoutTabs?.map(
 				({name, objectLayoutBoxes, objectRelationshipId}, tabIndex) => {
-					const isRelationshipType = objectRelationshipId !== 0;
+					const isRelationshipType =
+						objectRelationshipId && objectRelationshipId !== 0;
 					const labelDisplayType = isRelationshipType
 						? 'warning'
 						: 'info';
@@ -99,6 +100,21 @@ const ObjectLayoutTabs: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 														TYPES.ADD_OBJECT_LAYOUT_BOX,
 												});
 											}}
+											addComments={() => {
+												dispatch({
+													payload: {
+														name: {
+															[defaultLanguageId]: Liferay.Language.get(
+																'comments'
+															),
+														},
+														tabIndex,
+														type: 'comments',
+													},
+													type:
+														TYPES.ADD_OBJECT_LAYOUT_BOX,
+												});
+											}}
 											deleteElement={() => {
 												dispatch({
 													payload: {
@@ -111,7 +127,7 @@ const ObjectLayoutTabs: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 										/>
 									</>
 								}
-								title={name[defaultLanguageId]}
+								title={name[defaultLanguageId]!}
 								type="regular"
 							/>
 
@@ -133,7 +149,7 @@ const ObjectLayoutTabs: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 													collapsable={collapsable}
 													key={`box_${boxIndex}`}
 													label={
-														name[defaultLanguageId]
+														name[defaultLanguageId]!
 													}
 													objectLayoutRows={
 														objectLayoutRows

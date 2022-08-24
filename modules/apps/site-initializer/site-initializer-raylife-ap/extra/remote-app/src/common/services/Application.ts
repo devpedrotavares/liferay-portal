@@ -45,6 +45,7 @@ export function deleteApplicationByExternalReferenceCode(
 		`${DeliveryAPI}/by-external-reference-code/${externalReferenceCode}`
 	);
 }
+const products: any = localStorage.getItem('raylife-ap-storage');
 
 const adaptToFormApplicationRequest = (state: any, status: any) => ({
 	address: state?.contactInfo?.form?.streetAddress,
@@ -55,6 +56,9 @@ const adaptToFormApplicationRequest = (state: any, status: any) => ({
 	},
 	city: state?.contactInfo?.form?.city,
 	dataJSON: JSON.stringify({
+		coverage: {
+			form: state?.coverage?.form,
+		},
 		driverInfo: {
 			form: state?.driverInfo?.form,
 		},
@@ -67,7 +71,7 @@ const adaptToFormApplicationRequest = (state: any, status: any) => ({
 	firstName: state?.contactInfo?.form?.firstName,
 	lastName: state?.contactInfo?.form?.lastName,
 	phone: state?.contactInfo?.form?.phone,
-	productName: 'Auto',
+	productName: JSON.parse(products)?.productName,
 	state: state?.contactInfo?.form?.state,
 	zip: state?.contactInfo?.form?.zipCode,
 });

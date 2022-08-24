@@ -29,6 +29,8 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
+		ACUtils.tearDownAC();
+
 		ACUtils.tearDownDXP();
 
 		if ("${testPortalInstance}" == "true") {
@@ -37,8 +39,6 @@ definition {
 		else {
 			JSONGroup.deleteGroupByName(groupName = "Site Name");
 		}
-
-		ACUtils.tearDownAC();
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-9034 | Test Summary: As a Business User, I should be able to create multiple properties with multiple sites"
@@ -372,6 +372,102 @@ definition {
 			AssertElementPresent(
 				key_tableEntry = "Site Name",
 				locator1 = "LexiconTable#TABLE_ENTRY_CHECKBOX_DISABLED");
+		}
+	}
+
+	@description = "Bug ID: LRAC-8093 | Automation ID: LRAC-11533 | Test Summary: Able to clear property data"
+	@priority = "4"
+	test ClearPropertyData {
+		task ("Connect the DXP to Analytics Cloud") {
+			JSONUser.addUser(
+				userEmailAddress = "userea@liferay.com",
+				userFirstName = "userfn",
+				userLastName = "userln",
+				userScreenName = "usersn");
+
+			ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
+		}
+
+		task ("Login new user and view page") {
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea@liferay.com",
+				userLoginFullName = "userfn userln");
+		}
+
+		task ("Interact with page") {
+			ACUtils.navigateToSitePage(
+				pageName = "AC Page",
+				siteName = "Site Name");
+
+			TestUtils.hardRefresh();
+
+			ACUtils.closeAllSessionsAndWait();
+		}
+
+		task ("Launch AC") {
+			ACUtils.launchAC();
+
+			ACProperties.switchProperty(propertyName = "${assignedPropertyName}");
+
+			ACNavigation.goToSites();
+		}
+
+		task ("Go to Sites overview") {
+			ACTimeFilter.clickTimeFilterButton();
+
+			ACTimeFilter.setLast24Hours();
+		}
+
+		task ("Assert the unique visitors is shown") {
+			ACAssets.viewVisitorsBehaviorMetric(
+				metricTitle = "Unique Visitors",
+				metricValue = "1",
+				timeFilter = "Last 24 hours");
+		}
+
+		task ("Navigate to the Individuals and view individual count") {
+			ACNavigation.goToIndividuals();
+
+			ACCards.viewTotalCount(
+				cardName = "Total Individuals",
+				count = "1");
+		}
+
+		task ("Go to AC Properties") {
+			ACNavigation.goToSettings();
+
+			ACSettings.goToProperties();
+		}
+
+		task ("Clear Property") {
+			ACSettings.clearProperty(propertyName = "${assignedPropertyName}");
+		}
+
+		task ("Exit Settings") {
+			ACNavigation.exitSettings();
+		}
+
+		task ("Go to Sites overview") {
+			ACNavigation.goToSites();
+
+			ACTimeFilter.clickTimeFilterButton();
+
+			ACTimeFilter.setLast24Hours();
+		}
+
+		task ("Assert the unique visitors is shown") {
+			ACAssets.viewVisitorsBehaviorMetric(
+				metricTitle = "Unique Visitors",
+				metricValue = "0",
+				timeFilter = "Last 24 hours");
+		}
+
+		task ("Navigate to the Individuals and view individual count") {
+			ACNavigation.goToIndividuals();
+
+			ACCards.viewTotalCount(
+				cardName = "Total Individuals",
+				count = "0");
 		}
 	}
 

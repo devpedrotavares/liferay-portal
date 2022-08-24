@@ -134,8 +134,8 @@ public class CommercePriceListLocalServiceUtil {
 		getService().checkCommercePriceLists();
 	}
 
-	public static void cleanPriceListCache(long companyId) {
-		getService().cleanPriceListCache(companyId);
+	public static void cleanPriceListCache() {
+		getService().cleanPriceListCache();
 	}
 
 	/**
@@ -453,13 +453,13 @@ public class CommercePriceListLocalServiceUtil {
 		return getService().getCommercePriceList(commercePriceListId);
 	}
 
-	public static java.util.Optional<CommercePriceList> getCommercePriceList(
-			long companyId, long groupId, long commerceAccountId,
+	public static CommercePriceList getCommercePriceList(
+			long groupId, long commerceAccountId,
 			long[] commerceAccountGroupIds)
 		throws PortalException {
 
 		return getService().getCommercePriceList(
-			companyId, groupId, commerceAccountId, commerceAccountGroupIds);
+			groupId, commerceAccountId, commerceAccountGroupIds);
 	}
 
 	public static CommercePriceList

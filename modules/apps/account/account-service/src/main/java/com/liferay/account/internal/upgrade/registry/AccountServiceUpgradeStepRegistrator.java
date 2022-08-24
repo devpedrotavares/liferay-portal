@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.BaseUuidUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -73,10 +74,13 @@ public class AccountServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.2.1", "1.3.0",
-			new com.liferay.account.internal.upgrade.v1_3_0.
-				AccountEntryUpgradeProcess(),
-			new com.liferay.account.internal.upgrade.v1_3_0.
-				AccountGroupUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"AccountEntry", "defaultBillingAddressId LONG",
+				"defaultShippingAddressId LONG",
+				"emailAddress VARCHAR(254) null",
+				"taxExemptionCode VARCHAR(75) null"),
+			UpgradeProcessFactory.addColumns(
+				"AccountGroup", "defaultAccountGroup BOOLEAN"));
 
 		registry.register(
 			"1.3.0", "2.0.0",
@@ -106,13 +110,14 @@ public class AccountServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.5.0", "2.6.0",
-			new com.liferay.account.internal.upgrade.v2_6_0.
-				AccountEntryUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"AccountEntry", "defaultDeliveryCTermEntryId LONG",
+				"defaultPaymentCTermEntryId LONG"));
 
 		registry.register(
 			"2.6.0", "2.7.0",
-			new com.liferay.account.internal.upgrade.v2_7_0.
-				AccountEntryUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"AccountEntry", "defaultCPaymentMethodKey VARCHAR(75)"));
 
 		registry.register(
 			"2.7.0", "2.7.1", new AccountEntryUserRelUpgradeProcess());

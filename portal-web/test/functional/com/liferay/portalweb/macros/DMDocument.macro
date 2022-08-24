@@ -325,7 +325,7 @@ definition {
 		}
 
 		if (isSet(siteName)) {
-			LexiconCard.clickCardTitleLink(card = "${siteName}");
+			LexiconCard.clickCard(card = "${siteName}");
 		}
 
 		if (isSet(depotName)) {
@@ -359,7 +359,7 @@ definition {
 			value1 = "Sites and Libraries");
 
 		if (isSet(siteName)) {
-			LexiconCard.clickCardTitleLink(card = "${siteName}");
+			LexiconCard.clickCard(card = "${siteName}");
 		}
 
 		if (isSet(depotName)) {
@@ -563,7 +563,7 @@ definition {
 			}
 		}
 		else {
-			AssertElementPresent.pauseAssertVisible(locator1 = "DocumentsAndMedia#BREADCRUMB_HOME");
+			AssertVisible(locator1 = "DocumentsAndMedia#BREADCRUMB_HOME");
 
 			VerifyElementPresent(locator1 = "Message#SUCCESS");
 		}
@@ -987,7 +987,9 @@ definition {
 				value1 = "You now have a lock on this document. No one else can edit this document until you unlock it. This lock will automatically expire in 1 day.");
 		}
 
-		LexiconEntry.gotoEllipsisMenuItem(menuItem = "Checkin");
+		Click(locator1 = "Icon#TOOLBAR_ELLIPSIS");
+
+		MenuItem.click(menuItem = "Checkin");
 
 		if (IsElementPresent(locator1 = "DocumentsAndMedia#CHECKIN_DIALOG_TITLE")) {
 			if ("${revision}" == "Major") {
@@ -1362,7 +1364,7 @@ definition {
 
 		Click(locator1 = "DocumentsAndMedia#DOCUMENT_VERSION_VERTICAL_ELLIPSIS");
 
-		MenuItem.clickNoError(menuItem = "Delete Version");
+		MenuItem.clickNoError(menuItem = "Delete");
 
 		AssertConfirm(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
 
@@ -1730,7 +1732,7 @@ definition {
 			value1 = "Sites and Libraries");
 
 		if (isSet(siteName)) {
-			LexiconCard.clickCardTitleLink(card = "${siteName}");
+			LexiconCard.clickCard(card = "${siteName}");
 		}
 
 		if (isSet(depotName)) {
@@ -1842,7 +1844,11 @@ definition {
 	}
 
 	macro editPGViaMG {
-		LexiconEntry.gotoEllipsisMenuItem(menuItem = "Edit");
+		Click.waitForMenuToggleJSClick(
+			key_card = "${mgDocumentTitle}",
+			locator1 = "Card#CARD_ELLIPSIS");
+
+		MenuItem.click(menuItem = "Edit");
 
 		PortletEntry.inputTitle(title = "${mgDocumentTitleEdit}");
 
@@ -1928,7 +1934,7 @@ definition {
 
 		SelectFrame.selectFrameNoLoading(locator1 = "DocumentsAndMedia#CONFIGURATION_IFRAME");
 
-		AssertElementPresent.pauseAssertVisible(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
+		WaitForVisible(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
 
 		Check(locator1 = "Checkbox#SHOW_ACTIONS_CHECKBOX");
 
@@ -2025,7 +2031,7 @@ definition {
 	macro gotoMenuItemViaInfoPanel {
 		DMDocument.expandInfo();
 
-		Click(locator1 = "Icon#BODY_VERTICAL_ELLIPSIS");
+		Click(locator1 = "Icon#SIDEBAR_HEADER_ACTION_VERTICAL_ELLIPSIS_BUTTON");
 
 		if (isSet(menuItem)) {
 			Click(
@@ -3583,10 +3589,6 @@ definition {
 	}
 
 	macro viewNoPermission {
-		Click(
-			key_rowEntry = "${rowEntry}",
-			locator1 = "Icon#ROW_VERTICAL_ELLIPSIS");
-
 		MenuItem.viewNotPresent(menuItem = "${menuItem}");
 	}
 
@@ -3953,7 +3955,7 @@ definition {
 		var key_dmRepositoryName = "${dmRepositoryName}";
 
 		if (isSet(dmRepositoryName)) {
-			AssertClick.assertTextClickAtAndPause(
+			AssertClick(
 				locator1 = "DocumentsAndMedia#SEARCH_REPOSITORY_TAB",
 				value1 = "${dmRepositoryName}");
 

@@ -50,10 +50,13 @@ interface PickList {
 	listTypeEntries: PickListItem[];
 	name: string;
 }
+export declare function deleteObjectDefinitions(id: number): Promise<void>;
+export declare function deleteObjectRelationships(id: number): Promise<void>;
 export declare function fetchJSON<T>(
 	input: RequestInfo,
 	init?: RequestInit
 ): Promise<T>;
+export declare function getList<T>(url: string): Promise<T[]>;
 export declare function getNotificationTemplate(
 	notificationTemplateId: number
 ): Promise<NotificationTemplate>;
@@ -73,7 +76,7 @@ export declare function getPickListItems(
 ): Promise<PickListItem[]>;
 export declare function save(
 	url: string,
-	item: any,
+	item: unknown,
 	method?: 'PUT' | 'POST'
 ): Promise<void>;
 export declare function updateRelationship({

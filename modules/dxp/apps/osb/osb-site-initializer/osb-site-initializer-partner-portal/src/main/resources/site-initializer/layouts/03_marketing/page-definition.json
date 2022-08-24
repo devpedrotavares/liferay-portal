@@ -656,20 +656,24 @@
 																"definition": {
 																	"fragmentLink": {
 																		"href": {
-																			"value_i18n": {
-																				"ar_SA": "https://www.liferay.com/",
-																				"ca_ES": "https://www.liferay.com/",
-																				"de_DE": "https://www.liferay.com/",
-																				"en_US": "https://www.liferay.com/",
-																				"es_ES": "https://www.liferay.com/",
-																				"fi_FI": "https://www.liferay.com/",
-																				"fr_FR": "https://www.liferay.com/",
-																				"hu_HU": "https://www.liferay.com/",
-																				"ja_JP": "https://www.liferay.com/",
-																				"nl_NL": "https://www.liferay.com/",
-																				"pt_BR": "https://www.liferay.com/",
-																				"sv_SE": "https://www.liferay.com/",
-																				"zh_CN": "https://www.liferay.com/"
+																			"mapping": {
+																				"itemReference": {
+																					"className": "com.liferay.portal.kernel.model.Layout",
+																					"fields": [
+																						{
+																							"fieldName": "friendlyURL",
+																							"fieldValue": "/marketing/mdf-requests/new"
+																						},
+																						{
+																							"fieldName": "privatePage",
+																							"fieldValue": "false"
+																						},
+																						{
+																							"fieldName": "siteKey",
+																							"fieldValue": "[$GROUP_KEY$]"
+																						}
+																					]
+																				}
 																			}
 																		}
 																	},
@@ -706,6 +710,29 @@
 																					"id": "element-text",
 																					"value": {
 																						"fragmentLink": {
+																							"value": {
+																								"href": {
+																									"mapping": {
+																										"itemReference": {
+																											"className": "com.liferay.portal.kernel.model.Layout",
+																											"fields": [
+																												{
+																													"fieldName": "friendlyURL",
+																													"fieldValue": "/marketing/mdf-requests/new"
+																												},
+																												{
+																													"fieldName": "privatePage",
+																													"fieldValue": "false"
+																												},
+																												{
+																													"fieldName": "siteKey",
+																													"fieldValue": "[$GROUP_KEY$]"
+																												}
+																											]
+																										}
+																									}
+																								}
+																							}
 																						},
 																						"text": {
 																							"value_i18n": {
@@ -752,7 +779,6 @@
 																				"key": "clay-icon-link"
 																			},
 																			"fragmentConfig": {
-																				"iconLink": "https://www.liferay.com/",
 																				"iconName": "order-arrow-right"
 																			},
 																			"fragmentFields": [
@@ -2360,20 +2386,24 @@
 																						"fragmentLink": {
 																							"value": {
 																								"href": {
-																									"value_i18n": {
-																										"ar_SA": "https://www.liferay.com/",
-																										"ca_ES": "https://www.liferay.com/",
-																										"de_DE": "https://www.liferay.com/",
-																										"en_US": "https://www.liferay.com/",
-																										"es_ES": "https://www.liferay.com/",
-																										"fi_FI": "https://www.liferay.com/",
-																										"fr_FR": "https://www.liferay.com/",
-																										"hu_HU": "https://www.liferay.com/",
-																										"ja_JP": "https://www.liferay.com/",
-																										"nl_NL": "https://www.liferay.com/",
-																										"pt_BR": "https://www.liferay.com/",
-																										"sv_SE": "https://www.liferay.com/",
-																										"zh_CN": "https://www.liferay.com/"
+																									"mapping": {
+																										"itemReference": {
+																											"className": "com.liferay.portal.kernel.model.Layout",
+																											"fields": [
+																												{
+																													"fieldName": "friendlyURL",
+																													"fieldValue": "/marketing/mdf-requests/create"
+																												},
+																												{
+																													"fieldName": "privatePage",
+																													"fieldValue": "false"
+																												},
+																												{
+																													"fieldName": "siteKey",
+																													"fieldValue": "[$GROUP_KEY$]"
+																												}
+																											]
+																										}
 																									}
 																								}
 																							}

@@ -21,7 +21,6 @@
 <%@ taglib uri="http://liferay.com/tld/asset" prefix="liferay-asset" %><%@
 taglib uri="http://liferay.com/tld/aui" prefix="aui" %><%@
 taglib uri="http://liferay.com/tld/clay" prefix="clay" %><%@
-taglib uri="http://liferay.com/tld/document-library" prefix="liferay-document-library" %><%@
 taglib uri="http://liferay.com/tld/editor" prefix="liferay-editor" %><%@
 taglib uri="http://liferay.com/tld/expando" prefix="liferay-expando" %><%@
 taglib uri="http://liferay.com/tld/frontend" prefix="liferay-frontend" %><%@
@@ -30,6 +29,7 @@ taglib uri="http://liferay.com/tld/ratings" prefix="liferay-ratings" %><%@
 taglib uri="http://liferay.com/tld/react" prefix="react" %><%@
 taglib uri="http://liferay.com/tld/rss" prefix="liferay-rss" %><%@
 taglib uri="http://liferay.com/tld/security" prefix="liferay-security" %><%@
+taglib uri="http://liferay.com/tld/site-navigation" prefix="liferay-site-navigation" %><%@
 taglib uri="http://liferay.com/tld/social-bookmarks" prefix="liferay-social-bookmarks" %><%@
 taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %><%@
 taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
@@ -114,6 +114,7 @@ page import="com.liferay.knowledge.base.web.internal.security.permission.resourc
 page import="com.liferay.knowledge.base.web.internal.security.permission.resource.KBCommentPermission" %><%@
 page import="com.liferay.knowledge.base.web.internal.security.permission.resource.KBFolderPermission" %><%@
 page import="com.liferay.knowledge.base.web.internal.security.permission.resource.KBTemplatePermission" %><%@
+page import="com.liferay.knowledge.base.web.internal.servlet.taglib.clay.KBArticleAttachmentHorizontalCard" %><%@
 page import="com.liferay.knowledge.base.web.internal.social.SocialBookmarksUtil" %><%@
 page import="com.liferay.knowledge.base.web.internal.util.AdminUtil" %><%@
 page import="com.liferay.knowledge.base.web.internal.util.KBArticleAssetEntriesUtil" %><%@

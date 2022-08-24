@@ -55,6 +55,18 @@ export const getCommerceOrderItems = gql`
 	}
 `;
 
+export const patchOrderItemByExternalReferenceCode = gql`
+	mutation patchOrderItemByExternalReferenceCode(
+		$externalReferenceCode: String
+		$orderItem: InputOrderItem
+	) {
+		patchOrderItemByExternalReferenceCode(
+			externalReferenceCode: $externalReferenceCode
+			orderItem: $orderItem
+		)
+	}
+`;
+
 export const getStructuredContentFolders = gql`
 	query getStructuredContentFolders($siteKey: String!, $filter: String) {
 		structuredContentFolders(siteKey: $siteKey, filter: $filter) {
@@ -209,6 +221,19 @@ export const getAnalyticsCloudWorkspace = gql`
 				items {
 					analyticsCloudWorkspaceId
 					workspaceGroupId
+				}
+			}
+		}
+	}
+`;
+
+export const getLiferayExperienceCloudEnvironments = gql`
+	query getLiferayExperienceCloudEnvironments($filter: String) {
+		c {
+			liferayExperienceCloudEnvironments(filter: $filter) {
+				items {
+					liferayExperienceCloudEnvironmentId
+					projectId
 				}
 			}
 		}

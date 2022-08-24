@@ -14,16 +14,16 @@
 
 import {useModal} from '@clayui/modal';
 import {BuilderScreen} from '@liferay/object-js-components-web';
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 
 import {ModalAddFilter} from '../../ModalAddFilter';
-import ViewContext, {TYPES} from '../context';
+import {TYPES, useViewContext} from '../objectViewContext';
 
 export function FilterScreen() {
 	const [
-		{objectFields, objectView, workflowStatusJSONArray},
+		{filterOperators, objectFields, objectView, workflowStatusJSONArray},
 		dispatch,
-	] = useContext(ViewContext);
+	] = useViewContext();
 
 	const {objectViewFilterColumns} = objectView;
 
@@ -47,11 +47,11 @@ export function FilterScreen() {
 	};
 
 	const saveFilterColumn = (
+		objectFieldName: string,
 		filterBy?: string,
 		fieldLabel?: LocalizedValue<string>,
 		objectFieldBusinessType?: string,
 		filterType?: string,
-		objectFieldName?: string,
 		valueList?: IItem[]
 	) => {
 		if (editingFilter) {
@@ -120,6 +120,7 @@ export function FilterScreen() {
 					disableDateValues
 					editingFilter={editingFilter}
 					editingObjectFieldName={editingObjectFieldName}
+					filterOperators={filterOperators}
 					header={Liferay.Language.get('new-filter')}
 					objectFields={
 						editingFilter

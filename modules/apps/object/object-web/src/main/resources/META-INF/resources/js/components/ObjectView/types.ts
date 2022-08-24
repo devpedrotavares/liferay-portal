@@ -12,8 +12,6 @@
  * details.
  */
 
-import {TYPES} from './context';
-
 export type TName = {
 	[key: string]: string;
 };
@@ -38,8 +36,8 @@ export type TObjectColumn = {
 };
 
 export type TObjectViewColumn = {
-	defaultSort: boolean;
-	fieldLabel: string;
+	defaultSort?: boolean;
+	fieldLabel?: string;
 	label: TName;
 	objectFieldBusinessType?: string;
 	objectFieldName: string;
@@ -47,7 +45,7 @@ export type TObjectViewColumn = {
 };
 
 export type TObjectViewSortColumn = {
-	fieldLabel: string;
+	fieldLabel?: string;
 	label: TName;
 	objectFieldName: string;
 	priority?: number;
@@ -57,8 +55,8 @@ export type TObjectViewSortColumn = {
 export type TObjectViewFilterColumn = {
 	definition: {[key: string]: string[]} | null;
 	disableEdit?: boolean;
-	fieldLabel: string;
-	filterBy: string;
+	fieldLabel?: string;
+	filterBy?: string;
 	filterType: string | null;
 	label: TName;
 	objectFieldBusinessType?: string;
@@ -77,14 +75,10 @@ export type TObjectView = {
 };
 
 export type TState = {
+	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
 	objectFields: ObjectField[];
 	objectView: TObjectView;
 	objectViewId: string;
 	workflowStatusJSONArray: TWorkflowStatus[];
-};
-
-export type TAction = {
-	payload: {[key: string]: any};
-	type: keyof typeof TYPES;
 };

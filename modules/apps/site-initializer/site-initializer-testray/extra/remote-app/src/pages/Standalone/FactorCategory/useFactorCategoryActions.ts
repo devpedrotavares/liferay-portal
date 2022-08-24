@@ -15,7 +15,6 @@
 import useFormModal from '../../../hooks/useFormModal';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
 import {TestrayFactorCategory, deleteResource} from '../../../services/rest';
 import {Action} from '../../../types';
 
@@ -27,22 +26,24 @@ const useFactorCategoryActions = () => {
 	const actions: Action[] = [
 		{
 			action: (item: TestrayFactorCategory) => modal.open(item),
+			icon: 'pencil',
 			name: i18n.translate('edit'),
 			permission: 'UPDATE',
 		},
 		{
 			action: ({id}: TestrayFactorCategory, mutate) =>
 				deleteResource(`/factorcategories/${id}`)
-					.then(() => removeItemFromList(mutate, id))
+					?.then(() => removeItemFromList(mutate, id))
 					.then(modal.onSave)
 					.catch(modal.onError),
+			icon: 'trash',
 			name: i18n.translate('delete'),
 			permission: 'DELETE',
 		},
 	];
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
+		actions,
 		formModal,
 	};
 };

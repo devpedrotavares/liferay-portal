@@ -14,12 +14,17 @@
 
 package com.liferay.account.internal.search.spi.model.index.contributor;
 
+import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountGroup;
+import com.liferay.account.model.AccountGroupRel;
+import com.liferay.account.service.AccountGroupRelLocalService;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
+import com.liferay.portal.vulcan.util.TransformUtil;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Drew Brokke
@@ -38,7 +43,19 @@ public class AccountGroupModelDocumentContributor
 		document.addText(Field.NAME, accountGroup.getName());
 		document.addKeyword(Field.TYPE, accountGroup.getType());
 		document.addKeyword(
+			"accountEntryIds", _getAccountEntryIds(accountGroup));
+		document.addKeyword(
 			"defaultAccountGroup", accountGroup.isDefaultAccountGroup());
 	}
+
+	private Long[] _getAccountEntryIds(AccountGroup accountGroup) {
+		return TransformUtil.transformToArray(
+			_accountGroupRelLocalService.getAccountGroupRels(
+				accountGroup.getAccountGroupId(), AccountEntry.class.getName()),
+			AccountGroupRel::getClassPK, Long.class);
+	}
+
+	@Reference
+	private AccountGroupRelLocalService _accountGroupRelLocalService;
 
 }

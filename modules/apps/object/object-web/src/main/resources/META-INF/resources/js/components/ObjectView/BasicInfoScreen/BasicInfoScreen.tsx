@@ -18,14 +18,14 @@ import {
 	Input,
 	invalidateRequired,
 } from '@liferay/object-js-components-web';
-import React, {useContext} from 'react';
+import React from 'react';
 
-import ViewContext, {TYPES} from '../context';
+import {TYPES, useViewContext} from '../objectViewContext';
 
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 
 export default function BasicInfoScreen() {
-	const [{objectView}, dispatch] = useContext(ViewContext);
+	const [{objectView}, dispatch] = useViewContext();
 
 	const handleChangeName = (newName: string) => {
 		dispatch({
@@ -55,7 +55,7 @@ export default function BasicInfoScreen() {
 					error={error}
 					label={Liferay.Language.get('name')}
 					name="name"
-					onChange={({target: {value}}: any) => {
+					onChange={({target: {value}}) => {
 						handleChangeName(value);
 					}}
 					required

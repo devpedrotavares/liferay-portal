@@ -16,6 +16,7 @@ package com.liferay.notification.service.impl;
 
 import com.liferay.mail.kernel.model.MailMessage;
 import com.liferay.mail.kernel.service.MailService;
+import com.liferay.notification.constants.NotificationsQueryEntryConstants;
 import com.liferay.notification.model.NotificationQueueEntry;
 import com.liferay.notification.model.NotificationQueueEntryAttachment;
 import com.liferay.notification.service.NotificationQueueEntryAttachmentLocalService;
@@ -36,6 +37,8 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
@@ -89,6 +92,8 @@ public class NotificationQueueEntryLocalServiceImpl
 		notificationQueueEntry.setSubject(subject);
 		notificationQueueEntry.setTo(to);
 		notificationQueueEntry.setToName(toName);
+		notificationQueueEntry.setStatus(
+			NotificationsQueryEntryConstants.STATUS_SENT);
 
 		notificationQueueEntry = notificationQueueEntryPersistence.update(
 			notificationQueueEntry);
@@ -168,9 +173,21 @@ public class NotificationQueueEntryLocalServiceImpl
 
 	@Override
 	public void sendNotificationQueueEntries() throws PortalException {
+		List<NotificationQueueEntry> notificationQueueEntries = null;
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-159052"))) {
+			notificationQueueEntries =
+				notificationQueueEntryPersistence.findByStatus(
+					NotificationsQueryEntryConstants.STATUS_UNSENT);
+		}
+		else {
+			notificationQueueEntries =
+				notificationQueueEntryPersistence.findBySent(false);
+		}
+
 		try {
 			for (NotificationQueueEntry notificationQueueEntry :
-					notificationQueueEntryPersistence.findBySent(false)) {
+					notificationQueueEntries) {
 
 				MailMessage mailMessage = new MailMessage(
 					new InternetAddress(
@@ -223,9 +240,13 @@ public class NotificationQueueEntryLocalServiceImpl
 
 		if (sent) {
 			notificationQueueEntry.setSentDate(new Date());
+			notificationQueueEntry.setStatus(
+				NotificationsQueryEntryConstants.STATUS_SENT);
 		}
 		else {
 			notificationQueueEntry.setSentDate(null);
+			notificationQueueEntry.setStatus(
+				NotificationsQueryEntryConstants.STATUS_UNSENT);
 		}
 
 		return notificationQueueEntryPersistence.update(notificationQueueEntry);

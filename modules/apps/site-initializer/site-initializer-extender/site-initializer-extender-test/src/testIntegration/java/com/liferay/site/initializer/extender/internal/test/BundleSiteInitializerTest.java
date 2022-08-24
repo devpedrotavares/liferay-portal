@@ -83,6 +83,8 @@ import com.liferay.knowledge.base.util.comparator.KBArticlePriorityComparator;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
+import com.liferay.notification.rest.dto.v1_0.NotificationTemplate;
+import com.liferay.notification.rest.resource.v1_0.NotificationTemplateResource;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectRelationship;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectRelationshipResource;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
@@ -101,6 +103,7 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.Theme;
@@ -110,6 +113,7 @@ import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -142,6 +146,8 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.segments.model.SegmentsEntry;
+import com.liferay.segments.service.SegmentsEntryLocalService;
 import com.liferay.site.initializer.SiteInitializer;
 import com.liferay.site.initializer.SiteInitializerRegistry;
 import com.liferay.site.navigation.menu.item.layout.constants.SiteNavigationMenuItemTypeConstants;
@@ -246,12 +252,14 @@ public class BundleSiteInitializerTest {
 			_assertLayouts(group, serviceContext);
 			_assertLayoutSets(group);
 			_assertListTypeDefinitions(serviceContext);
+			_assertNotificationTemplate(serviceContext);
 			_assertObjectDefinitions(group, serviceContext);
 			_assertOrganizations(serviceContext);
 			_assertPermissions(group);
 			_assertPortletSettings(group);
 			_assertClientExtension(group);
 			_assertSAPEntries(group);
+			_assertSegmentsEntries(group.getGroupId());
 			_assertSiteConfiguration(group.getGroupId());
 			_assertSiteSettings(group.getGroupId());
 			_assertSiteNavigationMenu(group);
@@ -393,7 +401,8 @@ public class BundleSiteInitializerTest {
 		List<AssetListEntry> assetListEntries =
 			_assetListEntryLocalService.getAssetListEntries(group.getGroupId());
 
-		Assert.assertTrue(assetListEntries.size() == 2);
+		Assert.assertEquals(
+			assetListEntries.toString(), 2, assetListEntries.size());
 
 		AssetListEntry assetListEntry1 = assetListEntries.get(0);
 
@@ -765,7 +774,8 @@ public class BundleSiteInitializerTest {
 		List<JournalFolder> journalFolders = _journalFolderService.getFolders(
 			group.getGroupId());
 
-		Assert.assertTrue(journalFolders.size() == 2);
+		Assert.assertEquals(
+			journalFolders.toString(), 2, journalFolders.size());
 
 		JournalFolder journalFolder1 = journalFolders.get(0);
 
@@ -919,6 +929,33 @@ public class BundleSiteInitializerTest {
 		Assert.assertEquals("testlisttypeentry2", listTypeEntry2.getKey());
 	}
 
+	private void _assertNotificationTemplate(ServiceContext serviceContext)
+		throws Exception {
+
+		NotificationTemplateResource.Builder
+			notificationTemplateResourceBuilder =
+				_notificationTemplateResourceFactory.create();
+
+		NotificationTemplateResource notificationTemplateResource =
+			notificationTemplateResourceBuilder.user(
+				serviceContext.fetchUser()
+			).build();
+
+		Page<NotificationTemplate> notificationTemplatesPage =
+			notificationTemplateResource.getNotificationTemplatesPage(
+				null, null, null, null, null);
+
+		Assert.assertEquals(
+			notificationTemplatesPage.toString(), 1,
+			notificationTemplatesPage.getTotalCount());
+
+		NotificationTemplate notificationTemplate =
+			notificationTemplatesPage.fetchFirstItem();
+
+		Assert.assertEquals(
+			"Test Notification Template", notificationTemplate.getName());
+	}
+
 	private void _assertObjectActions(
 		int objectActionsCount, ObjectDefinition objectDefinition) {
 
@@ -967,7 +1004,7 @@ public class BundleSiteInitializerTest {
 		Assert.assertEquals(
 			objectDefinition1.getStatus(), WorkflowConstants.STATUS_APPROVED);
 
-		_assertObjectActions(2, objectDefinition1);
+		_assertObjectActions(3, objectDefinition1);
 		_assertObjectEntries(group.getGroupId(), objectDefinition1, 0);
 		_assertObjectRelationships(objectDefinition1, serviceContext);
 
@@ -1101,7 +1138,8 @@ public class BundleSiteInitializerTest {
 		Organization organization2 = organizationsPage2.fetchFirstItem();
 
 		Assert.assertNotNull(organization2);
-		Assert.assertTrue(organization2.getNumberOfOrganizations() == 1);
+
+		Assert.assertEquals(1, organizationsPage2.getTotalCount());
 
 		_assertUserOrganizations(organization2.getId(), 1, userAccountResource);
 
@@ -1140,7 +1178,8 @@ public class BundleSiteInitializerTest {
 		List<Layout> privateLayouts = _layoutLocalService.getLayouts(
 			group.getGroupId(), true, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 
-		Assert.assertTrue(privateLayouts.size() == 1);
+		Assert.assertEquals(
+			privateLayouts.toString(), 1, privateLayouts.size());
 
 		Layout privateLayout = privateLayouts.get(0);
 
@@ -1152,7 +1191,8 @@ public class BundleSiteInitializerTest {
 
 		List<Layout> privateChildLayouts = privateLayout.getAllChildren();
 
-		Assert.assertTrue(privateChildLayouts.size() == 1);
+		Assert.assertEquals(
+			privateChildLayouts.toString(), 1, privateChildLayouts.size());
 
 		Layout privateChildLayout = privateChildLayouts.get(0);
 
@@ -1168,7 +1208,7 @@ public class BundleSiteInitializerTest {
 		int publicLayoutsCount = _layoutLocalService.getLayoutsCount(
 			group, false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 
-		Assert.assertTrue(publicLayoutsCount == 3);
+		Assert.assertEquals(4, publicLayoutsCount);
 
 		Layout publicLayout = _layoutLocalService.getLayoutByFriendlyURL(
 			group.getGroupId(), false, "/test-public-layout");
@@ -1179,9 +1219,50 @@ public class BundleSiteInitializerTest {
 			publicLayout.getName(LocaleUtil.getSiteDefault()));
 		Assert.assertEquals("content", publicLayout.getType());
 
+		Layout publicPermissionsLayout =
+			_layoutLocalService.getLayoutByFriendlyURL(
+				group.getGroupId(), false, "/test-public-permissions-layout");
+
+		Role guestRole = _roleLocalService.getRole(
+			publicLayout.getCompanyId(), RoleConstants.GUEST);
+
+		boolean hasGuestViewPermission =
+			_resourcePermissionLocalService.hasResourcePermission(
+				publicPermissionsLayout.getCompanyId(),
+				publicPermissionsLayout.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(publicPermissionsLayout.getPlid()),
+				guestRole.getRoleId(), ActionKeys.VIEW);
+
+		Assert.assertFalse(hasGuestViewPermission);
+
+		Role siteMemberRole = _roleLocalService.getRole(
+			publicLayout.getCompanyId(), RoleConstants.SITE_MEMBER);
+
+		boolean hasSiteMemberViewPermission =
+			_resourcePermissionLocalService.hasResourcePermission(
+				publicPermissionsLayout.getCompanyId(),
+				publicPermissionsLayout.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(publicPermissionsLayout.getPlid()),
+				siteMemberRole.getRoleId(), ActionKeys.VIEW);
+
+		Assert.assertTrue(hasSiteMemberViewPermission);
+
+		boolean hasSiteMemberUpdateLayoutContentPermission =
+			_resourcePermissionLocalService.hasResourcePermission(
+				publicPermissionsLayout.getCompanyId(),
+				publicPermissionsLayout.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(publicPermissionsLayout.getPlid()),
+				siteMemberRole.getRoleId(), ActionKeys.UPDATE_LAYOUT_CONTENT);
+
+		Assert.assertTrue(hasSiteMemberUpdateLayoutContentPermission);
+
 		List<Layout> publicChildLayouts = publicLayout.getAllChildren();
 
-		Assert.assertTrue(publicChildLayouts.size() == 1);
+		Assert.assertEquals(
+			publicChildLayouts.toString(), 1, publicChildLayouts.size());
 
 		Layout publicChildLayout = publicChildLayouts.get(0);
 
@@ -1284,12 +1365,12 @@ public class BundleSiteInitializerTest {
 		Assert.assertTrue(sapEntry1.isDefaultSAPEntry());
 		Assert.assertTrue(sapEntry1.isEnabled());
 
-		List<String> allowedServiceSignaturesList1 =
+		List<String> allowedServiceSignatures1 =
 			sapEntry1.getAllowedServiceSignaturesList();
 
 		Assert.assertEquals(
-			allowedServiceSignaturesList1.toString(), 3,
-			allowedServiceSignaturesList1.size());
+			allowedServiceSignatures1.toString(), 3,
+			allowedServiceSignatures1.size());
 
 		SAPEntry sapEntry2 = _sapEntryLocalService.fetchSAPEntry(
 			group.getCompanyId(), "TEST_SAP_ENTRY_2");
@@ -1298,12 +1379,42 @@ public class BundleSiteInitializerTest {
 		Assert.assertFalse(sapEntry2.isDefaultSAPEntry());
 		Assert.assertTrue(sapEntry2.isEnabled());
 
-		List<String> allowedServiceSignaturesList2 =
+		List<String> allowedServiceSignatures2 =
 			sapEntry2.getAllowedServiceSignaturesList();
 
 		Assert.assertEquals(
-			allowedServiceSignaturesList2.toString(), 5,
-			allowedServiceSignaturesList2.size());
+			allowedServiceSignatures2.toString(), 5,
+			allowedServiceSignatures2.size());
+	}
+
+	private void _assertSegmentsEntries(Long groupId) {
+		Assert.assertEquals(
+			2,
+			_segmentsEntryLocalService.getSegmentsEntriesCount(groupId, true));
+
+		SegmentsEntry segmentsEntry1 =
+			_segmentsEntryLocalService.fetchSegmentsEntry(
+				groupId, "TEST-SEGMENTS-ENTRY-1", true);
+
+		Assert.assertNotNull(segmentsEntry1);
+		Assert.assertTrue(segmentsEntry1.isActive());
+		Assert.assertEquals(
+			"Test Segments Entry 1",
+			segmentsEntry1.getName(LocaleUtil.getSiteDefault()));
+		Assert.assertEquals(
+			"com.liferay.portal.kernel.model.User", segmentsEntry1.getType());
+
+		SegmentsEntry segmentsEntry2 =
+			_segmentsEntryLocalService.fetchSegmentsEntry(
+				groupId, "TEST-SEGMENTS-ENTRY-2", true);
+
+		Assert.assertNotNull(segmentsEntry2);
+		Assert.assertFalse(segmentsEntry2.isActive());
+		Assert.assertEquals(
+			"Test Segments Entry 2",
+			segmentsEntry2.getName(LocaleUtil.getSiteDefault()));
+		Assert.assertEquals(
+			"com.liferay.portal.kernel.model.User", segmentsEntry2.getType());
 	}
 
 	private void _assertSiteConfiguration(Long groupId) {
@@ -1424,7 +1535,7 @@ public class BundleSiteInitializerTest {
 		List<UserGroup> userGroups = _userGroupLocalService.getGroupUserGroups(
 			group.getGroupId());
 
-		Assert.assertTrue(userGroups.size() == 2);
+		Assert.assertEquals(userGroups.toString(), 2, userGroups.size());
 
 		UserGroup userGroup1 =
 			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
@@ -1675,6 +1786,10 @@ public class BundleSiteInitializerTest {
 		_listTypeDefinitionResourceFactory;
 
 	@Inject
+	private NotificationTemplateResource.Factory
+		_notificationTemplateResourceFactory;
+
+	@Inject
 	private ObjectActionLocalService _objectActionLocalService;
 
 	@Inject
@@ -1705,6 +1820,9 @@ public class BundleSiteInitializerTest {
 
 	@Inject
 	private SAPEntryLocalService _sapEntryLocalService;
+
+	@Inject
+	private SegmentsEntryLocalService _segmentsEntryLocalService;
 
 	@Inject
 	private ServletContext _servletContext;

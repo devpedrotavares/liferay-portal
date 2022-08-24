@@ -12,9 +12,8 @@
  * details.
  */
 
-import ClayButton from '@clayui/button';
+import {ClayButtonWithIcon} from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
-import ClayIcon from '@clayui/icon';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 
@@ -52,17 +51,19 @@ const FieldsSelectorDropdown = ({fields}) => {
 		<ClayDropDown
 			active={active}
 			className="ml-auto"
+			hasLeftSymbols
 			onActiveChange={setActive}
 			trigger={
-				<ClayButton borderless displayType="secondary">
-					<ClayIcon symbol={active ? 'caret-top' : 'caret-bottom'} />
-
-					<span className="sr-only">
-						{active
+				<ClayButtonWithIcon
+					aria-label={
+						active
 							? Liferay.Language.get('close-fields-menu')
-							: Liferay.Language.get('open-fields-menu')}
-					</span>
-				</ClayButton>
+							: Liferay.Language.get('open-fields-menu')
+					}
+					borderless
+					displayType="secondary"
+					symbol={active ? 'caret-top' : 'caret-bottom'}
+				/>
 			}
 		>
 			<ClayDropDown.Search
@@ -77,25 +78,38 @@ const FieldsSelectorDropdown = ({fields}) => {
 						<ClayDropDown.Item
 							key={fieldName}
 							onClick={() => {
-								dispatch(
-									persistVisibleFieldNames({
-										appURL,
-										id,
-										portletId,
-										visibleFieldNames: {
-											...selectedFieldNames,
-											[fieldName]: !selectedFieldNames[
-												fieldName
-											],
-										},
-									})
-								);
-							}}
-						>
-							{selectedFieldNames[fieldName] && (
-								<ClayIcon className="mr-2" symbol="check" />
-							)}
+								const newVisibleFieldNames = {
+									...selectedFieldNames,
+									[fieldName]: !selectedFieldNames[fieldName],
+								};
 
+								const isVisible = Object.keys(
+									newVisibleFieldNames
+								).some(
+									(visibleFieldName) =>
+										newVisibleFieldNames[visibleFieldName]
+								);
+
+								if (isVisible) {
+									dispatch(
+										persistVisibleFieldNames({
+											appURL,
+											id,
+											portletId,
+											visibleFieldNames: {
+												...selectedFieldNames,
+												[fieldName]: !selectedFieldNames[
+													fieldName
+												],
+											},
+										})
+									);
+								}
+							}}
+							symbolLeft={
+								selectedFieldNames[fieldName] ? 'check' : null
+							}
+						>
 							{label}
 						</ClayDropDown.Item>
 					))}

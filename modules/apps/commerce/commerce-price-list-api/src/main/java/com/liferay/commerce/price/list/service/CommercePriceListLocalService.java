@@ -49,7 +49,6 @@ import java.io.Serializable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -134,7 +133,7 @@ public interface CommercePriceListLocalService
 
 	public void checkCommercePriceLists() throws PortalException;
 
-	public void cleanPriceListCache(long companyId);
+	public void cleanPriceListCache();
 
 	/**
 	 * Creates a new commerce price list with the primary key. Does not add the commerce price list to the database.
@@ -374,8 +373,8 @@ public interface CommercePriceListLocalService
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public Optional<CommercePriceList> getCommercePriceList(
-			long companyId, long groupId, long commerceAccountId,
+	public CommercePriceList getCommercePriceList(
+			long groupId, long commerceAccountId,
 			long[] commerceAccountGroupIds)
 		throws PortalException;
 

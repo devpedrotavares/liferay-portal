@@ -12,35 +12,18 @@
  * details.
  */
 
+import {
+	currentDate,
+	currentYear,
+	lastYear,
+	lastYearSixMonthsAgoPeriod,
+	oneYearAgoDate,
+	sixMonthsAgoDate,
+} from '../utils/dateFormatter';
 import {axios} from './liferay/api';
 
 const DeliveryAPI = 'o/c/raylifepolicies';
-
-function convertDateToString(date) {
-	const newDate = date.toISOString().substring(0, 10);
-
-	return newDate;
-}
-
-const currentDate = convertDateToString(new Date());
-
-const currentYear = new Date().getFullYear();
-
-const lastYear = currentYear - 1;
-
-const sixMonthsAgo = new Date().getMonth() - 5;
-
-const oneYearAgoDate = convertDateToString(
-	new Date(new Date().setFullYear(lastYear))
-);
-
-const sixMonthsAgoDate = convertDateToString(
-	new Date(new Date().setMonth(sixMonthsAgo))
-).split('-');
-
-const lastYearSixMonthsAgoPeriod = convertDateToString(
-	new Date(new Date(new Date().setFullYear(lastYear)).setMonth(sixMonthsAgo))
-).split('-');
+const userId = Liferay.ThemeDisplay.getUserId();
 
 export function getPoliciesStatus(totalCount) {
 	return new Promise((resolve) => {
@@ -48,7 +31,7 @@ export function getPoliciesStatus(totalCount) {
 	});
 }
 
-export function getPolicies() {
+export function getActivePolicies() {
 	return axios.get(
 		`${DeliveryAPI}/?fields=policyStatus,productName&pageSize=200&aggregationTerms=policyStatus&filter=policyStatus ne 'expired' and policyStatus ne 'declined'`
 	);
@@ -75,5 +58,16 @@ export function getPoliciesUntilCurrentMonth() {
 export function getPoliciesUntilCurrentMonthLastYear() {
 	return axios.get(
 		`${DeliveryAPI}/?filter=policyStatus ne 'declined' and (startDate le ${oneYearAgoDate} and startDate ge ${lastYear}-01-01)&pageSize=200`
+	);
+}
+
+export function getPoliciesForSalesGoal(
+	currentYear,
+	currentMonth,
+	periodYear,
+	periodMonth
+) {
+	return axios.get(
+		`${DeliveryAPI}/?fields=boundDate,termPremium&pageSize=200&filter=policyStatus ne 'declined' and userId eq '${userId}' and boundDate le ${currentYear}-${currentMonth}-31 and boundDate ge ${periodYear}-${periodMonth}-01`
 	);
 }

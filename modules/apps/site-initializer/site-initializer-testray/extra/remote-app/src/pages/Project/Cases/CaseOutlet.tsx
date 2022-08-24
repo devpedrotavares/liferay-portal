@@ -23,7 +23,7 @@ import {
 import {useFetch} from '../../../hooks/useFetch';
 import useHeader from '../../../hooks/useHeader';
 import i18n from '../../../i18n';
-import {getCaseQuery, getCaseTransformData} from '../../../services/rest';
+import {testrayCaseRest} from '../../../services/rest';
 import {isIncludingFormPage} from '../../../util';
 
 const CaseOutlet = () => {
@@ -33,47 +33,45 @@ const CaseOutlet = () => {
 	const basePath = `/project/${projectId}/cases/${caseId}`;
 	const isFormPage = isIncludingFormPage(pathname);
 
-	const {setHeading, setTabs} = useHeader();
+	const {setHeading, setTabs} = useHeader({timeout: 100});
 
-	const {data: testrayCase, mutate: mutateCase} = useFetch(
-		getCaseQuery(caseId as string),
-		getCaseTransformData
+	const {
+		data: testrayCase,
+		mutate: mutateCase,
+	} = useFetch(testrayCaseRest.getResource(caseId as string), (response) =>
+		testrayCaseRest.transformDataFromList(response)
 	);
 
 	useEffect(() => {
 		if (testrayCase && testrayProject) {
-			setTimeout(() => {
-				setHeading([
-					{
-						category: i18n.translate('project').toUpperCase(),
-						path: `/project/${testrayProject.id}/cases`,
-						title: testrayProject.name,
-					},
-					{
-						category: i18n.translate('case').toUpperCase(),
-						title: testrayCase.name,
-					},
-				]);
-			}, 0);
+			setHeading([
+				{
+					category: i18n.translate('project').toUpperCase(),
+					path: `/project/${testrayProject.id}/cases`,
+					title: testrayProject.name,
+				},
+				{
+					category: i18n.translate('case').toUpperCase(),
+					title: testrayCase.name,
+				},
+			]);
 		}
 	}, [testrayProject, testrayCase, setHeading]);
 
 	useEffect(() => {
 		if (!isFormPage) {
-			setTimeout(() => {
-				setTabs([
-					{
-						active: pathname === basePath,
-						path: basePath,
-						title: i18n.translate('case-details'),
-					},
-					{
-						active: pathname === `${basePath}/requirements`,
-						path: `${basePath}/requirements`,
-						title: i18n.translate('requirements'),
-					},
-				]);
-			});
+			setTabs([
+				{
+					active: pathname === basePath,
+					path: basePath,
+					title: i18n.translate('case-details'),
+				},
+				{
+					active: pathname === `${basePath}/requirements`,
+					path: `${basePath}/requirements`,
+					title: i18n.translate('requirements'),
+				},
+			]);
 		}
 	}, [basePath, isFormPage, pathname, setTabs]);
 

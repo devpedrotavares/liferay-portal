@@ -41,6 +41,8 @@ type hasRequiredErrorTypes = {
 	uninsuredOrUnderinsuredMPD: boolean;
 };
 
+type StateInfoTypes = 'CA' | 'NY' | 'NV';
+
 const hasRequiredError: hasRequiredErrorTypes = {
 	bodilyInjury: false,
 	collision: false,
@@ -56,6 +58,11 @@ const CoverageInfoForm = () => {
 
 	const {form} = state?.steps?.coverage;
 
+	const vehicleInfoForm = state?.steps?.vehicleInfo?.form;
+
+	const stateInfoForm = state?.steps?.contactInfo?.form
+		?.state as StateInfoTypes;
+
 	const handleChangeField = (fieldName: string, fieldValue: string) => {
 		const payload = {
 			...form,
@@ -66,61 +73,33 @@ const CoverageInfoForm = () => {
 		dispatch({payload: true, type: ACTIONS.SET_HAS_FORM_CHANGE});
 	};
 
-	const [hasError, setHasError] = useState(hasRequiredError);
+	const handleChangeVehicleInfo = (
+		index: number,
+		fieldName: string,
+		fieldValue: string
+	) => {
+		const vehicles = form.vehicles.map((vehicle, vehicleIndex) => {
+			if (vehicleIndex === index) {
+				return {
+					...vehicle,
+					[fieldName]: fieldValue,
+				};
+			}
 
-	const handleSaveChanges = (currentForm: any) => {
-		const isAbleToSave =
-			!hasError.bodilyInjury ||
-			!hasError.collision ||
-			!hasError.comprehensive ||
-			!hasError.medical ||
-			!hasError.propertyDamage ||
-			!hasError.uninsuredOrUnderinsuredMBI ||
-			!hasError.uninsuredOrUnderinsuredMPD;
-
-		const hasSomeField =
-			currentForm.bodilyInjury !== '' ||
-			currentForm.collision !== '' ||
-			currentForm.comprehensive !== '' ||
-			currentForm.medical !== '' ||
-			currentForm.propertyDamage !== '' ||
-			currentForm.uninsuredOrUnderinsuredMBI !== '' ||
-			currentForm.uninsuredOrUnderinsuredMPD;
-
-		const isAbleToNextStep =
-			isAbleToSave &&
-			!hasError.bodilyInjury &&
-			!hasError.collision &&
-			!hasError.comprehensive &&
-			!hasError.medical &&
-			!hasError.propertyDamage &&
-			!hasError.uninsuredOrUnderinsuredMBI &&
-			!hasError.uninsuredOrUnderinsuredMPD;
-
-		const hasAllRequiredFieldsToNextStep =
-			hasSomeField &&
-			currentForm.bodilyInjury &&
-			currentForm.collision &&
-			currentForm.comprehensive &&
-			currentForm.medical &&
-			currentForm.propertyDamage &&
-			currentForm.uninsuredOrUnderinsuredMBI &&
-			currentForm.uninsuredOrUnderinsuredMPD;
+			return vehicle;
+		});
 
 		dispatch({
-			payload: isAbleToSave && hasSomeField,
-			type: ACTIONS.SET_IS_ABLE_TO_SAVE,
+			payload: {
+				...form,
+				vehicles,
+			},
+			type: ACTIONS.SET_COVERAGE_FORM,
 		});
-		dispatch({
-			payload: isAbleToNextStep && hasAllRequiredFieldsToNextStep,
-			type: ACTIONS.SET_IS_ABLE_TO_NEXT,
-		});
+		dispatch({payload: true, type: ACTIONS.SET_HAS_FORM_CHANGE});
 	};
 
-	useEffect(() => {
-		handleSaveChanges(form);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [form]);
+	const [hasError, setHasError] = useState(hasRequiredError);
 
 	const ErrorMessage = ({text}: any) => (
 		<div className="form-feedback-group">
@@ -133,6 +112,222 @@ const CoverageInfoForm = () => {
 			</div>
 		</div>
 	);
+
+	const VehicleForm = (
+		vehicleInfoForm: any,
+		formIndex: number
+	): JSX.Element => {
+		const handleSaveChanges = (currentForm: any) => {
+			const isAbleToSave =
+				!hasError.bodilyInjury ||
+				!hasError.collision ||
+				!hasError.comprehensive ||
+				!hasError.medical ||
+				!hasError.propertyDamage ||
+				!hasError.uninsuredOrUnderinsuredMBI ||
+				!hasError.uninsuredOrUnderinsuredMPD;
+
+			const hasSomeField =
+				currentForm.bodilyInjury !== '' ||
+				currentForm.vehicles[formIndex].collision !== '' ||
+				currentForm.vehicles[formIndex].comprehensive !== '' ||
+				currentForm.medical !== '' ||
+				currentForm.propertyDamage !== '' ||
+				currentForm.uninsuredOrUnderinsuredMBI !== '' ||
+				currentForm.uninsuredOrUnderinsuredMPD;
+
+			const isAbleToNextStep =
+				isAbleToSave &&
+				!hasError.bodilyInjury &&
+				!hasError.collision &&
+				!hasError.comprehensive &&
+				!hasError.medical &&
+				!hasError.propertyDamage &&
+				!hasError.uninsuredOrUnderinsuredMBI &&
+				!hasError.uninsuredOrUnderinsuredMPD;
+
+			const hasAllRequiredFieldsToNextStep =
+				hasSomeField &&
+				currentForm.bodilyInjury &&
+				currentForm.vehicles[formIndex].collision &&
+				currentForm.vehicles[formIndex].comprehensive &&
+				currentForm.medical &&
+				currentForm.propertyDamage &&
+				currentForm.uninsuredOrUnderinsuredMBI &&
+				currentForm.uninsuredOrUnderinsuredMPD;
+
+			dispatch({
+				payload: isAbleToSave && hasSomeField,
+				type: ACTIONS.SET_IS_ABLE_TO_SAVE,
+			});
+			dispatch({
+				payload: isAbleToNextStep && hasAllRequiredFieldsToNextStep,
+				type: ACTIONS.SET_IS_ABLE_TO_NEXT,
+			});
+		};
+
+		useEffect(() => {
+			handleSaveChanges(form);
+
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, [form]);
+
+		return (
+			<>
+				<div className="font-weight-bolder mb-4 mt-3 text-paragraph-sm text-uppercase">
+					<u>
+						{`Vehicle ${formIndex + 1}: ${vehicleInfoForm.year} ${
+							vehicleInfoForm.make
+						}`}
+					</u>
+				</div>
+
+				<div className="row" key={formIndex}>
+					<div
+						className={classNames(
+							'col-sm filled form-condensed form-group',
+
+							{
+								'has-error': (hasError as any)[
+									`comprehensive.${formIndex}`
+								],
+							}
+						)}
+					>
+						<ClaySelect
+							aria-label="Select Label"
+							id="comprehensive"
+							name="comprehensive"
+							onBlur={(event) => {
+								let comprehensiveValue = event.target.value;
+								comprehensiveValue =
+									comprehensiveValue === 'CHOOSE AN OPTION'
+										? ''
+										: comprehensiveValue;
+								setHasError({
+									...hasError,
+									comprehensive:
+										comprehensiveValue === ''
+											? true
+											: false,
+								});
+							}}
+							onChange={(event) => {
+								let comprehensiveValue = event.target.value;
+								comprehensiveValue =
+									comprehensiveValue === 'CHOOSE AN OPTION'
+										? ''
+										: comprehensiveValue;
+								handleChangeVehicleInfo(
+									formIndex,
+									'comprehensive',
+									comprehensiveValue
+								);
+
+								setHasError({
+									...hasError,
+									[`comprehensive.${formIndex}`]:
+										comprehensiveValue === ''
+											? true
+											: false,
+								});
+							}}
+							value={form.vehicles[formIndex].comprehensive}
+						>
+							{comprehensiveOptions[stateInfoForm].map(
+								(comprehensiveOption: any, index: number) => (
+									<ClaySelect.Option
+										className="font-weight-bold text-center text-primary"
+										key={index}
+										label={comprehensiveOption.label}
+										value={comprehensiveOption.value}
+									/>
+								)
+							)}
+						</ClaySelect>
+
+						<label htmlFor="Comprehensive">
+							Comprehensive&nbsp;
+							<span className="text-danger-darken-1">*</span>
+						</label>
+
+						{(hasError as any)[`comprehensive.${formIndex}`] && (
+							<ErrorMessage />
+						)}
+					</div>
+
+					<div
+						className={classNames(
+							'col-sm filled form-condensed form-group',
+
+							{
+								'has-error': (hasError as any)[
+									`collision.${formIndex}`
+								],
+							}
+						)}
+					>
+						<ClaySelect
+							aria-label="Select Label"
+							id="collision"
+							onBlur={(event) => {
+								let collisionValue = event.target.value;
+								collisionValue =
+									collisionValue === 'CHOOSE AN OPTION'
+										? ''
+										: collisionValue;
+
+								setHasError({
+									...hasError,
+									collision:
+										collisionValue === '' ? true : false,
+								});
+							}}
+							onChange={(event) => {
+								let collisionValue = event.target.value;
+								collisionValue =
+									collisionValue === 'CHOOSE AN OPTION'
+										? ''
+										: collisionValue;
+								handleChangeVehicleInfo(
+									formIndex,
+									'collision',
+									collisionValue
+								);
+
+								setHasError({
+									...hasError,
+									[`collision.${formIndex}`]:
+										collisionValue === '' ? true : false,
+								});
+							}}
+							value={form.vehicles[formIndex].collision}
+						>
+							{collisionOptions[stateInfoForm].map(
+								(collisionOption: any, index: number) => (
+									<ClaySelect.Option
+										className="font-weight-bold text-center text-primary"
+										key={index}
+										label={collisionOption.label}
+										value={collisionOption.value}
+									/>
+								)
+							)}
+						</ClaySelect>
+
+						<label htmlFor="Collision">
+							Collision&nbsp;
+							<span className="text-danger-darken-1">*</span>
+						</label>
+
+						{(hasError as any)[`collision.${formIndex}`] && (
+							<ErrorMessage />
+						)}
+					</div>
+				</div>
+			</>
+		);
+	};
 
 	return (
 		<div className="container m-0 p-4">
@@ -161,7 +356,11 @@ const CoverageInfoForm = () => {
 						className="text-left"
 						id="mySelectId"
 						onBlur={(event) => {
-							const bodilyInjuryValue = event.target.value;
+							let bodilyInjuryValue = event.target.value;
+							bodilyInjuryValue =
+								bodilyInjuryValue === 'CHOOSE AN OPTION'
+									? ''
+									: bodilyInjuryValue;
 							setHasError({
 								...hasError,
 								bodilyInjury:
@@ -172,7 +371,11 @@ const CoverageInfoForm = () => {
 							});
 						}}
 						onChange={(event) => {
-							const bodilyInjuryValue = event.target.value;
+							let bodilyInjuryValue = event.target.value;
+							bodilyInjuryValue =
+								bodilyInjuryValue === 'CHOOSE AN OPTION'
+									? ''
+									: bodilyInjuryValue;
 							handleChangeField(
 								'bodilyInjury',
 								bodilyInjuryValue
@@ -189,8 +392,8 @@ const CoverageInfoForm = () => {
 						}}
 						value={form.bodilyInjury}
 					>
-						{bodilyInjuryOptions.map(
-							(bodilyInjuryOption, index) => (
+						{bodilyInjuryOptions[stateInfoForm].map(
+							(bodilyInjuryOption: any, index: number) => (
 								<ClaySelect.Option
 									className="font-weight-bold text-center text-primary"
 									key={index}
@@ -222,7 +425,11 @@ const CoverageInfoForm = () => {
 						aria-label="Select Label"
 						id="propertyDamage"
 						onBlur={(event) => {
-							const propertyDamageValue = event.target.value;
+							let propertyDamageValue = event.target.value;
+							propertyDamageValue =
+								propertyDamageValue === 'CHOOSE AN OPTION'
+									? ''
+									: propertyDamageValue;
 							setHasError({
 								...hasError,
 								propertyDamage:
@@ -233,7 +440,11 @@ const CoverageInfoForm = () => {
 							});
 						}}
 						onChange={(event) => {
-							const propertyDamageValue = event.target.value;
+							let propertyDamageValue = event.target.value;
+							propertyDamageValue =
+								propertyDamageValue === 'CHOOSE AN OPTION'
+									? ''
+									: propertyDamageValue;
 							handleChangeField(
 								'propertyDamage',
 								propertyDamageValue
@@ -250,8 +461,8 @@ const CoverageInfoForm = () => {
 						}}
 						value={form.propertyDamage}
 					>
-						{propertyDamageOptions.map(
-							(propertyDamageOption, index) => (
+						{propertyDamageOptions[stateInfoForm].map(
+							(propertyDamageOption: any, index: number) => (
 								<ClaySelect.Option
 									className="font-weight-bold text-center text-primary"
 									key={index}
@@ -285,8 +496,13 @@ const CoverageInfoForm = () => {
 						aria-label="Select Label"
 						id="uninsuredOrUnderinsuredMBI"
 						onBlur={(event) => {
-							const uninsuredOrUnderinsuredMBIOptionValue =
+							let uninsuredOrUnderinsuredMBIOptionValue =
 								event.target.value;
+							uninsuredOrUnderinsuredMBIOptionValue =
+								uninsuredOrUnderinsuredMBIOptionValue ===
+								'CHOOSE AN OPTION'
+									? ''
+									: uninsuredOrUnderinsuredMBIOptionValue;
 							setHasError({
 								...hasError,
 								uninsuredOrUnderinsuredMBI:
@@ -299,8 +515,13 @@ const CoverageInfoForm = () => {
 							});
 						}}
 						onChange={(event) => {
-							const uninsuredOrUnderinsuredMBIOptionValue =
+							let uninsuredOrUnderinsuredMBIOptionValue =
 								event.target.value;
+							uninsuredOrUnderinsuredMBIOptionValue =
+								uninsuredOrUnderinsuredMBIOptionValue ===
+								'CHOOSE AN OPTION'
+									? ''
+									: uninsuredOrUnderinsuredMBIOptionValue;
 							handleChangeField(
 								'uninsuredOrUnderinsuredMBI',
 								uninsuredOrUnderinsuredMBIOptionValue
@@ -319,8 +540,11 @@ const CoverageInfoForm = () => {
 						}}
 						value={form.uninsuredOrUnderinsuredMBI}
 					>
-						{uninsuredOrUnderinsuredMBIOptions.map(
-							(uninsuredOrUnderinsuredMBIOption, index) => (
+						{uninsuredOrUnderinsuredMBIOptions[stateInfoForm].map(
+							(
+								uninsuredOrUnderinsuredMBIOption: any,
+								index: number
+							) => (
 								<ClaySelect.Option
 									className="font-weight-bold text-center text-primary"
 									key={index}
@@ -356,8 +580,13 @@ const CoverageInfoForm = () => {
 						aria-label="Select Label"
 						id="uninsuredOrUnderinsuredMPD"
 						onBlur={(event) => {
-							const uninsuredOrUnderinsuredMPDValue =
+							let uninsuredOrUnderinsuredMPDValue =
 								event.target.value;
+							uninsuredOrUnderinsuredMPDValue =
+								uninsuredOrUnderinsuredMPDValue ===
+								'CHOOSE AN OPTION'
+									? ''
+									: uninsuredOrUnderinsuredMPDValue;
 							setHasError({
 								...hasError,
 								uninsuredOrUnderinsuredMPD:
@@ -369,8 +598,13 @@ const CoverageInfoForm = () => {
 							});
 						}}
 						onChange={(event) => {
-							const uninsuredOrUnderinsuredMPDValue =
+							let uninsuredOrUnderinsuredMPDValue =
 								event.target.value;
+							uninsuredOrUnderinsuredMPDValue =
+								uninsuredOrUnderinsuredMPDValue ===
+								'CHOOSE AN OPTION'
+									? ''
+									: uninsuredOrUnderinsuredMPDValue;
 							handleChangeField(
 								'uninsuredOrUnderinsuredMPD',
 								uninsuredOrUnderinsuredMPDValue
@@ -388,8 +622,11 @@ const CoverageInfoForm = () => {
 						}}
 						value={form.uninsuredOrUnderinsuredMPD}
 					>
-						{uninsuredOrUnderinsuredMPDOptions.map(
-							(uninsuredOrUnderinsuredMPDOption, index) => (
+						{uninsuredOrUnderinsuredMPDOptions[stateInfoForm].map(
+							(
+								uninsuredOrUnderinsuredMPDOption: any,
+								index: number
+							) => (
 								<ClaySelect.Option
 									className="font-weight-bold text-center text-primary"
 									key={index}
@@ -427,7 +664,11 @@ const CoverageInfoForm = () => {
 						aria-label="Select Label"
 						id="Medical"
 						onBlur={(event) => {
-							const medicalValue = event.target.value;
+							let medicalValue = event.target.value;
+							medicalValue =
+								medicalValue === 'CHOOSE AN OPTION'
+									? ''
+									: medicalValue;
 							setHasError({
 								...hasError,
 								medical:
@@ -438,7 +679,11 @@ const CoverageInfoForm = () => {
 							});
 						}}
 						onChange={(event) => {
-							const medicalValue = event.target.value;
+							let medicalValue = event.target.value;
+							medicalValue =
+								medicalValue === 'CHOOSE AN OPTION'
+									? ''
+									: medicalValue;
 							handleChangeField('medical', medicalValue);
 
 							setHasError({
@@ -452,14 +697,16 @@ const CoverageInfoForm = () => {
 						}}
 						value={form.medical}
 					>
-						{medicalOptions.map((medicalOption, index) => (
-							<ClaySelect.Option
-								className="font-weight-bold text-center text-primary"
-								key={index}
-								label={medicalOption.label}
-								value={medicalOption.value}
-							/>
-						))}
+						{medicalOptions[stateInfoForm].map(
+							(medicalOption: any, index: number) => (
+								<ClaySelect.Option
+									className="font-weight-bold text-center text-primary"
+									key={index}
+									label={medicalOption.label}
+									value={medicalOption.value}
+								/>
+							)
+						)}
 					</ClaySelect>
 
 					<label htmlFor="Medical">
@@ -473,128 +720,9 @@ const CoverageInfoForm = () => {
 				<div className="col-sm"></div>
 			</div>
 
-			<div className="font-weight-bolder mb-4 mt-3 text-paragraph-sm text-uppercase">
-				<u>Vehicle 1: 2018 Toyota</u>
-			</div>
-
-			<div className="row">
-				<div
-					className={classNames(
-						'col-sm filled form-condensed form-group',
-
-						{
-							'has-error': hasError.comprehensive,
-						}
-					)}
-				>
-					<ClaySelect
-						aria-label="Select Label"
-						id="Comprehensive"
-						onBlur={(event) => {
-							const comprehensiveValue = event.target.value;
-							setHasError({
-								...hasError,
-								comprehensive:
-									comprehensiveValue === '' ||
-									comprehensiveValue === 'CHOOSE AN OPTION'
-										? true
-										: false,
-							});
-						}}
-						onChange={(event) => {
-							const comprehensiveValue = event.target.value;
-							handleChangeField(
-								'comprehensive',
-								comprehensiveValue
-							);
-
-							setHasError({
-								...hasError,
-								comprehensive:
-									comprehensiveValue === '' ||
-									comprehensiveValue === 'CHOOSE AN OPTION'
-										? true
-										: false,
-							});
-						}}
-						value={form.comprehensive}
-					>
-						{comprehensiveOptions.map(
-							(comprehensiveOption, index) => (
-								<ClaySelect.Option
-									className="font-weight-bold text-center text-primary"
-									key={index}
-									label={comprehensiveOption.label}
-									value={comprehensiveOption.value}
-								/>
-							)
-						)}
-					</ClaySelect>
-
-					<label htmlFor="Comprehensive">
-						Comprehensive&nbsp;
-						<span className="text-danger-darken-1">*</span>
-					</label>
-
-					{hasError.comprehensive && <ErrorMessage />}
-				</div>
-
-				<div
-					className={classNames(
-						'col-sm filled form-condensed form-group',
-
-						{
-							'has-error': hasError.collision,
-						}
-					)}
-				>
-					<ClaySelect
-						aria-label="Select Label"
-						id="Collision"
-						onBlur={(event) => {
-							const collisionValue = event.target.value;
-							setHasError({
-								...hasError,
-								collision:
-									collisionValue === '' ||
-									collisionValue === 'CHOOSE AN OPTION'
-										? true
-										: false,
-							});
-						}}
-						onChange={(event) => {
-							const collisionValue = event.target.value;
-							handleChangeField('collision', collisionValue);
-
-							setHasError({
-								...hasError,
-								collision:
-									collisionValue === '' ||
-									collisionValue === 'CHOOSE AN OPTION'
-										? true
-										: false,
-							});
-						}}
-						value={form.collision}
-					>
-						{collisionOptions.map((collisionOption, index) => (
-							<ClaySelect.Option
-								className="font-weight-bold text-center text-primary"
-								key={index}
-								label={collisionOption.label}
-								value={collisionOption.value}
-							/>
-						))}
-					</ClaySelect>
-
-					<label htmlFor="collision">
-						Collision&nbsp;
-						<span className="text-danger-darken-1">*</span>
-					</label>
-
-					{hasError.collision && <ErrorMessage />}
-				</div>
-			</div>
+			{vehicleInfoForm.map((vehicleInfo: any, index: number) =>
+				VehicleForm(vehicleInfo, index)
+			)}
 		</div>
 	);
 };

@@ -44,7 +44,6 @@
 		<Logger level="ERROR" name="com.liferay.mail.util.DummyHook" />
 		<Logger level="ERROR" name="com.liferay.mail.util.HookFactory" />
 		<Logger level="ERROR" name="com.liferay.mail.util.MailSessionFactoryBean" />
-		<Logger level="WARN" name="com.liferay.petra.mail" />
 		<Logger level="INFO" name="com.liferay.portal.action.JSONServiceAction" />
 		<Logger level="WARN" name="com.liferay.portal.action.LayoutAction" />
 		<Logger level="WARN" name="com.liferay.portal.bean.BeanLocatorImpl" />
@@ -208,6 +207,7 @@
 		<Logger level="INFO" name="com.liferay.portal.tools.sql" />
 		<Logger level="INFO" name="com.liferay.portal.upgrade" />
 		<Logger level="INFO" name="com.liferay.portal.upgrade.UpgradeProcessUtil" />
+		<Logger level="ERROR" name="com.liferay.portal.upgrade.v6_1_1.UpgradeJournal" />
 		<Logger level="INFO" name="com.liferay.portal.upgrade.v6_2_0.BaseUpgradePortletPreferences" />
 		<Logger level="INFO" name="com.liferay.portal.upgrade.v6_2_0.UpgradePortletPreferences" />
 		<Logger level="INFO" name="com.liferay.portal.upgrade.v7_0_0.UpgradePortletSettings" />

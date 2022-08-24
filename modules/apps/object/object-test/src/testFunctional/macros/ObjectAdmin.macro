@@ -216,9 +216,11 @@ definition {
 		}
 
 		if (isSet(object)) {
-			Select(
-				locator1 = "ObjectAdmin#SELECT_OBJECT_RELATIONSHIP",
-				value1 = "${object}");
+			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
+
+			Click(
+				key_columnOption = "${object}",
+				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
 		}
 
 		if (isSet(name)) {
@@ -490,6 +492,19 @@ definition {
 		Click(locator1 = "ObjectAdmin#OBJECT_DETAILS_TAB");
 
 		AssertElementPresent(locator1 = "ObjectAdmin#DETAILS_PAGE_TITLE");
+	}
+
+	macro assertObjectEntryFieldValueViaAPI {
+		var actualValue = JSONObject.getObjectEntryFieldValue(
+			attribute = "${attribute}",
+			attributeValue = "${attributeValue}",
+			fieldName = "${fieldName}",
+			objectName = "${objectName}",
+			type = "${type}");
+
+		TestUtils.assertEquals(
+			actual = "${actualValue}",
+			expected = "${expectedValue}");
 	}
 
 	macro assertObjectField {

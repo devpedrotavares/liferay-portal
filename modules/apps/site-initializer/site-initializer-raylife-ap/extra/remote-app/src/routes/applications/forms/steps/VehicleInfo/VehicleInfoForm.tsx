@@ -29,20 +29,28 @@ import {
 	primaryUsageOptions,
 	yearsOptions,
 } from './SelectOptions';
+import {formValidationTypes} from './types';
 
 type FormVehicleInfoTypes = {
 	form: any[];
+	formIndex: number;
 	formNumber: number;
 	id: number;
 };
 
-const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
+const FormVehicleInfo = ({
+	form,
+	formIndex,
+	formNumber,
+	id,
+}: FormVehicleInfoTypes) => {
 	const [_state, dispatch] = useContext(NewApplicationAutoContext);
 
 	const [_makeOptions, setMakeOptions] = useState<any[]>([]);
 	const [_yearsOptions, setYearsOptions] = useState<any[]>([]);
 	const [_model, setModel] = useState<string>('');
 	const [year, setYear] = useState<string>('');
+	const [yearSearch, setYearSearch] = useState<string>('');
 
 	enum dropdownAlign {
 		topCenter = 0,
@@ -54,15 +62,6 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 		middleLeft = 6,
 		topLeft = 7,
 	}
-
-	type formValidationTypes = {
-		annualMileage: boolean;
-		make: boolean;
-		model: boolean;
-		ownership: boolean;
-		primaryUsage: boolean;
-		year: boolean;
-	};
 
 	const hasRequiredError: formValidationTypes = {
 		annualMileage: false,
@@ -115,35 +114,42 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 		dispatch({payload: true, type: ACTIONS.SET_HAS_FORM_CHANGE});
 	};
 
-	const handleRemoveFormClick = (id: number) => {
-		const payload = {id};
+	const handleRemoveFormClick = (formIndex: number) => {
+		const payload = {id: formIndex};
 		dispatch({payload, type: ACTIONS.SET_REMOVE_VEHICLE});
 	};
 
-	useEffect(() => {
-		setMakeOptions(makeOptions);
-
-		const yearOptionsAddClick = yearsOptions.map((yearsOption) => {
+	const yearOptionsAddClick = () => {
+		return yearsOptions.map((yearsOption) => {
 			return {
 				...yearsOption,
+				id,
 				onClick: (event: any) => {
 					let value = event.target.textContent || '';
 
 					value = value === 'Choose an option' ? '' : value;
-
 					setYear(value);
 					handleChangeField('year', value, id);
 					setHasError({
 						...hasError,
-						year: value === '' ? true : false,
+						year: value === '',
 					});
 				},
 			};
 		});
+	};
 
-		setYearsOptions(yearOptionsAddClick);
+	useEffect(() => {
+		setMakeOptions(makeOptions);
+		setYearsOptions(yearOptionsAddClick());
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useEffect(() => {
+		setYearSearch('');
+		setYearsOptions(yearOptionsAddClick());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [year]);
 
 	useEffect(() => {
 		setMakeOptions(
@@ -190,7 +196,7 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 						<ClayButton
 							className="border-white font-weight-bolder text-paragraph-sm"
 							displayType="secondary"
-							onClick={() => handleRemoveFormClick(id)}
+							onClick={() => handleRemoveFormClick(formIndex)}
 						>
 							<ClayIcon symbol="times-circle" />
 							&nbsp;REMOVE VEHICLE
@@ -215,13 +221,24 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 					<ClayDropDownWithItems
 						alignmentByViewport={true}
 						alignmentPosition={dropdownAlign.bottomCenter}
-						items={_yearsOptions.filter((yearOption) => {
-							return yearOption.label.includes(year);
-						})}
-						onSearchValueChange={(value) => {
-							setYear(value);
+						items={_yearsOptions}
+						onSearchValueChange={(value: string) => {
+							const filterOptions = yearOptionsAddClick().filter(
+								(yearOption) => {
+									if (
+										yearOption.label
+											.toLowerCase()
+											.includes(value)
+									) {
+										return yearOption;
+									}
+								}
+							);
+
+							setYearsOptions(filterOptions);
+							setYearSearch(value);
 						}}
-						searchValue={year}
+						searchValue={yearSearch}
 						searchable={true}
 						trigger={
 							<div className="d-flex select-years text-neutral-10">
@@ -234,7 +251,6 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 									<ClaySelect.Option
 										className="cursor-pointer font-weight-bold py-4 text-brand-primary text-center text-paragraph-sm text-uppercase"
 										label={form[formNumber - 1].year}
-										selected
 										value={form[formNumber - 1].year}
 									/>
 								</ClaySelect>
@@ -279,7 +295,6 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 								className="font-weight-bold py-6 text-brand-primary text-center text-paragraph-sm text-uppercase"
 								key={index}
 								label={makeOption.name}
-								selected={makeOption.checked}
 								value={makeOption.name}
 							/>
 						))}
@@ -378,7 +393,7 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 						{
 							'has-error':
 								hasError.annualMileage ||
-								(form[formNumber - 1].annualMileage < 50 &&
+								(form[formNumber - 1].annualMileage <= 50 &&
 									form[formNumber - 1].annualMileage !== ''),
 						}
 					)}
@@ -410,7 +425,7 @@ const FormVehicleInfo = ({form, formNumber, id}: FormVehicleInfoTypes) => {
 
 					{hasError.annualMileage && <ErrorMessage />}
 
-					{form[formNumber - 1].annualMileage < 50 &&
+					{form[formNumber - 1].annualMileage <= 50 &&
 						form[formNumber - 1].annualMileage !== '' && (
 							<ErrorMessage text="Please enter a value greater than 50" />
 						)}

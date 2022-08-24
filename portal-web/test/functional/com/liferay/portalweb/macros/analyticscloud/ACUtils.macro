@@ -9,9 +9,17 @@ definition {
 			var layoutName = "AC Page";
 		}
 
-		JSONLayout.addPublicLayout(
-			groupName = "${siteName}",
-			layoutName = "${layoutName}");
+		if (!(isSet(type))) {
+			JSONLayout.addPublicLayout(
+				groupName = "${siteName}",
+				layoutName = "${layoutName}");
+		}
+		else {
+			JSONLayout.addPublicLayout(
+				groupName = "${siteName}",
+				layoutName = "${layoutName}",
+				type = "${type}");
+		}
 	}
 
 	macro addSiteAndPage {
@@ -25,9 +33,17 @@ definition {
 			var layoutName = "AC Page";
 		}
 
-		ACUtils.addPage(
-			layoutName = "${layoutName}",
-			siteName = "${siteName}");
+		if (!(isSet(type))) {
+			ACUtils.addPage(
+				layoutName = "${layoutName}",
+				siteName = "${siteName}");
+		}
+		else {
+			ACUtils.addPage(
+				layoutName = "${layoutName}",
+				siteName = "${siteName}",
+				type = "${type}");
+		}
 	}
 
 	macro addWidgetToPage {
@@ -53,7 +69,7 @@ definition {
 
 			MouseOver(locator1 = "ACIndividualsDashboard#VISITORS_LEGEND");
 
-			while (IsElementNotPresent(locator1 = "ACIndividualsDashboard#ACTIVE_INDIVIDUAL_CHART") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACIndividualsDashboard#ACTIVE_INDIVIDUAL_CHART")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 
 				if ("${timeFilter}" != "Custom Range") {
@@ -106,7 +122,7 @@ definition {
 			}
 		}
 		else {
-			while (IsElementNotPresent(locator1 = "ACIndividualsDashboard#ACTIVE_INDIVIDUAL_CHART") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACIndividualsDashboard#ACTIVE_INDIVIDUAL_CHART")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 
 				if ("${timeFilter}" != "Custom Range") {
@@ -166,7 +182,7 @@ definition {
 		for (var percentage : list "${percentageList}") {
 			var key_percentage = "${percentage}";
 
-			while (IsElementNotPresent(locator1 = "ACUtils#METRIC_VALUE_PERCENTAGE") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#METRIC_VALUE_PERCENTAGE")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 			}
 
@@ -604,6 +620,12 @@ definition {
 		}
 	}
 
+	macro executeJSInBrowserConsole {
+		var javaScript = "${javaScriptCode}";
+
+		var javaScriptItem = selenium.getEval("${javaScript}");
+	}
+
 	macro getEventPropertyValue {
 		var postDataText = ProxyUtil.getHarRecording("$..request..postData..text");
 
@@ -885,6 +907,14 @@ definition {
 			value1 = "${itemName}");
 	}
 
+	macro setLocalStorageValue {
+		var javaScript = '''
+		localStorage.setItem('${keyName}', '${keyValue}');
+		''';
+
+		var localStorageItem = selenium.getEval("${javaScript}");
+	}
+
 	macro tearDownAC {
 		ACUtils.launchAC();
 
@@ -923,7 +953,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementNotPresent(locator1 = "ACUtils#GENERIC_TEXT") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#GENERIC_TEXT")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 			}
 
@@ -941,7 +971,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementNotPresent(locator1 = "ACUtils#GENERIC_TEXT_ORDER") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#GENERIC_TEXT_ORDER")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 			}
 
@@ -955,7 +985,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementNotPresent(locator1 = "ACUtils#NAME_LIST") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#NAME_LIST")) && (maxIterations = "50")) {
 				ACSegments.searchSegment(findSegment = "${name}");
 
 				ACUtils.clearSearchBar();
@@ -973,7 +1003,7 @@ definition {
 
 		WaitForPageLoad();
 
-		while (IsElementNotPresent(locator1 = "ACSegments#ADD_MEMBERS_INDEX_TABLE") && (maxIterations = "50")) {
+		while ((IsElementNotPresent(locator1 = "ACSegments#ADD_MEMBERS_INDEX_TABLE")) && (maxIterations = "50")) {
 			Refresh();
 		}
 
@@ -988,7 +1018,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementPresent(locator1 = "ACUtils#NAME_LIST") && (maxIterations = "50")) {
+			while ((IsElementPresent(locator1 = "ACUtils#NAME_LIST")) && (maxIterations = "50")) {
 				ACSegments.searchSegment(findSegment = "${name}");
 
 				ACUtils.clearSearchBar();
@@ -1003,7 +1033,7 @@ definition {
 
 		WaitForPageLoad();
 
-		while (IsElementNotPresent(locator1 = "ACAssets#NO_RESULTS_CONTENT_MESSAGE") && (maxIterations = "50")) {
+		while ((IsElementNotPresent(locator1 = "ACAssets#NO_RESULTS_CONTENT_MESSAGE")) && (maxIterations = "50")) {
 			TestUtils.hardRefresh();
 		}
 
@@ -1030,7 +1060,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementNotPresent(locator1 = "ACUtils#NAME_LIST") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#NAME_LIST")) && (maxIterations = "50")) {
 				ACSegments.searchSegment(findSegment = "${name}");
 
 				ACUtils.clearSearchBar();
@@ -1074,7 +1104,7 @@ definition {
 
 			WaitForPageLoad();
 
-			while (IsElementNotPresent(locator1 = "ACUtils#TABLE_CELL_INFORMATION") && (maxIterations = "50")) {
+			while ((IsElementNotPresent(locator1 = "ACUtils#TABLE_CELL_INFORMATION")) && (maxIterations = "50")) {
 				TestUtils.hardRefresh();
 			}
 
@@ -1084,6 +1114,13 @@ definition {
 
 			var i = StringUtil.valueOf("${i}");
 		}
+	}
+
+	macro waitForClearProperty {
+
+		// This pause is necessary as it takes time for the data to be cleared from the property. See LRAC-11595
+
+		Pause(locator1 = "10000");
 	}
 
 	macro waitForLoading {

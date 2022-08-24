@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class MathUtil {
 
-	public static Long difference(Long value1, Long value2) {
+	public static long difference(Long value1, Long value2) {
 		return value1 - value2;
 	}
 
@@ -57,19 +57,19 @@ public class MathUtil {
 		return false;
 	}
 
-	public static Long percent(Long percent, Long value) {
+	public static long percent(Long percent, Long value) {
 		return quotient(product(percent, value), 100L, true);
 	}
 
-	public static Long product(Long value1, Long value2) {
+	public static long product(Long value1, Long value2) {
 		return value1 * value2;
 	}
 
-	public static Long quotient(Long value1, Long value2) {
+	public static long quotient(Long value1, Long value2) {
 		return value1 / value2;
 	}
 
-	public static Long quotient(Long value1, Long value2, boolean ceil) {
+	public static long quotient(Long value1, Long value2, boolean ceil) {
 		if (ceil) {
 			return (value1 + value2 - 1) / value2;
 		}
@@ -77,13 +77,13 @@ public class MathUtil {
 		return quotient(value1, value2);
 	}
 
-	public static Long randomNumber(Long maxValue) {
+	public static long randomNumber(Long maxValue) {
 		ThreadLocalRandom current = ThreadLocalRandom.current();
 
 		return current.nextLong(maxValue) + 1;
 	}
 
-	public static Long sum(Long value1, Long value2) {
+	public static long sum(Long value1, Long value2) {
 		return value1 + value2;
 	}
 

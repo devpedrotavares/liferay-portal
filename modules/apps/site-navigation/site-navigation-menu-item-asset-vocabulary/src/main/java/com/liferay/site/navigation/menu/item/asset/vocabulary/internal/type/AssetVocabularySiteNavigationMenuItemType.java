@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
@@ -55,7 +55,6 @@ import com.liferay.site.navigation.type.SiteNavigationMenuItemType;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -122,7 +121,7 @@ public class AssetVocabularySiteNavigationMenuItemType
 
 	@Override
 	public String getAddTitle(Locale locale) {
-		return LanguageUtil.format(locale, "select-x", "vocabularies");
+		return _language.format(locale, "select-x", "vocabularies");
 	}
 
 	@Override
@@ -207,7 +206,7 @@ public class AssetVocabularySiteNavigationMenuItemType
 
 	@Override
 	public String getLabel(Locale locale) {
-		return LanguageUtil.get(locale, "vocabulary");
+		return _language.get(locale, "vocabulary");
 	}
 
 	@Override
@@ -263,7 +262,7 @@ public class AssetVocabularySiteNavigationMenuItemType
 			Objects.equals(
 				typeSettingsUnicodeProperties.get("type"), "asset-category")) {
 
-			return Arrays.asList(siteNavigationMenuItem);
+			return Collections.singletonList(siteNavigationMenuItem);
 		}
 
 		return _getChildrenSiteNavigationMenuItems(
@@ -433,13 +432,6 @@ public class AssetVocabularySiteNavigationMenuItemType
 	}
 
 	@Override
-	public void renderAddPage(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws IOException {
-	}
-
-	@Override
 	public void renderEditPage(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse,
@@ -531,6 +523,9 @@ public class AssetVocabularySiteNavigationMenuItemType
 
 	@Reference
 	private JSPRenderer _jspRenderer;
+
+	@Reference
+	private Language _language;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.site.navigation.menu.item.asset.vocabulary)",

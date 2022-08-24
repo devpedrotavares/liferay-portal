@@ -43,13 +43,6 @@ html#{$cadmin-selector} .cadmin .page-editor__item-configuration-sidebar {
 	}
 }
 
-html#{$cadmin-selector}
-	body.open
-	.cadmin
-	.page-editor__sidebar:not(.page-editor__sidebar-old) {
-	left: $product-menu-width;
-}
-
 html#{$cadmin-selector} .cadmin .page-editor__sidebar {
 	@include sidebar;
 	left: 0;
@@ -140,7 +133,7 @@ html#{$cadmin-selector} .cadmin .page-editor__sidebar {
 		);
 		/* stylelint-enable */
 		left: $sidebarButtonWidth;
-		overflow-x: hidden;
+		overflow: hidden;
 		position: fixed;
 		transform: translateX(-100%);
 		transition: transform ease $defaultTransitionDuration;
@@ -173,11 +166,11 @@ html#{$cadmin-selector} body {
 }
 
 html#{$cadmin-selector} .page-editor__wrapper {
-	margin-left: $sidebarButtonWidth;
+	padding-left: $sidebarButtonWidth;
 	position: relative;
-	transition: margin-left ease $defaultTransitionDuration,
+	transition: padding-left ease $defaultTransitionDuration,
 		margin-right ease $defaultTransitionDuration;
-	will-change: margin-left, margin-right;
+	will-change: padding-left, margin-right;
 	/* stylelint-disable */
 	max-height: calc(
 		100vh -
@@ -190,20 +183,20 @@ html#{$cadmin-selector} .page-editor__wrapper {
 	overflow: auto;
 
 	&.page-editor__wrapper-old {
-		margin-left: 0;
 		margin-right: $sidebarButtonWidth;
+		padding-left: 0;
 
 		&.page-editor__wrapper--padded {
 			@include media-breakpoint-up(sm) {
-				margin-left: 0;
 				margin-right: $sidebarButtonWidth + $sidebarContentWidth;
+				padding-left: 0;
 			}
 		}
 	}
 
 	&--padded-start {
 		@include media-breakpoint-up(sm) {
-			margin-left: $sidebarButtonWidth + $sidebarContentWidth;
+			padding-left: $sidebarButtonWidth + $sidebarContentWidth;
 		}
 	}
 
@@ -211,23 +204,5 @@ html#{$cadmin-selector} .page-editor__wrapper {
 		@include media-breakpoint-up(sm) {
 			margin-right: $sidebarContentWidth;
 		}
-	}
-}
-
-html#{$cadmin-selector} {
-	body.open .page-editor__wrapper#wrapper {
-		&:not(.page-editor__wrapper-old) {
-			margin-left: $product-menu-width + $sidebarButtonWidth;
-
-			.page-editor__wrapper--padded-start {
-				@include media-breakpoint-up(sm) {
-					margin-left: $product-menu-width + $sidebarButtonWidth +
-						$sidebarContentWidth;
-				}
-			}
-		}
-
-		margin-left: $product-menu-width;
-		padding-left: 0;
 	}
 }

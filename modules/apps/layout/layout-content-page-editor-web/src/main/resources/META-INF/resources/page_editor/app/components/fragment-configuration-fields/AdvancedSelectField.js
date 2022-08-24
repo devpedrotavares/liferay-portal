@@ -20,30 +20,34 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useEffect, useMemo, useState} from 'react';
 
+import {getResetLabelByViewport} from '../../../app/utils/getResetLabelByViewport';
 import {LengthField} from '../../../common/components/LengthField';
 import useControlledState from '../../../core/hooks/useControlledState';
 import {ConfigurationFieldPropTypes} from '../../../prop-types/index';
 import {useActiveItemId} from '../../contexts/ControlsContext';
 import {useGlobalContext} from '../../contexts/GlobalContext';
-import {useSelector} from '../../contexts/StoreContext';
-import selectCanDetachTokenValues from '../../selectors/selectCanDetachTokenValues';
 import getLayoutDataItemUniqueClassName from '../../utils/getLayoutDataItemUniqueClassName';
+import getPreviousResponsiveStyle from '../../utils/getPreviousResponsiveStyle';
 import isNullOrUndefined from '../../utils/isNullOrUndefined';
+import isValidStyleValue from '../../utils/isValidStyleValue';
 import {useId} from '../../utils/useId';
 
 export function AdvancedSelectField({
+	canDetachTokenValues,
 	disabled,
 	field,
+	item,
 	onValueSelect,
 	options,
+	selectedViewportSize,
 	tokenValues,
 	value,
 }) {
-	const canDetachTokenValues = useSelector(selectCanDetachTokenValues);
 	const helpTextId = useId();
 	const triggerId = useId();
 
 	const [active, setActive] = useState(false);
+	const [error, setError] = useState(false);
 	const [isTokenValueOrInherited, setIsTokenValueOrInherited] = useState(
 		!isNullOrUndefined(tokenValues[value]) || !value
 	);
@@ -57,9 +61,60 @@ export function AdvancedSelectField({
 		onValueSelect(field.name, nextValue);
 	};
 
+	const handleInputBlur = (event) => {
+		if (
+			!event.target.value ||
+			!isValidStyleValue(field.cssProperty, event.target.value)
+		) {
+			setNextValue(value);
+			setError(true);
+
+			setTimeout(() => setError(false), 1000);
+
+			return;
+		}
+
+		onValueSelect(field.name, event.target.value);
+	};
+
+	const handleInputKeyDown = (event) => {
+		if (event.key === 'Enter') {
+			handleInputBlur(event);
+		}
+	};
+
+	const onSetValue = ({isTokenValue, value}) => {
+		if (value === null) {
+			const previousViewportValue = getPreviousResponsiveStyle(
+				field.name,
+				item.config,
+				selectedViewportSize
+			);
+
+			if (previousViewportValue === nextValue) {
+				return;
+			}
+
+			setNextValue(previousViewportValue);
+		}
+		else {
+			setNextValue(value);
+		}
+
+		setIsTokenValueOrInherited(isTokenValue);
+		onValueSelect(field.name, value);
+	};
+
+	useEffect(() => {
+		setIsTokenValueOrInherited(
+			!isNullOrUndefined(tokenValues[value]) || !value
+		);
+	}, [selectedViewportSize, tokenValues, value]);
+
 	return (
 		<div
 			className={classNames('page-editor__select-field', {
+				'custom': !isTokenValueOrInherited,
 				'has-value': value,
 			})}
 		>
@@ -81,86 +136,104 @@ export function AdvancedSelectField({
 			) : (
 				<InputWithIcon
 					field={field}
-					onBlur={(event) => {
-						if (!event.target.value) {
-							return;
-						}
-
-						onValueSelect(field.name, event.target.value);
-					}}
+					onBlur={handleInputBlur}
 					onChange={(event) => {
 						setNextValue(event.target.value);
 					}}
+					onKeyDown={handleInputKeyDown}
 					value={nextValue}
 				/>
 			)}
 
 			{value ? (
-				isTokenValueOrInherited && canDetachTokenValues ? (
-					<ClayButtonWithIcon
-						className="border-0 mb-0 ml-1"
-						displayType="secondary"
-						onClick={() => {
-							setIsTokenValueOrInherited(false);
-							setNextValue(tokenValues[value].value);
-							onValueSelect(field.name, tokenValues[value].value);
-						}}
-						small
-						symbol="chain-broken"
-						title={Liferay.Language.get('detach-token')}
-					/>
-				) : (
-					<ClayDropDown
-						active={active}
-						alignmentPosition={Align.BottomRight}
-						menuElementAttrs={{
-							containerProps: {
-								className: 'cadmin',
-							},
-						}}
-						onActiveChange={setActive}
-						trigger={
-							<ClayButtonWithIcon
-								className="border-0 ml-1"
-								displayType="secondary"
-								id={triggerId}
-								small
-								symbol="theme"
-								title={Liferay.Language.get(
-									'value-from-stylebook'
-								)}
-							/>
-						}
-					>
-						<ClayDropDown.ItemList aria-labelledby={triggerId}>
-							{options.map(({label, value}) => {
-								if (!value) {
-									return;
-								}
+				<>
+					{isTokenValueOrInherited && canDetachTokenValues ? (
+						<ClayButtonWithIcon
+							className="border-0 mb-0 page-editor__select-field__action-button"
+							displayType="secondary"
+							onClick={() =>
+								onSetValue({
+									isTokenValue: false,
+									value: tokenValues[value].value,
+								})
+							}
+							small
+							symbol="chain-broken"
+							title={Liferay.Language.get('detach-token')}
+						/>
+					) : (
+						<ClayDropDown
+							active={active}
+							alignmentPosition={Align.BottomRight}
+							menuElementAttrs={{
+								containerProps: {
+									className: 'cadmin',
+								},
+							}}
+							onActiveChange={setActive}
+							trigger={
+								<ClayButtonWithIcon
+									className="border-0"
+									displayType="secondary"
+									id={triggerId}
+									small
+									symbol="theme"
+									title={Liferay.Language.get(
+										'value-from-stylebook'
+									)}
+								/>
+							}
+						>
+							<ClayDropDown.ItemList aria-labelledby={triggerId}>
+								{options.map(({label, value}) => {
+									if (!value) {
+										return;
+									}
 
-								return (
-									<ClayDropDown.Item
-										key={value}
-										onClick={() => {
-											setActive(false);
-											setIsTokenValueOrInherited(true);
-											setNextValue(value);
-											onValueSelect(field.name, value);
-										}}
-									>
-										{label}
-									</ClayDropDown.Item>
-								);
-							})}
-						</ClayDropDown.ItemList>
-					</ClayDropDown>
-				)
+									return (
+										<ClayDropDown.Item
+											key={value}
+											onClick={() => {
+												setActive(false);
+												onSetValue({
+													isTokenValue: true,
+													value,
+												});
+											}}
+										>
+											{label}
+										</ClayDropDown.Item>
+									);
+								})}
+							</ClayDropDown.ItemList>
+						</ClayDropDown>
+					)}
+
+					<ClayButtonWithIcon
+						className="border-0 mb-0 page-editor__select-field__action-button"
+						displayType="secondary"
+						onClick={() =>
+							onSetValue({isTokenValue: true, value: null})
+						}
+						small
+						symbol="restore"
+						title={getResetLabelByViewport(selectedViewportSize)}
+					/>
+				</>
 			) : null}
 
 			{field.description ? (
 				<div className="mt-1 small text-secondary" id={helpTextId}>
 					{field.description}
 				</div>
+			) : null}
+
+			{error ? (
+				<span aria-live="assertive" className="sr-only">
+					{Liferay.Language.get(
+						'this-field-requires-a-valid-style-value'
+					)}
+				</span>
 			) : null}
 		</div>
 	);
@@ -225,7 +298,7 @@ const SingleSelectWithIcon = ({
 				.getComputedStyle(element)
 				.getPropertyValue(field.cssProperty)
 		);
-	}, [activeItemId, field.cssProperty, globalContext]);
+	}, [activeItemId, field.cssProperty, globalContext, value]);
 
 	return (
 		<div className="btn btn-unstyled m-0 p-0 page-editor__single-select-with-icon">
@@ -265,7 +338,7 @@ const SingleSelectWithIcon = ({
 	);
 };
 
-const InputWithIcon = ({field, onBlur, onChange, value}) => {
+const InputWithIcon = ({field, onBlur, onChange, onKeyDown, value}) => {
 	const inputId = useId();
 
 	return (
@@ -277,6 +350,7 @@ const InputWithIcon = ({field, onBlur, onChange, value}) => {
 					insetBefore={Boolean(field.icon)}
 					onBlur={onBlur}
 					onChange={onChange}
+					onKeyDown={onKeyDown}
 					sizing="sm"
 					value={value}
 				/>

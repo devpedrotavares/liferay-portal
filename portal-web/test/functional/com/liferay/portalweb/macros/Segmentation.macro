@@ -110,24 +110,6 @@ definition {
 			value1 = "${textValue}");
 	}
 
-	macro checkSegmentationDisabledWarningUserWithoutPermission {
-		AssertTextEquals.assertPartialText(
-			locator1 = "Message#ERROR_3",
-			value1 = "administrator to enable it.");
-	}
-
-	macro checkSegmentationReEnableWarning {
-		AssertTextEquals.assertPartialText(
-			locator1 = "Message#ERROR_3",
-			value1 = "To enable, go to Instance Settings.");
-	}
-
-	macro checkSegmentationReEnableWarningLink {
-		AssertClick.assertPartialTextClickAt(
-			locator1 = "Message#ERROR_3",
-			value1 = "To enable, go to Instance Settings.");
-	}
-
 	macro clickAssignSiteRolesOption {
 		Click(locator1 = "Segmentation#SEGMENT_OPTIONS_MENU");
 
@@ -142,23 +124,10 @@ definition {
 
 	macro clickToReEnableSegmentsWarningLink {
 		Click(locator1 = "Segmentation#ENABLE_SEGMENTS_INSTANCE_SETTINGS");
-
-		AssertVisible(
-			key_configurationName = "Segments Service",
-			key_configurationScope = "Virtual Instance Scope",
-			locator1 = "SystemSettings#SCOPED_CONFIGURATION_NAME");
 	}
 
 	macro closeSegmentationDisabledWarning {
-		Segmentation.checkSegmentationDisabledWarning();
-
 		Click(locator1 = "Icon#CLOSE");
-
-		if (IsElementPresent(locator1 = "Message#ERROR_3")) {
-			AssertTextNotEquals.assertNotPartialText(
-				locator1 = "Message#ERROR_3",
-				value1 = "Segmentation is disabled");
-		}
 	}
 
 	macro createExperienceWithSegment {
@@ -237,21 +206,24 @@ definition {
 	}
 
 	macro disableConfigurationAtSystemSettings {
-		ApplicationsMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Segments",
-			configurationName = "Segments Service",
-			configurationScope = "System Scope");
+		Segmentation.gotoSegmeentsService(key_portlet = "System Settings");
 
 		if (!(isSet(checkLabel))) {
-			var checkLabel = "Enable Segmentation";
+			var checkLabel = "Enable Segmentation,Enable Assign Roles by Segment";
 		}
 
-		Segmentation.disableCheckbox(key_checkLabel = "${checkLabel}");
+		for (var label : list "${checkLabel}") {
+			FormFields.disableCheckbox(fieldName = "${label}");
+		}
+
+		if (IsElementPresent(locator1 = "Button#UPDATE")) {
+			PortletEntry.update();
+		}
+		else if (IsElementPresent(locator1 = "Button#SAVE")) {
+			PortletEntry.save();
+		}
+
+		Alert.viewSuccessMessage();
 	}
 
 	macro disableSegmentationAtInstanceSettings {
@@ -265,15 +237,7 @@ definition {
 	}
 
 	macro disableSegmentationAtSystemSettings {
-		ApplicationsMenu.gotoPortlet(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "System Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Segments",
-			configurationName = "Segments Service",
-			configurationScope = "System Scope");
+		Segmentation.gotoSegmeentsService(key_portlet = "System Settings");
 
 		FormFields.disableCheckbox(fieldName = "Enable Segmentation");
 
@@ -563,7 +527,7 @@ definition {
 
 		SystemSettings.gotoConfiguration(
 			configurationCategory = "Segments",
-			configurationName = "Segments Analytics Cloud",
+			configurationName = "Analytics Cloud Segments",
 			configurationScope = "System Scope");
 
 		if (IsElementPresent(locator1 = "SystemSettings#SAVE_BUTTON_SEGMENTS_AC")) {

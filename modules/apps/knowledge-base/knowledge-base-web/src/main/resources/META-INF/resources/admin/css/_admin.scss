@@ -4,6 +4,9 @@ $controlMenuHeight: 56px;
 
 .knowledge-base-portlet-admin {
 	.knowledge-base-vertical-bar {
+		position: relative;
+		z-index: 1;
+
 		> div {
 			height: 100%;
 			min-height: calc(100vh - #{$controlMenuHeight});
@@ -13,11 +16,31 @@ $controlMenuHeight: 56px;
 			border-right: 1px solid $gray-300;
 		}
 
-		.tbar-light {
+		.knowledge-base-navigation-item-active {
 			background-color: $gray-200;
+			color: $dark;
+			font-weight: 600;
+		}
+
+		.sidebar {
+			border-right: 1px solid $secondary-l3;
+			box-shadow: none;
 
 			.sidebar-header .component-title {
 				font-size: 1rem;
+			}
+
+			.c-empty-state-title {
+				color: $gray-600;
+				font-weight: normal;
+			}
+		}
+
+		.tbar-light {
+			background-color: $gray-200;
+
+			.active {
+				background-color: $light-d1;
 			}
 		}
 	}

@@ -75,7 +75,9 @@ definition {
 		}
 
 		task ("And Then the blog comments are created properly") {
-			var blogCommentsText = CommentAPI.getBlogCommentsText(blogPostingId = "${blogPostingId}");
+			var blogCommentsText = CommentAPI.getFieldValueOfBlogPostingComments(
+				blogPostingId = "${blogPostingId}",
+				fieldName = "text");
 
 			TestUtils.assertEquals(
 				actual = "${blogCommentsText}",

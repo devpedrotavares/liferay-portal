@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.math.BigDecimal;
 
@@ -257,12 +258,12 @@ public class PendingCommerceOrderItemFDSDataProvider
 	private String[] _getCommerceOrderErrorMessages(
 		CommerceOrderItem commerceOrderItem,
 		Map<Long, List<CommerceOrderValidatorResult>>
-			commerceOrderValidatorResultMap) {
+			commerceOrderValidatorResultsMap) {
 
 		List<String> errorMessages = new ArrayList<>();
 
 		List<CommerceOrderValidatorResult> commerceOrderValidatorResults =
-			commerceOrderValidatorResultMap.get(
+			commerceOrderValidatorResultsMap.get(
 				commerceOrderItem.getCommerceOrderItemId());
 
 		for (CommerceOrderValidatorResult commerceOrderValidatorResult :
@@ -295,7 +296,7 @@ public class PendingCommerceOrderItemFDSDataProvider
 	}
 
 	private Map<Long, List<CommerceOrderValidatorResult>>
-			_getCommerceOrderValidatorResultMap(
+			_getcommerceOrderValidatorResultsMap(
 				List<CommerceOrderItem> commerceOrderItems, Locale locale)
 		throws Exception {
 
@@ -316,32 +317,28 @@ public class PendingCommerceOrderItemFDSDataProvider
 			HttpServletRequest httpServletRequest)
 		throws Exception {
 
-		if (commerceOrderItems.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		List<OrderItem> orderItems = new ArrayList<>();
-
 		Locale locale = _portal.getLocale(httpServletRequest);
 
-		for (CommerceOrderItem commerceOrderItem : commerceOrderItems) {
-			CommerceOrder commerceOrder = commerceOrderItem.getCommerceOrder();
+		Map<Long, List<CommerceOrderValidatorResult>>
+			commerceOrderValidatorResultsMap =
+				_getcommerceOrderValidatorResultsMap(
+					commerceOrderItems, locale);
 
-			CommerceOrderItemPrice commerceOrderItemPrice =
-				_commerceOrderPriceCalculation.getCommerceOrderItemPrice(
-					commerceOrder.getCommerceCurrency(), commerceOrderItem);
+		return TransformUtil.transform(
+			commerceOrderItems,
+			commerceOrderItem -> {
+				CommerceOrder commerceOrder =
+					commerceOrderItem.getCommerceOrder();
 
-			Map<Long, List<CommerceOrderValidatorResult>>
-				commerceOrderValidatorResultMap =
-					_getCommerceOrderValidatorResultMap(
-						commerceOrderItems, locale);
+				CommerceOrderItemPrice commerceOrderItemPrice =
+					_commerceOrderPriceCalculation.getCommerceOrderItemPrice(
+						commerceOrder.getCommerceCurrency(), commerceOrderItem);
 
-			orderItems.add(
-				new OrderItem(
+				return new OrderItem(
 					commerceOrderItem.getCPInstanceId(),
 					_formatDiscountAmount(commerceOrderItemPrice, locale),
 					_getCommerceOrderErrorMessages(
-						commerceOrderItem, commerceOrderValidatorResultMap),
+						commerceOrderItem, commerceOrderValidatorResultsMap),
 					_commerceOrderItemQuantityFormatter.format(
 						commerceOrderItem, locale),
 					_formatSubscriptionPeriod(commerceOrderItem, locale),
@@ -359,10 +356,8 @@ public class PendingCommerceOrderItemFDSDataProvider
 							(CommerceContext)httpServletRequest.getAttribute(
 								CommerceWebKeys.COMMERCE_CONTEXT)),
 						commerceOrderItem.getCPInstanceId()),
-					_formatFinalPrice(commerceOrderItemPrice, locale)));
-		}
-
-		return orderItems;
+					_formatFinalPrice(commerceOrderItemPrice, locale));
+			});
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -11,6 +11,11 @@
 
 <tbody>
 <tr>
+	<td>PAGE_TITLE</td>
+	<td>//h1[text()='${key_title}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>FIELDS_KORONEIKI</td>
 	<td>//div[contains(@data-field-name, '${field}')]//input[contains(@value, '${value}')]</td>
 	<td></td>
@@ -223,6 +228,11 @@
 <tr>
 	<td>TABLE_ENTRY</td>
 	<td>//tr[@data-qa-id='row'][contains(.,'${tableEntry}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>WELCOME_PAGE_USER_NAME</td>
+	<td>//*[contains(@id,'customer-portal-user-name') and text()='${key_userFirstName}!']</td>
 	<td></td>
 </tr>
 </tbody>

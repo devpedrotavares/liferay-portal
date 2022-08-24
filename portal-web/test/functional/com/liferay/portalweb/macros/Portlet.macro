@@ -518,12 +518,12 @@ definition {
 				AssertVisible(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
 			}
 			else if ("${siteTemplate}" == "true") {
-				MouseOver.mouseOverNotVisible(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
+				MouseOver.waitForMenuToggleJSMouseOver(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
 
 				Click(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
 			}
 			else if (isSet(portletIndex)) {
-				MouseOver.mouseOverNotVisible(
+				MouseOver.waitForMenuToggleJSMouseOver(
 					locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON_INDEX",
 					portletIndex = "${portletIndex}");
 
@@ -532,20 +532,15 @@ definition {
 					portletIndex = "${portletIndex}");
 			}
 			else {
-				MouseOver.mouseOverInvisible(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
+				MouseOver.waitForMenuToggleJSMouseOver(locator1 = "Portlet#SPECIFIC_PORTLET_SECTION");
 
-				if (IsNotVisible(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON")) {
-					Click.javaScriptClick(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
-				}
-				else {
-					Click.waitForMenuToggleJSClick(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
-				}
+				Click.javaScriptClick(locator1 = "Portlet#SPECIFIC_BORDERLESS_ELLIPSIS_ICON");
 			}
 		}
 		else {
-			MouseOver.mouseOverNotVisible(locator1 = "Portlet#OPTIONS_ICON");
+			MouseOver.waitForMenuToggleJSMouseOver(locator1 = "Portlet#PORTLET_SECTION");
 
-			Click.waitForMenuToggleJSClick(locator1 = "Portlet#OPTIONS_ICON");
+			Click.javaScriptClick(locator1 = "Portlet#OPTIONS_ICON");
 		}
 
 		if (isSet(portletOption)) {
@@ -585,6 +580,7 @@ definition {
 		WaitForLiferayEvent.initializeLiferayEventLog();
 
 		Portlet.gotoPortletOptions(
+			portletIndex = "${portletIndex}",
 			portletName = "${portletName}",
 			portletOption = "Configuration");
 

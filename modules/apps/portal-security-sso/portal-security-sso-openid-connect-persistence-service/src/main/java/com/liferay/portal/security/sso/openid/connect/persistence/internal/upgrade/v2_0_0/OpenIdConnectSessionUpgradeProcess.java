@@ -18,6 +18,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
+import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,12 +49,6 @@ public class OpenIdConnectSessionUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		alterTableAddColumn(
-			"OpenIdConnectSession", "authServerWellKnownURI",
-			"VARCHAR(256) null");
-		alterTableAddColumn(
-			"OpenIdConnectSession", "clientId", "VARCHAR(256) null");
-
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select openIdConnectSessionId, configurationPid from " +
 					"OpenIdConnectSession");
@@ -80,9 +76,24 @@ public class OpenIdConnectSessionUpgradeProcess extends UpgradeProcess {
 				}
 			}
 		}
+	}
 
-		alterTableDropColumn("OpenIdConnectSession", "configurationPid");
-		alterTableDropColumn("OpenIdConnectSession", "providerName");
+	@Override
+	protected UpgradeStep[] getPostUpgradeSteps() {
+		return new UpgradeStep[] {
+			UpgradeProcessFactory.dropColumns(
+				"OpenIdConnectSession", "configurationPid", "providerName")
+		};
+	}
+
+	@Override
+	protected UpgradeStep[] getPreUpgradeSteps() {
+		return new UpgradeStep[] {
+			UpgradeProcessFactory.addColumns(
+				"OpenIdConnectSession",
+				"authServerWellKnownURI VARCHAR(256) null",
+				"clientId VARCHAR(256) null")
+		};
 	}
 
 	private String _generateLocalWellKnownURI(

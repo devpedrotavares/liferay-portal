@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.upgrade.BaseSQLServerDatetimeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.subscription.service.SubscriptionLocalService;
 
@@ -65,8 +66,8 @@ public class CalendarServiceUpgradeStepRegistrator
 	public void register(Registry registry) {
 		registry.register(
 			"0.0.1", "1.0.0",
-			new com.liferay.calendar.internal.upgrade.v1_0_0.
-				CalendarBookingUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"CalendarBooking", "description", "TEXT null"));
 
 		registry.register(
 			"1.0.0", "1.0.1",
@@ -141,13 +142,15 @@ public class CalendarServiceUpgradeStepRegistrator
 
 		registry.register(
 			"4.1.0", "4.1.1",
-			new com.liferay.calendar.internal.upgrade.v4_1_1.
-				CalendarNotificationTemplateUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"CalendarNotificationTemplate", "notificationTypeSettings",
+				"VARCHAR(150) null"));
 
 		registry.register(
 			"4.1.1", "4.1.2",
-			new com.liferay.calendar.internal.upgrade.v4_1_2.
-				CalendarNotificationTemplateUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"CalendarNotificationTemplate", "notificationTypeSettings",
+				"VARCHAR(200) null"));
 
 		registry.register("4.1.2", "4.1.3", new DummyUpgradeStep());
 

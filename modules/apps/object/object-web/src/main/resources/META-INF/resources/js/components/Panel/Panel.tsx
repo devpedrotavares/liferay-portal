@@ -14,11 +14,15 @@
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import ClayIcon from '@clayui/icon';
+import {ClayTooltipProvider} from '@clayui/tooltip';
 import classNames from 'classnames';
-import React, {useContext} from 'react';
+import React from 'react';
 
 import {BoxType} from '../Layout/types';
-import PanelContextProvider, {PanelContext, TYPES} from './context';
+import PanelContextProvider, {
+	TYPES,
+	usePanelContext,
+} from './objectPanelContext';
 
 import './Panel.scss';
 
@@ -42,7 +46,7 @@ const Panel: React.FC<React.HTMLAttributes<HTMLElement>> & {
 interface IPanelBodyProps extends React.HTMLAttributes<HTMLElement> {}
 
 const PanelBody: React.FC<IPanelBodyProps> = ({children, className}) => {
-	const [{expanded}] = useContext(PanelContext);
+	const [{expanded}] = usePanelContext();
 
 	return (
 		<>
@@ -73,7 +77,7 @@ const PanelHeader: React.FC<IPanelHeaderProps> = ({
 	title,
 	type,
 }) => {
-	const [{expanded}, dispatch] = useContext(PanelContext);
+	const [{expanded}, dispatch] = usePanelContext();
 
 	return (
 		<div
@@ -95,18 +99,26 @@ const PanelHeader: React.FC<IPanelHeaderProps> = ({
 					{title}
 				</h3>
 
-				{type === 'categorization' && (
-					<span
-						className="ml-2"
-						title={Liferay.Language.get(
-							'visibility-and-permissions-can-affect-how-the-categorization-block-will-be-displayed'
-						)}
-					>
-						<ClayIcon
-							className="object-admin-panel__tooltip-icon"
-							symbol="info-panel-open"
-						/>
-					</span>
+				{(type === 'categorization' || type === 'comments') && (
+					<ClayTooltipProvider>
+						<span
+							className="ml-2"
+							title={
+								type === 'categorization'
+									? Liferay.Language.get(
+											'visibility-and-permissions-can-affect-how-the-categorization-block-will-be-displayed'
+									  )
+									: Liferay.Language.get(
+											'visibility-and-permissions-can-affect-how-the-comments-block-is-displayed'
+									  )
+							}
+						>
+							<ClayIcon
+								className="object-admin-panel__tooltip-icon"
+								symbol="info-panel-open"
+							/>
+						</span>
+					</ClayTooltipProvider>
 				)}
 
 				{contentLeft && (

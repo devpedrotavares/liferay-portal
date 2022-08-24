@@ -1,11 +1,5 @@
 definition {
 
-	macro assertCreatedRoutine {
-		AssertElementPresent(
-			key_projectName = "${key_name}",
-			locator1 = "Testray#PROJECT_NAME_BUTTON");
-	}
-
 	macro assertItemsPerPageValue {
 		AssertElementPresent(
 			key_value = "${itemValue}",
@@ -33,7 +27,13 @@ definition {
 	macro assertProjectName {
 		AssertElementPresent(
 			key_projectName = "${key_name}",
-			locator1 = "Testray#PROJECT_NAME_BUTTON");
+			locator1 = "Testray#PROJECT_NAME");
+	}
+
+	macro assertProjectNotPresent {
+		AssertElementPresent(
+			key_projectName = "${key_name}",
+			locator1 = "Testray#PROJECT_NAME");
 	}
 
 	macro assertProjectTitleHeader {
@@ -48,12 +48,20 @@ definition {
 			locator1 = "Testray#ITEMS_PER_PAGE_DESCRIPTION");
 	}
 
-	macro changeItemsPerPage {
+	macro changePagination {
 		Click(locator1 = "Testray#ITEMS_PER_PAGE_BUTTON");
 
 		Click(
-			key_itemvalue = "${itemValue}",
-			locator1 = "Testray#ITEMS_PER_PAGE_BUTTON_DROPDOWN");
+			key_value = "${valuePagination}",
+			locator1 = "Testray#ITEMS_PER_PAGE_SELECT");
+	}
+
+	macro changePaginationInModal {
+		Click(locator1 = "Testray#ITEMS_PER_PAGE_BUTTON_ON_MODAL");
+
+		Click(
+			key_value = "${valuePagination}",
+			locator1 = "Testray#ITEMS_PER_PAGE_SELECT");
 	}
 
 	macro clickOnModalNumber {
@@ -79,7 +87,7 @@ definition {
 
 		Type(
 			locator1 = "Testray#NEW_DESCRIPTION_PROJECT",
-			value1 = "ci:test");
+			value1 = "${description}");
 
 		Click(locator1 = "TestrayManage#SAVE_BUTTON");
 	}
@@ -132,6 +140,34 @@ definition {
 		Click(locator1 = "Button#SAVE");
 	}
 
+	macro deleteProject {
+		TestrayLayout.clickResultsOnSidebar();
+
+		while (IsElementPresent(key_projectName = "Project_", locator1 = "Testray#PROJECT_NAME")) {
+			MouseOver.mouseOverNotVisible(
+				key_value = "${valueName}",
+				locator1 = "TestrayManage#OPTIONS_NAME");
+
+			Click(locator1 = "TestrayDropdown#DROPDOWN_ITEM");
+
+			MenuItem.clickNoError(menuItem = "Delete");
+		}
+	}
+
+	macro editProjectTestray {
+		SelectFrame(locator1 = "Testray#MODAL_BODY");
+
+		Type(
+			locator1 = "TestrayManage#NEW_OPTION_NAME",
+			value1 = "${name}");
+
+		Type(
+			locator1 = "Testray#NEW_DESCRIPTION_PROJECT",
+			value1 = "${description}");
+
+		Click(locator1 = "TestrayManage#SAVE_BUTTON");
+	}
+
 	macro enableTestrayTasksInPortlet {
 		Refresh();
 
@@ -151,6 +187,10 @@ definition {
 		CreateObject.saveObject();
 	}
 
+	macro gotoAddProject {
+		Click(locator1 = "Testray#ADD_PROJECT");
+	}
+
 	macro goToNextAndPreviousPage {
 		Click(
 			key_pageDirection = "${pageDirection}",
@@ -160,7 +200,7 @@ definition {
 	macro goToProjectPage {
 		Click(
 			key_projectName = "${projectName}",
-			locator1 = "Testray#PROJECT_NAME_BUTTON");
+			locator1 = "Testray#PROJECT_NAME");
 	}
 
 	macro goToTestflow {
@@ -215,6 +255,20 @@ definition {
 		Click(locator1 = "Button#MODAL_DELETE");
 
 		Alert.viewSuccessMessage();
+	}
+
+	macro typeProjectsField {
+		SelectFrame(locator1 = "Testray#MODAL_BODY");
+
+		Type(
+			locator1 = "TestrayManage#NEW_OPTION_NAME",
+			value1 = "${projectName}");
+
+		Type(
+			locator1 = "Testray#NEW_DESCRIPTION_PROJECT",
+			value1 = "${description}");
+
+		Click(locator1 = "TestrayManage#SAVE_BUTTON");
 	}
 
 	macro viewOverviewTab {

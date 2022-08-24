@@ -549,6 +549,23 @@ public abstract class TopLevelBuild extends BaseBuild {
 	}
 
 	@Override
+	public String getResult() {
+		if ((this.result == null) && (getBuildURL() != null)) {
+			JSONObject buildJSONObject = getBuildJSONObject("result");
+
+			String result = buildJSONObject.optString("result");
+
+			if (JenkinsResultsParserUtil.isNullOrEmpty(result)) {
+				result = null;
+			}
+
+			setResult(result);
+		}
+
+		return this.result;
+	}
+
+	@Override
 	public String getStatusSummary() {
 		long currentTimeMillis =
 			JenkinsResultsParserUtil.getCurrentTimeMillis();
@@ -1111,7 +1128,7 @@ public abstract class TopLevelBuild extends BaseBuild {
 
 		String result = getResult();
 
-		if (result.equals("SUCCESS")) {
+		if (Objects.equals(result, "SUCCESS")) {
 			return null;
 		}
 
@@ -1120,12 +1137,12 @@ public abstract class TopLevelBuild extends BaseBuild {
 			Dom4JUtil.getNewAnchorElement(
 				getBuildURL(), null, getDisplayName()));
 
-		if (result.equals("ABORTED")) {
+		if (Objects.equals(result, "ABORTED")) {
 			messageElement.add(
 				Dom4JUtil.toCodeSnippetElement("Build was aborted"));
 		}
 
-		if (result.equals("FAILURE")) {
+		if (Objects.equals(result, "FAILURE")) {
 			Element failureMessageElement = getFailureMessageElement();
 
 			if (failureMessageElement != null) {
@@ -1501,7 +1518,7 @@ public abstract class TopLevelBuild extends BaseBuild {
 
 		String result = getResult();
 
-		if ((result != null) && result.equals("SUCCESS")) {
+		if (Objects.equals(result, "SUCCESS")) {
 			successCount++;
 		}
 
@@ -1570,9 +1587,7 @@ public abstract class TopLevelBuild extends BaseBuild {
 		Element jobSummaryListElement = Dom4JUtil.getNewElement("ul");
 
 		for (Build build : builds) {
-			String result = build.getResult();
-
-			if (result.equals("SUCCESS") == success) {
+			if (Objects.equals(getResult(), "SUCCESS") == success) {
 				count++;
 
 				if (count > _MAX_JOB_SUMMARY_LIST_SIZE) {
@@ -1731,9 +1746,7 @@ public abstract class TopLevelBuild extends BaseBuild {
 
 		int successCount = getDownstreamBuildCountByResult("SUCCESS");
 
-		String result = getResult();
-
-		if ((result != null) && result.equals("SUCCESS")) {
+		if (Objects.equals(getResult(), "SUCCESS")) {
 			successCount++;
 		}
 

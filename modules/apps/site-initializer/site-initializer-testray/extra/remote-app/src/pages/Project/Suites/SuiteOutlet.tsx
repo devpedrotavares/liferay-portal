@@ -15,41 +15,61 @@
 import {useEffect} from 'react';
 import {Outlet, useOutletContext, useParams} from 'react-router-dom';
 
-import {useHeader} from '../../../hooks';
 import {useFetch} from '../../../hooks/useFetch';
+import useHeader from '../../../hooks/useHeader';
 import i18n from '../../../i18n';
-import {TestraySuite} from '../../../services/rest';
+import {TestrayProject, TestraySuite} from '../../../services/rest';
+import useSuiteActions from './useSuiteActions';
 
 const SuiteOutlet = () => {
-	const {projectId, suiteId} = useParams();
-	const {testrayProject}: any = useOutletContext();
-	const {setHeading} = useHeader();
+	const {actions} = useSuiteActions({isHeaderActions: true});
+	const {suiteId} = useParams();
+	const {
+		testrayProject,
+	}: {testrayProject: TestrayProject} = useOutletContext();
 
-	const {data: testraySuite} = useFetch<TestraySuite>(`/suites/${suiteId}`);
+	const {data: testraySuite, mutate} = useFetch<TestraySuite>(
+		`/suites/${suiteId}`
+	);
+
+	const {setHeaderActions, setHeading} = useHeader({
+		timeout: 100,
+	});
 
 	useEffect(() => {
-		if (testraySuite && testrayProject) {
-			setTimeout(() => {
-				setHeading([
-					{
-						category: i18n.translate('project').toUpperCase(),
-						path: `/project/${testrayProject.id}/suites`,
-						title: testrayProject.name,
-					},
-					{
-						category: i18n.translate('suite').toUpperCase(),
-						title: testraySuite.name,
-					},
-				]);
-			});
-		}
-	}, [testraySuite, testrayProject, setHeading]);
+		setHeaderActions({actions, item: testraySuite, mutate});
+	}, [actions, mutate, setHeaderActions, testraySuite]);
 
-	if (!testraySuite) {
-		return null;
+	useEffect(() => {
+		if (testrayProject && testraySuite) {
+			setHeading([
+				{
+					category: i18n.translate('project').toUpperCase(),
+					path: `/project/${testrayProject.id}/suites`,
+					title: testrayProject.name,
+				},
+				{
+					category: i18n.translate('suite').toUpperCase(),
+					path: `/project/${testrayProject.id}/suites/${testraySuite.id}`,
+					title: testraySuite.name,
+				},
+			]);
+		}
+	}, [setHeading, testrayProject, testraySuite]);
+
+	if (testrayProject && testraySuite) {
+		return (
+			<Outlet
+				context={{
+					mutateTestraySuite: mutate,
+					testrayProject,
+					testraySuite,
+				}}
+			/>
+		);
 	}
 
-	return <Outlet context={{projectId, testraySuite}} />;
+	return null;
 };
 
 export default SuiteOutlet;

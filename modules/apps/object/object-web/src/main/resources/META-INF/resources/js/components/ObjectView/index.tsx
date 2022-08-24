@@ -20,15 +20,13 @@ import {
 	openToast,
 	saveAndReload,
 } from '@liferay/object-js-components-web';
-import {fetch} from 'frontend-js-web';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
-import {HEADERS} from '../../utils/constants';
 import BasicInfoScreen from './BasicInfoScreen/BasicInfoScreen';
 import {DefaultSortScreen} from './DefaultSortScreen/DefaultSortScreen';
 import {FilterScreen} from './FilterScreen/FilterScreen';
 import ViewBuilderScreen from './ViewBuilderScreen/ViewBuilderScreen';
-import ViewContext, {TYPES, ViewContextProvider} from './context';
+import {TYPES, ViewContextProvider, useViewContext} from './objectViewContext';
 import {TObjectView, TWorkflowStatus} from './types';
 
 const TABS = [
@@ -51,9 +49,7 @@ const TABS = [
 ];
 
 const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
-	const [{isViewOnly, objectView, objectViewId}, dispatch] = useContext(
-		ViewContext
-	);
+	const [{isViewOnly, objectView, objectViewId}, dispatch] = useViewContext();
 
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -171,19 +167,11 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 		}
 
 		if (!objectView.defaultObjectView || objectViewColumns.length !== 0) {
-			const response = await fetch(
-				`/o/object-admin/v1.0/object-views/${objectViewId}`,
-				{
-					body: JSON.stringify(newObjectView),
-					headers: HEADERS,
-					method: 'PUT',
-				}
-			);
-
-			if (response.status === 401) {
-				window.location.reload();
-			}
-			else if (response.ok) {
+			try {
+				await API.save(
+					`/o/object-admin/v1.0/object-views/${objectViewId}`,
+					newObjectView
+				);
 				saveAndReload();
 
 				openToast({
@@ -192,13 +180,9 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 					),
 				});
 			}
-			else {
-				const {
-					title = Liferay.Language.get('an-error-occurred'),
-				} = (await response.json()) as any;
-
+			catch (error) {
 				openToast({
-					message: title,
+					message: (error as Error).message,
 					type: 'danger',
 				});
 			}
@@ -242,12 +226,14 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 	);
 };
 interface ICustomViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
+	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
 	objectViewId: string;
 	workflowStatusJSONArray: TWorkflowStatus[];
 }
 
 const CustomViewWrapper: React.FC<ICustomViewWrapperProps> = ({
+	filterOperators,
 	isViewOnly,
 	objectViewId,
 	workflowStatusJSONArray,
@@ -255,6 +241,7 @@ const CustomViewWrapper: React.FC<ICustomViewWrapperProps> = ({
 	return (
 		<ViewContextProvider
 			value={{
+				filterOperators,
 				isViewOnly,
 				objectViewId,
 				workflowStatusJSONArray,

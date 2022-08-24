@@ -47,6 +47,10 @@ public interface PortalCacheManager<K extends Serializable, V> {
 			String portalCacheName, boolean mvcc)
 		throws PortalCacheException;
 
+	public PortalCache<K, V> getPortalCache(
+			String portalCacheName, boolean mvcc, boolean sharded)
+		throws PortalCacheException;
+
 	public Set<PortalCacheManagerListener> getPortalCacheManagerListeners();
 
 	public String getPortalCacheManagerName();
@@ -60,6 +64,8 @@ public interface PortalCacheManager<K extends Serializable, V> {
 		PortalCacheManagerListener portalCacheManagerListener);
 
 	public void removePortalCache(String portalCacheName);
+
+	public void removePortalCaches(long companyId);
 
 	public boolean unregisterPortalCacheManagerListener(
 		PortalCacheManagerListener portalCacheManagerListener);

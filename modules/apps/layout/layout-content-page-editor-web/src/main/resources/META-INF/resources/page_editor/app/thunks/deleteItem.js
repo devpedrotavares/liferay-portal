@@ -26,8 +26,8 @@ import LayoutService from '../services/LayoutService';
 import {CACHE_KEYS, getCacheItem, getCacheKey} from '../utils/cache';
 import {
 	FORM_ERROR_TYPES,
-	getFormValidationData,
-} from '../utils/getFormValidationData';
+	getFormErrorDescription,
+} from '../utils/getFormErrorDescription';
 import getFragmentEntryLinkIdsFromItemId from '../utils/getFragmentEntryLinkIdsFromItemId';
 import {hasFormParent} from '../utils/hasFormParent';
 import hasRequiredInputChild from '../utils/hasRequiredInputChild';
@@ -48,19 +48,19 @@ export default function deleteItem({itemId, selectItem = () => {}}) {
 			onNetworkStatus: dispatch,
 			segmentsExperienceId,
 		})
-			.then(({portletIds = [], layoutData}) => {
+			.then(({portletIds = [], layoutData: nextLayoutData}) => {
 				selectItem(null);
 
 				const fragmentEntryLinkIds = getFragmentEntryLinkIdsFromItemId({
 					itemId,
-					layoutData,
+					layoutData: nextLayoutData,
 				});
 
 				dispatch(
 					deleteItemAction({
 						fragmentEntryLinkIds,
 						itemId,
-						layoutData,
+						layoutData: nextLayoutData,
 						portletIds,
 					})
 				);
@@ -137,7 +137,11 @@ function findPortletIds(itemId, layoutData, fragmentEntryLinks) {
 function maybeShowAlert(layoutData, itemId, fragmentEntryLinks) {
 	const item = layoutData?.items?.[itemId];
 
-	if (!item || !hasFormParent(item, layoutData)) {
+	if (
+		!item ||
+		item.type === LAYOUT_DATA_ITEM_TYPES.form ||
+		!hasFormParent(item, layoutData)
+	) {
 		return null;
 	}
 
@@ -173,7 +177,7 @@ function maybeShowAlert(layoutData, itemId, fragmentEntryLinks) {
 				FREEMARKER_FRAGMENT_ENTRY_PROCESSOR
 			);
 
-			const {message} = getFormValidationData({
+			const {message} = getFormErrorDescription({
 				name: getFieldLabel(fieldId, formFields),
 				type: FORM_ERROR_TYPES.deletedField,
 			});
@@ -191,7 +195,7 @@ function maybeShowAlert(layoutData, itemId, fragmentEntryLinks) {
 				layoutData,
 			})
 		) {
-			const {message} = getFormValidationData({
+			const {message} = getFormErrorDescription({
 				type: FORM_ERROR_TYPES.deletedFragment,
 			});
 

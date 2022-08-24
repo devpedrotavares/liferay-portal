@@ -14,6 +14,7 @@
 
 import ClayButton from '@clayui/button';
 import ClayModal from '@clayui/modal';
+import {Observer} from '@clayui/modal/lib/types';
 import {
 	API,
 	AutoComplete,
@@ -30,12 +31,6 @@ import React, {
 	useState,
 } from 'react';
 
-import {
-	DATE_OPERATORS,
-	NUMERIC_OPERATORS,
-	PICKLIST_OPERATORS,
-} from '../utils/filterOperators';
-
 import './ModalAddFilter.scss';
 
 const REQUIRED_MSG = Liferay.Language.get('required');
@@ -46,6 +41,7 @@ export function ModalAddFilter({
 	disableDateValues,
 	editingFilter,
 	editingObjectFieldName,
+	filterOperators,
 	header,
 	objectFields,
 	observer,
@@ -95,7 +91,7 @@ export function ModalAddFilter({
 		const valuesArray =
 			definition && filterType ? definition[filterType] : null;
 
-		const editingFilterType = PICKLIST_OPERATORS.find(
+		const editingFilterType = filterOperators.picklistOperators.find(
 			(filterType) => filterType.value === currentFilterColumn?.filterType
 		);
 
@@ -138,7 +134,7 @@ export function ModalAddFilter({
 		const valuesArray =
 			definition && filterType ? definition[filterType] : null;
 
-		const editingFilterType = PICKLIST_OPERATORS.find(
+		const editingFilterType = filterOperators.picklistOperators.find(
 			(filterType) => filterType.value === currentFilterColumn?.filterType
 		);
 
@@ -311,11 +307,11 @@ export function ModalAddFilter({
 
 		if (editingFilter) {
 			onSave(
+				editingObjectFieldName,
 				selectedFilterBy?.name,
 				selectedFilterBy?.label,
 				selectedFilterBy?.businessType,
 				selectedFilterType?.value,
-				editingObjectFieldName,
 				selectedFilterBy?.name === 'status' ||
 					selectedFilterBy?.businessType === 'Picklist'
 					? checkedItems
@@ -325,11 +321,11 @@ export function ModalAddFilter({
 		}
 		else {
 			onSave(
+				selectedFilterBy?.name!,
 				selectedFilterBy?.name,
 				selectedFilterBy?.label,
 				selectedFilterBy?.businessType,
 				selectedFilterType?.value,
-				selectedFilterBy?.name,
 				selectedFilterBy?.name === 'status' ||
 					selectedFilterBy?.businessType === 'Picklist'
 					? checkedItems
@@ -384,8 +380,8 @@ export function ModalAddFilter({
 						options={
 							selectedFilterBy?.businessType === 'Integer' ||
 							selectedFilterBy?.businessType === 'LongInteger'
-								? NUMERIC_OPERATORS
-								: PICKLIST_OPERATORS
+								? filterOperators.numericOperators
+								: filterOperators.picklistOperators
 						}
 						required
 						value={selectedFilterType?.label ?? ''}
@@ -400,7 +396,7 @@ export function ModalAddFilter({
 							onChange={(target: LabelValueObject) =>
 								setSelectedFilterType(target)
 							}
-							options={DATE_OPERATORS}
+							options={filterOperators.dateOperators}
 							required
 							value={selectedFilterType?.label ?? ''}
 						/>
@@ -511,16 +507,17 @@ interface IProps {
 	disableDateValues?: boolean;
 	editingFilter: boolean;
 	editingObjectFieldName: string;
+	filterOperators: TFilterOperators;
 	header: string;
 	objectFields: ObjectField[];
-	observer: any;
+	observer: Observer;
 	onClose: () => void;
 	onSave: (
+		objectFieldName: string,
 		filterBy?: string,
 		fieldLabel?: LocalizedValue<string>,
 		objectFieldBusinessType?: string,
 		filterType?: string,
-		objectFieldName?: string,
 		valueList?: IItem[],
 		value?: string
 	) => void;
@@ -542,12 +539,12 @@ type TErrors = {
 
 type TCurrentFilter = {
 	definition: {[key: string]: string[]} | null;
-	fieldLabel: string;
-	filterBy: string;
+	fieldLabel?: string;
+	filterBy?: string;
 	filterType: string | null;
 	label: TName;
 	objectFieldBusinessType?: string;
-	objectFieldName: string;
+	objectFieldName?: string;
 	value?: string;
 	valueList?: LabelValueObject[];
 };

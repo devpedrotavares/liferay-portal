@@ -685,9 +685,11 @@ definition {
 			key_type = "One to Many",
 			locator1 = "ObjectAdmin#SELECT_RELATIONSHIPS_TYPE_OPTION");
 
-		Select(
-			locator1 = "ObjectAdmin#SELECT_OBJECT_RELATIONSHIP",
-			value1 = "CustomObject13");
+		Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
+
+		Click(
+			key_columnOption = "Custom Object 13",
+			locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
 
 		Button.clickCancel();
 
@@ -780,8 +782,6 @@ definition {
 	@description = "LPS-135397 - Verify it is possible to collapse and expand a block of fields"
 	@priority = "4"
 	test CanCollapseAndExpandBlock {
-		property portal.upstream = "quarantine";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 16",
 			objectName = "CustomObject16",
@@ -1041,7 +1041,7 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
-			object = "ObjectB26",
+			object = "Object B 26",
 			type = "Many to Many");
 
 		AssertElementPresent(
@@ -1070,7 +1070,7 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
-			object = "CustomObjectB28",
+			object = "Custom Object B 28",
 			type = "One to Many");
 
 		AssertElementPresent(
@@ -1352,8 +1352,6 @@ definition {
 	@description = "LPS-135401 - Verify that it is possible to delete a relation with an entry on the Relationship tab"
 	@priority = "5"
 	test CanDeleteRelationOnRelationshipTab {
-		property portal.acceptance = "quarantine";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 141661",
 			objectName = "CustomObject141661",
@@ -1433,7 +1431,7 @@ definition {
 
 		ObjectPortlet.viewEntryDetails(entry = "Entry A");
 
-		CreateObject.deleteEntryInRelationshipTab();
+		CreateObject.deleteEntryInRelationshipTab(kebabOption = "Delete");
 
 		ObjectPortlet.assertEntryNotPresent(entry = "Entry B");
 
@@ -1472,6 +1470,60 @@ definition {
 		ObjectAdmin.selectKebabMenuOption(kebabOption = "Delete");
 
 		ObjectAdmin.assertNoResultsWereFound();
+	}
+
+	@description = "LPS-151877 - Verify that when the admin user deletes the relationship between Account and the Object, the Account Restriction is disabled and the admin user can edit the Object"
+	@priority = "4"
+	test CanDisableAccountRestriction {
+		task ("Add Custom Object (via API)") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 156824",
+				objectName = "CustomObject156824",
+				pluralLabelName = "Custom Objects 156824");
+		}
+
+		task ("Add Relationship Account to Custom Object (via API)") {
+			ObjectAdmin.addObjectRelationshipViaAPI(
+				objectName_1 = "AccountEntry",
+				objectName_2 = "CustomObject156824",
+				relationshipLabel = "RelationshipAccount",
+				relationshipName = "relationshipAccount",
+				relationshipType = "oneToMany");
+		}
+
+		task ("Go to Custom Object and active Account Restriction") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 156824");
+
+			CreateObject.activeToogleAccountRestriction();
+
+			CreateObject.selectAccountRestrictedField(accountRestrictedField = "RelationshipAccount");
+
+			CreateObject.saveObject();
+		}
+
+		task ("Go to Relationship tab and delete Relationship") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectSystemObject(label = "Account");
+
+			ObjectAdmin.gotoRelationshipsTab();
+
+			ObjectAdmin.deleteRelationshipViaUI(
+				relationshipLabel = "RelationshipAccount",
+				relationshipName = "relationshipAccount");
+		}
+
+		task ("Go to Custom Object and assert that it's not possible to select Account Restriction") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 156824");
+
+			CreateObject.assertAccountRestrictedFieldDisabled();
+
+			CreateObject.viewToogleAccountRestrictionDisabled();
+		}
 	}
 
 	@description = "LPS-135390 - Verify it is not possible to add an Object without the Add Object Definition permission"
@@ -1659,12 +1711,12 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
-			object = "CustomObject41",
+			object = "Custom Object 41",
 			type = "One to Many");
 
 		AssertTextEquals(
 			locator1 = "Message#ERROR",
-			value1 = "Duplicate name relationship");
+			value1 = "An error occurred.");
 	}
 
 	@description = "LPS-135390 - Verify it is not possible to delete an Object without the Delete permission"
@@ -1835,7 +1887,7 @@ definition {
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
 			name = "",
-			object = "CustomObject49",
+			object = "Custom Object 49",
 			type = "One to Many");
 
 		FieldBase.assertRequiredFieldErrorPresent(fieldLabel = "Name");
@@ -1878,7 +1930,7 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
-			object = "CustomObject51");
+			object = "Custom Object 51");
 
 		FieldBase.assertRequiredFieldErrorPresent(fieldLabel = "Type");
 	}
@@ -2512,6 +2564,172 @@ definition {
 		ObjectAdmin.openObjectAdmin();
 
 		CreateObject.assertCustomObjectNotPresent(labelName = "Custom Object 71");
+	}
+
+	@description = "LPS-151877 - Verify that, when adding a new Object, the admin user is able to restrict users to only see entries from an account that they are part of"
+	@priority = "5"
+	test CanOnlySeeEntriesFromAccount {
+		property portal.acceptance = "true";
+
+		task ("Add Accounts and Users related itself (via API)") {
+			JSONAccountEntry.addAccountEntry(
+				accountEntryName = "Public Account",
+				accountEntryType = "Business");
+
+			JSONAccountEntryUser.addAccountEntryUser(
+				accountEntryName = "Public Account",
+				userEmailAddress = "userea1@liferay.com",
+				userFirstName = "userfn1",
+				userLastName = "userln1",
+				userScreenName = "usersn1");
+
+			JSONAccountEntry.addAccountEntry(
+				accountEntryName = "Private Account",
+				accountEntryType = "Business");
+
+			JSONAccountEntryUser.addAccountEntryUser(
+				accountEntryName = "Private Account",
+				userEmailAddress = "userea2@liferay.com",
+				userFirstName = "userfn2",
+				userLastName = "userln2",
+				userScreenName = "usersn2");
+		}
+
+		task ("Add Custom Object (via API)") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object",
+				objectName = "CustomObject",
+				pluralLabelName = "Custom Objects");
+		}
+
+		task ("Add Relationship Account to Custom Object (via API)") {
+			ObjectAdmin.addObjectRelationshipViaAPI(
+				objectName_1 = "AccountEntry",
+				objectName_2 = "CustomObject",
+				relationshipLabel = "RelationshipAccount",
+				relationshipName = "relationshipAccount",
+				relationshipType = "oneToMany");
+		}
+
+		task ("Go to Account and change title field") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectSystemObject(label = "Account");
+
+			CreateObject.selectTitleField(fieldLabel = "Name");
+
+			CreateObject.saveObject();
+		}
+
+		task ("Go to Custom Object and active Account Restriction") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object");
+
+			CreateObject.activeToogleAccountRestriction();
+
+			CreateObject.saveObject();
+
+			Alert.viewErrorMessage(errorMessage = "Error:If activated, the account restriction field must be selected.");
+
+			CreateObject.activeToogleAccountRestriction();
+
+			CreateObject.selectAccountRestrictedField(accountRestrictedField = "RelationshipAccount");
+
+			Button.clickPublish();
+		}
+
+		task ("Define Regular Role for new User") {
+			JSONRole.addRegularRole(
+				roleKey = "Regular Role",
+				roleTitle = "Regular Role");
+
+			JSONRole.assignRoleToUser(
+				roleTitle = "Regular Role",
+				userEmailAddress = "userea1@liferay.com");
+
+			JSONRole.assignRoleToUser(
+				roleTitle = "Regular Role",
+				userEmailAddress = "userea2@liferay.com");
+
+			Role.openRolesAdmin();
+
+			Role.definePermissionCP(
+				permissionDefinitionKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS_APPLICATION_PERMISSION_ACCESS_CONTROL_PANEL_CHECKBOX",
+				permissionDefinitionValue = "",
+				permissionNavigationKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS",
+				permissionNavigationValue = "Custom Objects",
+				roleTitle = "Regular Role",
+				roleType = "Regular");
+
+			Role.openRolesAdmin();
+
+			Role.definePermissionCP(
+				permissionDefinitionKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS_RESOURCE_PERMISSIONS_VIEW_CHECKBOX",
+				permissionDefinitionValue = "",
+				permissionNavigationKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS",
+				permissionNavigationValue = "Custom Objects",
+				roleTitle = "Regular Role",
+				roleType = "Regular");
+
+			Role.openRolesAdmin();
+
+			Role.definePermissionCP(
+				permissionDefinitionKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS_RESOURCE_PERMISSION_ADD_ENTRY_CHECKBOX",
+				permissionDefinitionValue = "",
+				permissionNavigationKey = "CONTROL_PANEL_CUSTOM_OBJECTS_PERMISSIONS",
+				permissionNavigationValue = "Custom Objects",
+				roleTitle = "Regular Role",
+				roleType = "Regular");
+		}
+
+		task ("Logout and go to another User") {
+			Navigator.openURL();
+
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea1@liferay.com",
+				userLoginFullName = "userfn1 userln1");
+		}
+
+		task ("Go to Custom Object entries and assert that it's possible to view only Public Account") {
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject");
+
+			LexiconEntry.gotoAdd();
+
+			ObjectPortlet.assertRelationshipEntrySearchResultsNotPresent(entry = "Private Account");
+
+			ObjectPortlet.chooseEntryOnRelationshipField(entryOption = "Public Account");
+
+			Button.clickSave();
+
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject");
+
+			ObjectPortlet.viewEntry(entry = "Public Account");
+		}
+
+		task ("Logout and go to another User") {
+			Navigator.openURL();
+
+			User.logoutAndLoginPG(
+				userLoginEmailAddress = "userea2@liferay.com",
+				userLoginFullName = "userfn2 userln2");
+		}
+
+		task ("Go to Custom Object entries and assert that it's possible to view only Private Account") {
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject");
+
+			LexiconEntry.gotoAdd();
+
+			ObjectPortlet.assertRelationshipEntrySearchResultsNotPresent(entry = "Public Account");
+
+			ObjectPortlet.chooseEntryOnRelationshipField(entryOption = "Private Account");
+
+			Button.clickSave();
+
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject");
+
+			ObjectPortlet.viewEntry(entry = "Private Account");
+		}
 	}
 
 	@description = "LPS-135549 - Verify it is possible to Publish a Custom Object"
@@ -4735,7 +4953,8 @@ definition {
 	@description = "LPS-139803 - Verify it the Object Entry Title of a String type is displayed on the Relationship field when adding an entry"
 	@priority = "5"
 	test CanViewObjectEntryTitleStringOnRelationshipField {
-		property portal.acceptance = "true";
+		property portal.acceptance = "quarantine";
+		property portal.upstream = "quarantine";
 
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 117",
@@ -6474,8 +6693,6 @@ definition {
 	@description = "LPS-139005 - Verify that the Object entries are displayed again on Page fragments from an Object that was reactivated"
 	@priority = "4"
 	test ObjectEntriesReappearsPageFragmentsWhenReactivated {
-		property portal.upstream = "quarantine";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 142598",
 			objectName = "CustomObject142598",
@@ -6620,8 +6837,6 @@ definition {
 	@description = "LPS-139005 - Verify that pending and completed Object entries with workflow are displayed again on the workflow pages (My Workflow Tasks, My Submissions, and Submissions) when reactivated"
 	@priority = "4"
 	test ObjectEntriesReappearsWorkflowPagesWhenReactivated {
-		property portal.upstream = "quarantine";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 140887",
 			objectName = "CustomObject140887",
@@ -7334,7 +7549,7 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship",
-			object = "CustomObject162",
+			object = "Custom Object 162",
 			type = "One to Many");
 
 		ObjectAdmin.goToRelationshipsDetails(fieldName = "Relationship");
@@ -7345,8 +7560,6 @@ definition {
 	@description = "LPS-135401 - Verify if Prevent deletion type of Relationship Many to Many won't allow the user to delete an entry with relation"
 	@priority = "4"
 	test PreventDeletionManyToManyWontAllowDelete {
-		property portal.upstream = "quarantine";
-
 		for (var nameObject : list "A,B") {
 			ObjectAdmin.addObjectViaAPI(
 				labelName = "Custom Object ${nameObject} 163",
@@ -7706,7 +7919,7 @@ definition {
 
 		ObjectAdmin.addObjectRelationshipViaUI(
 			label = "Relationship Label",
-			object = "CustomObjectB168",
+			object = "Custom Object B 168",
 			type = "One to Many");
 
 		ObjectAdmin.openObjectAdmin();
@@ -8489,6 +8702,60 @@ definition {
 		CreateObject.assertValuesOnScope(
 			valuePanelCategory = "Site Administration > Site Builder",
 			valueScope = "Site");
+	}
+
+	@description = "LPS-151877 - Verify that, when adding a new Object with Account Restriction, the Account Restriction field turns into a mandatory field for the created Object"
+	@priority = "4"
+	test VerifyAccountRestrictionFieldTurnsIntoMandatoryField {
+		task ("Add Custom Object with Relationship related to System Object Account (via API)") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 156823",
+				objectName = "CustomObject156823",
+				pluralLabelName = "Custom Objects 156823");
+
+			ObjectAdmin.addObjectRelationshipViaAPI(
+				objectName_1 = "AccountEntry",
+				objectName_2 = "CustomObject156823",
+				relationshipLabel = "RelationshipAccount",
+				relationshipName = "relationshipAccount",
+				relationshipType = "oneToMany");
+		}
+
+		task ("Add new Account (via API)") {
+			JSONAccountEntry.addAccountEntry(
+				accountEntryName = "Account Name",
+				accountEntryType = "Business");
+		}
+
+		task ("Go to System Object Account and choose title field") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectSystemObject(label = "Account");
+
+			CreateObject.selectTitleField(fieldLabel = "Name");
+
+			CreateObject.saveObject();
+		}
+
+		task ("Go to Custom Object, active account restriction, and select relationship related to Account") {
+			ObjectAdmin.openObjectAdmin();
+
+			ObjectPortlet.selectCustomObject(label = "Custom Object 156823");
+
+			CreateObject.activeToogleAccountRestriction();
+
+			CreateObject.selectAccountRestrictedField(accountRestrictedField = "RelationshipAccount");
+
+			Button.clickPublish();
+		}
+
+		task ("Go to Custom Object entries and assert that the relationship is mandatory") {
+			ObjectAdmin.goToCustomObject(objectName = "CustomObject156823");
+
+			LexiconEntry.gotoAdd();
+
+			CreateObject.viewAccountRestrictedFieldIsRequiredOnEntries(relationshipName = "RelationshipAccount");
+		}
 	}
 
 	@description = "LPS-135548 - Verify that user can view custom objects"

@@ -5,8 +5,12 @@ $prefix: '.page-editor__single-select-with-icon';
 html#{$cadmin-selector} .cadmin .page-editor__select-field {
 	&.has-value {
 		display: grid;
-		gap: 4px;
-		grid-template-columns: auto 32px;
+		gap: 8px;
+		grid-template-columns: auto 32px 32px;
+	}
+
+	&:not(:hover):not(.custom) .page-editor__select-field__action-button {
+		opacity: 0;
 	}
 
 	#{$prefix} {
@@ -42,5 +46,9 @@ html#{$cadmin-selector} .cadmin .page-editor__select-field {
 
 	#{$prefix}:focus-within {
 		box-shadow: $btn-focus-box-shadow;
+	}
+
+	.page-editor__length-field.form-group {
+		margin-bottom: 0;
 	}
 }

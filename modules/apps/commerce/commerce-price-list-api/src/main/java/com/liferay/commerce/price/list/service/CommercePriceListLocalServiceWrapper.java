@@ -139,8 +139,8 @@ public class CommercePriceListLocalServiceWrapper
 	}
 
 	@Override
-	public void cleanPriceListCache(long companyId) {
-		_commercePriceListLocalService.cleanPriceListCache(companyId);
+	public void cleanPriceListCache() {
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	/**
@@ -502,13 +502,13 @@ public class CommercePriceListLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.Optional<CommercePriceList> getCommercePriceList(
-			long companyId, long groupId, long commerceAccountId,
+	public CommercePriceList getCommercePriceList(
+			long groupId, long commerceAccountId,
 			long[] commerceAccountGroupIds)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _commercePriceListLocalService.getCommercePriceList(
-			companyId, groupId, commerceAccountId, commerceAccountGroupIds);
+			groupId, commerceAccountId, commerceAccountGroupIds);
 	}
 
 	@Override

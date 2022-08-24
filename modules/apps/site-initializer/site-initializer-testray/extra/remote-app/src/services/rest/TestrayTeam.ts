@@ -12,44 +12,39 @@
  * details.
  */
 
+import i18n from '../../i18n';
 import yupSchema from '../../schema/yup';
-import fetcher from '../fetcher';
-import {APIResponse, TestrayTeam} from './types';
+import {searchUtil} from '../../util/search';
+import Rest from './Rest';
+import {TestrayTeam} from './types';
 
 type Team = typeof yupSchema.team.__outputType;
 
-const adapter = ({name, projectId: r_projectToTeams_c_projectId}: Team) => ({
-	name,
-	r_projectToTeams_c_projectId,
-});
+class TestrayTeamRest extends Rest<Team, TestrayTeam> {
+	constructor() {
+		super({
+			adapter: ({name, projectId: r_projectToTeams_c_projectId}) => ({
+				name,
+				r_projectToTeams_c_projectId,
+			}),
+			nestedFields: 'project',
+			transformData: (team) => ({
+				...team,
+				project: team?.r_projectToTeams_c_project,
+			}),
+			uri: 'teams',
+		});
+	}
 
-const createTeam = (team: Team) => fetcher.post('/teams', adapter(team));
+	protected async beforeCreate(team: Team) {
+		const response = await this.fetcher(
+			`/teams?filter=${searchUtil.eq('name', team.name)}`
+		);
 
-const updateTeam = (id: number, team: Team) =>
-	fetcher.put(`/teams/${id}`, adapter(team));
+		if (response?.items.length) {
+			throw new Error(i18n.translate('the-team-name-already-exists'));
+		}
+	}
+}
 
-const nestedFieldsParam = 'nestedFields=project';
-
-const teamsResource = `/teams?${nestedFieldsParam}`;
-
-const getTeamQuery = (teamId: number | string) =>
-	`/teams/${teamId}?${nestedFieldsParam}`;
-
-const getTeamTransformData = (testrayTeam: TestrayTeam): TestrayTeam => ({
-	...testrayTeam,
-	project: testrayTeam?.r_projectToTeams_c_project,
-});
-
-const getTeamsTransformData = (response: APIResponse<TestrayTeam>) => ({
-	...response,
-	items: response?.items?.map(getTeamTransformData),
-});
-
-export {
-	teamsResource,
-	createTeam,
-	updateTeam,
-	getTeamQuery,
-	getTeamTransformData,
-	getTeamsTransformData,
-};
+export const testrayTeamRest = new TestrayTeamRest();

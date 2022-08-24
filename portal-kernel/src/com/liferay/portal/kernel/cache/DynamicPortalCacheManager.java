@@ -62,7 +62,8 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 				}
 
 				return new DynamicPortalCache<>(
-					this, portalCache, key, portalCache.isMVCC());
+					this, portalCache, key, portalCache.isMVCC(),
+					portalCache.isSharded());
 			});
 	}
 
@@ -78,11 +79,19 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 			String portalCacheName, boolean mvcc)
 		throws PortalCacheException {
 
+		return getPortalCache(portalCacheName, mvcc, false);
+	}
+
+	@Override
+	public PortalCache<K, V> getPortalCache(
+			String portalCacheName, boolean mvcc, boolean sharded)
+		throws PortalCacheException {
+
 		return _dynamicPortalCaches.computeIfAbsent(
 			portalCacheName,
 			key -> new DynamicPortalCache<>(
-				this, _portalCacheManager.getPortalCache(key, mvcc), key,
-				mvcc));
+				this, _portalCacheManager.getPortalCache(key, mvcc, sharded),
+				key, mvcc, sharded));
 	}
 
 	@Override
@@ -148,6 +157,11 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 	}
 
 	@Override
+	public void removePortalCaches(long companyId) {
+		_portalCacheManager.removePortalCaches(companyId);
+	}
+
+	@Override
 	public boolean unregisterPortalCacheManagerListener(
 		PortalCacheManagerListener portalCacheManagerListener) {
 
@@ -202,7 +216,8 @@ public class DynamicPortalCacheManager<K extends Serializable, V>
 			dynamicPortalCache.setPortalCache(
 				_portalCacheManager.getPortalCache(
 					dynamicPortalCache.getPortalCacheName(),
-					dynamicPortalCache.isMVCC()));
+					dynamicPortalCache.isMVCC(),
+					dynamicPortalCache.isSharded()));
 		}
 	}
 

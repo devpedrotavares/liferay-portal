@@ -15,7 +15,6 @@
 import useFormModal from '../../../hooks/useFormModal';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
 import {TestrayProductVersion, deleteResource} from '../../../services/rest';
 import {Action} from '../../../types';
 
@@ -28,22 +27,24 @@ const useProductVersionActions = () => {
 		{
 			action: (productVersion: TestrayProductVersion) =>
 				modal.open(productVersion),
+			icon: 'pencil',
 			name: i18n.translate('edit'),
 			permission: 'UPDATE',
 		},
 		{
 			action: ({id}: TestrayProductVersion, mutate) =>
 				deleteResource(`/productversions/${id}`)
-					.then(() => removeItemFromList(mutate, id))
+					?.then(() => removeItemFromList(mutate, id))
 					.then(modal.onSave)
 					.catch(modal.onError),
+			icon: 'trash',
 			name: i18n.translate('delete'),
 			permission: 'DELETE',
 		},
 	];
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
+		actions,
 		formModal,
 	};
 };

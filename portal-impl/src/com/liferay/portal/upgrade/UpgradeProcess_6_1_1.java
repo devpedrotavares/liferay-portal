@@ -16,6 +16,7 @@ package com.liferay.portal.upgrade;
 
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.upgrade.v6_1_1.UpgradeDocumentLibrary;
+import com.liferay.portal.upgrade.v6_1_1.UpgradeJournal;
 import com.liferay.portal.upgrade.v6_1_1.UpgradeLayout;
 import com.liferay.portal.upgrade.v6_1_1.UpgradeLayoutSet;
 import com.liferay.portal.upgrade.v6_1_1.UpgradeLayoutSetBranch;
@@ -36,6 +37,7 @@ public class UpgradeProcess_6_1_1 extends Pre7UpgradeProcess {
 		upgrade(new UpgradeSchema());
 
 		upgrade(new UpgradeDocumentLibrary());
+		upgrade(new UpgradeJournal());
 		upgrade(new UpgradeLayout());
 		upgrade(new UpgradeLayoutSet());
 		upgrade(new UpgradeLayoutSetBranch());

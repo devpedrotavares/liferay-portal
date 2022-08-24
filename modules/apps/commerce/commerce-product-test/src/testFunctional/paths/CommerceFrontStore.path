@@ -11,6 +11,11 @@
 
 <tbody>
 <tr>
+	<td>COUPON_CODE_BODY</td>
+	<td>//div[@class='coupon-code-body']/h3[text()='${key_couponCode}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>PRODUCT_COMPARISON_TABLE_SPECIFICATION</td>
 	<td>//td[contains(.,'${key_specification}')]/following-sibling::td[${key_columnNumber}][contains(.,'${key_value}')]</td>
 	<td></td>
@@ -47,7 +52,7 @@
 </tr>
 <tr>
 	<td>FS_PRODUCT_SKU</td>
-	<td>//p/span[(normalize-space(text())='SKU')]/following::span[text()='${key_productSku}']</td>
+	<td>//p/span[(normalize-space(text())='SKU:')]/following::span[text()='${key_productSku}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -76,8 +81,13 @@
 	<td></td>
 </tr>
 <tr>
+	<td>FS_PRODUCT_FULL_DESCRIPTION</td>
+	<td>//div[contains(@id,'navDescription')]/div</td>
+	<td></td>
+</tr>
+<tr>
 	<td>FS_PRODUCT_SPECIFICATIONS</td>
-	<td>//dl/dt[@class="specification-term"][contains(text(),'${key_specification}')]/following-sibling::dd</td>
+	<td>//tr/td[contains(@class, 'specification-term')][contains(text(),'${key_specification}')]/following-sibling::td</td>
 	<td></td>
 </tr>
 <tr>
@@ -88,6 +98,11 @@
 <tr>
 	<td>FS_PRODUCT_OPTIONS_SELECT</td>
 	<td>//div/label[text()='${key_optionName}']/..//div[contains (@class,'select-field-trigger')]//a</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FS_PRODUCT_DETAIL_INCOMING_DATE_QUANTITY</td>
+	<td>//p[contains(.,"Incoming Date/Quantity: ${key_incomingDate} - ${key_incomingQuantity} Items")]</td>
 	<td></td>
 </tr>
 <tr>
@@ -103,6 +118,46 @@
 <tr>
 	<td>MAX_QUANTITY_SELECTOR_PRODUCT_DETAILS</td>
 	<td>//div[contains(@class,"product-detail")]//div[contains(@class,"add-to-cart")]//input[contains(@max, '${key_value}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_ATTACHMENTS_BUTTON</td>
+	<td>//li[contains(@class,'list-group-item')]//h5[text()='${key_entryName}']/../..//a[contains(@class,'btn') and contains(.,'${key_button}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_ATTACHMENTS_ICON_DEFAULT</td>
+	<td>//h5[text()='${key_entryName}']/../..//*[name()='svg'][contains(@class,'icon-document-default')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_ATTACHMENTS_NAME</td>
+	<td>//li[contains(@class,'list-group-item')]//h5[text()='${key_entryName}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_DOWNLOAD_SAMPLE_FILE_BUTTON</td>
+	<td>//a[normalize-space(text())='Download Sample File'][contains(@href,'${key_sampleFileName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_GROUPED_PRODUCT_NAME</td>
+	<td>//div[contains(@class,'grouped-products-container')]//h5[normalize-space(text())='${key_productName}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_GROUPED_PRODUCT_IMAGE</td>
+	<td>//div[contains(@class,'grouped-products-container')]//h5[normalize-space(text())='${key_productName}']/../..//img[contains(@src,'${key_productImage}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_GROUPED_PRODUCT_SHORT_DESCRIPTION</td>
+	<td>//div[contains(@class,'grouped-products-container')]//h5[normalize-space(text())='${key_productName}']/following::p[normalize-space(text())='${key_productShortDescription}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAILS_MIN_QUANTITY_PER_ORDER</td>
+	<td>//span[(@class='min-quantity-per-order') and contains(.,'Minimum Quantity Per Order: ${key_minQuantity}')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -14,10 +14,15 @@
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
+import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.model.CompanyConstants;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import java.net.URL;
 
@@ -96,9 +101,7 @@ public class SystemProperties {
 			while (enumeration.hasMoreElements()) {
 				URL url = enumeration.nextElement();
 
-				try (InputStream inputStream = url.openStream()) {
-					properties.load(inputStream);
-				}
+				_load(url, properties);
 
 				if (urls != null) {
 					urls.add(url);
@@ -118,9 +121,7 @@ public class SystemProperties {
 			while (enumeration.hasMoreElements()) {
 				URL url = enumeration.nextElement();
 
-				try (InputStream inputStream = url.openStream()) {
-					properties.load(inputStream);
-				}
+				_load(url, properties);
 
 				if (urls != null) {
 					urls.add(url);
@@ -188,6 +189,43 @@ public class SystemProperties {
 		System.setProperty(key, value);
 
 		_properties.put(key, value);
+	}
+
+	private static void _load(URL url, Properties properties)
+		throws IOException {
+
+		try (InputStream inputStream = url.openStream();
+			InputStreamReader inputStreamReader = new InputStreamReader(
+				inputStream);
+			UnsyncBufferedReader unsyncBufferedReader =
+				new UnsyncBufferedReader(inputStreamReader)) {
+
+			String line = null;
+			StringBundler sb = new StringBundler();
+
+			while ((line = unsyncBufferedReader.readLine()) != null) {
+				line = line.trim();
+
+				// Empty line, Comment line or "\"
+
+				if (line.isEmpty() || (line.charAt(0) == CharPool.POUND) ||
+					line.equals(StringPool.BACK_SLASH)) {
+
+					continue;
+				}
+
+				sb.append(line);
+				sb.append(StringPool.NEW_LINE);
+			}
+
+			if (sb.index() != 0) {
+				try (UnsyncStringReader unsyncStringReader =
+						new UnsyncStringReader(sb.toString())) {
+
+					properties.load(unsyncStringReader);
+				}
+			}
+		}
 	}
 
 	private static final Map<String, String> _properties =

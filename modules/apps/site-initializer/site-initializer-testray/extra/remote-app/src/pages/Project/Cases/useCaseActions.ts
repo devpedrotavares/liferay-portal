@@ -17,7 +17,6 @@ import {useNavigate} from 'react-router-dom';
 import useFormModal from '../../../hooks/useFormModal';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
 import {TestrayCase, deleteResource} from '../../../services/rest';
 import {Action} from '../../../types';
 
@@ -34,13 +33,13 @@ const useCaseActions = () => {
 			permission: 'UPDATE',
 		},
 		{
-			action: () => alert('Link'),
+			action: ({id}: TestrayCase) => navigate(`${id}/requirements`),
 			name: i18n.translate('link-requirements'),
 		},
 		{
 			action: ({id}: TestrayCase, mutate) =>
 				deleteResource(`/cases/${id}`)
-					.then(() => removeItemFromList(mutate, id))
+					?.then(() => removeItemFromList(mutate, id))
 					.then(modal.onSuccess)
 					.catch(modal.onError),
 			name: i18n.translate('delete'),
@@ -49,7 +48,7 @@ const useCaseActions = () => {
 	];
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
+		actions,
 		formModal,
 	};
 };

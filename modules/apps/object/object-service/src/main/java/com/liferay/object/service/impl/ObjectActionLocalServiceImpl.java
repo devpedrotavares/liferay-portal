@@ -28,10 +28,11 @@ import com.liferay.object.exception.ObjectActionTriggerKeyException;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.scripting.exception.ObjectScriptingException;
+import com.liferay.object.scripting.validator.ObjectScriptingValidator;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.base.ObjectActionLocalServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -46,11 +47,8 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-
-import groovy.lang.GroovyShell;
 
 import java.util.HashMap;
 import java.util.List;
@@ -274,19 +272,11 @@ public class ObjectActionLocalServiceImpl
 
 			if (Validator.isNotNull(script)) {
 				try {
-					if (StringUtil.count(script, StringPool.NEW_LINE) <= 2987) {
-						GroovyShell groovyShell = new GroovyShell();
-
-						groovyShell.parse(script);
-					}
-					else {
-						errorMessageKeys.put(
-							"script",
-							"the-maximum-number-of-lines-available-is-2987");
-					}
+					_objectScriptingValidator.validate("groovy", script);
 				}
-				catch (Exception exception) {
-					errorMessageKeys.put("script", "syntax-error");
+				catch (ObjectScriptingException objectScriptingException) {
+					errorMessageKeys.put(
+						"script", objectScriptingException.getMessageKey());
 				}
 			}
 		}
@@ -385,6 +375,9 @@ public class ObjectActionLocalServiceImpl
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Reference
+	private ObjectScriptingValidator _objectScriptingValidator;
 
 	@Reference
 	private UserLocalService _userLocalService;

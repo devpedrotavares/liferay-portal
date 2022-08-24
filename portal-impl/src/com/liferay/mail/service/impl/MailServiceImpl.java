@@ -318,7 +318,27 @@ public class MailServiceImpl implements IdentifiableOSGiService, MailService {
 			session = Session.getInstance(properties);
 		}
 
+		if (_log.isDebugEnabled()) {
+			session.setDebug(true);
+
+			properties.list(System.out);
+		}
+
 		_sessions.put(companyId, session);
+
+		return session;
+	}
+
+	public Session getSession(Account account) {
+		Session session = Session.getInstance(_getProperties(account));
+
+		if (_log.isDebugEnabled()) {
+			session.setDebug(true);
+
+			Properties sessionProperties = session.getProperties();
+
+			sessionProperties.list(System.out);
+		}
 
 		return session;
 	}
@@ -394,6 +414,38 @@ public class MailServiceImpl implements IdentifiableOSGiService, MailService {
 
 				return null;
 			});
+	}
+
+	private Properties _getProperties(Account account) {
+		Properties properties = new Properties();
+
+		String protocol = account.getProtocol();
+
+		properties.setProperty("mail.transport.protocol", protocol);
+		properties.setProperty("mail." + protocol + ".host", account.getHost());
+		properties.setProperty(
+			"mail." + protocol + ".port", String.valueOf(account.getPort()));
+
+		if (account.isRequiresAuthentication()) {
+			properties.setProperty("mail." + protocol + ".auth", "true");
+			properties.setProperty(
+				"mail." + protocol + ".user", account.getUser());
+			properties.setProperty(
+				"mail." + protocol + ".password", account.getPassword());
+		}
+
+		if (account.isSecure()) {
+			properties.setProperty(
+				"mail." + protocol + ".socketFactory.class",
+				"javax.net.ssl.SSLSocketFactory");
+			properties.setProperty(
+				"mail." + protocol + ".socketFactory.fallback", "false");
+			properties.setProperty(
+				"mail." + protocol + ".socketFactory.port",
+				String.valueOf(account.getPort()));
+		}
+
+		return properties;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

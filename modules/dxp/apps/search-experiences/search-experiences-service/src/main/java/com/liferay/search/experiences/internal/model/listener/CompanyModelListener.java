@@ -72,9 +72,6 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		}
 
 		for (SXPElement sxpElement : _sxpElements) {
-
-			// TODO Should this be en_US or en-US?
-
 			if (titles.contains(
 					MapUtil.getString(sxpElement.getTitle_i18n(), "en_US"))) {
 
@@ -84,7 +81,7 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 			User user = company.getDefaultUser();
 
 			sxpElementLocalService.addSXPElement(
-				user.getUserId(),
+				sxpElement.getExternalReferenceCode(), user.getUserId(),
 				LocalizedMapUtil.getLocalizedMap(
 					sxpElement.getDescription_i18n()),
 				String.valueOf(sxpElement.getElementDefinition()), true,

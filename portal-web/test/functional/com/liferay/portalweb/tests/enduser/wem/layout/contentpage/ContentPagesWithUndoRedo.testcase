@@ -63,8 +63,12 @@ definition {
 
 		task ("Remove the duplicated Button") {
 			PageEditor.removeFragment(
-				duplicateFragment = "true",
-				fragmentName = "Button");
+				fragmentName = "Button",
+				index = "2");
+
+			PageEditor.viewFragmentNotPresent(
+				fragmentName = "Button",
+				position = "2");
 		}
 
 		task ("Navigate to specific interaction states via Undo History") {
@@ -160,8 +164,12 @@ definition {
 
 		task ("Remove the duplicated Tabs") {
 			PageEditor.removeFragment(
-				duplicateFragment = "true",
-				fragmentName = "Tabs");
+				fragmentName = "Tabs",
+				index = "2");
+
+			PageEditor.viewFragmentNotPresent(
+				fragmentName = "Tabs",
+				position = "2");
 		}
 
 		task ("View the Undo button is enabled but the Redo button is disabled") {
@@ -757,7 +765,7 @@ definition {
 		task ("Undo 100 times") {
 			var count = "0";
 
-			while ("${count}" != "100" && (maxIterations = "100")) {
+			while (("${count}" != "100") && (maxIterations = "100")) {
 				Click(
 					key_text = "undo",
 					locator1 = "Icon#ANY");
@@ -822,8 +830,12 @@ definition {
 
 		task ("Remove the duplicated Button") {
 			PageEditor.removeFragment(
-				duplicateFragment = "true",
-				fragmentName = "Button");
+				fragmentName = "Button",
+				index = "2");
+
+			PageEditor.viewFragmentNotPresent(
+				fragmentName = "Button",
+				position = "2");
 		}
 
 		task ("Add a Heading fragment below the Button") {

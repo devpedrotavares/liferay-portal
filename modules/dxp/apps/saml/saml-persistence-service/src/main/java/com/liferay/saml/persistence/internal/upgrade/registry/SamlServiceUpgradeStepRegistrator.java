@@ -16,12 +16,9 @@ package com.liferay.saml.persistence.internal.upgrade.registry;
 
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.portal.upgrade.release.BaseUpgradeServiceModuleRelease;
-import com.liferay.portal.upgrade.step.util.UpgradeStepFactory;
-import com.liferay.saml.persistence.internal.upgrade.v1_1_0.SamlSpAuthRequestUpgradeProcess;
-import com.liferay.saml.persistence.internal.upgrade.v1_1_0.SamlSpMessageUpgradeProcess;
-import com.liferay.saml.persistence.internal.upgrade.v2_1_0.SamlIdpSpConnectionUpgradeProcess;
 import com.liferay.saml.persistence.internal.upgrade.v2_4_0.util.SamlPeerBindingTable;
 import com.liferay.saml.persistence.internal.upgrade.v3_0_1.SamlSpIdpConnectionDataUpgradeProcess;
 
@@ -69,27 +66,39 @@ public class SamlServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.0.0", "1.1.0",
-			new com.liferay.saml.persistence.internal.upgrade.v1_1_0.
-				SamlIdpSpSessionUpgradeProcess(),
-			new SamlSpAuthRequestUpgradeProcess(),
-			new SamlSpMessageUpgradeProcess(),
-			new com.liferay.saml.persistence.internal.upgrade.v1_1_0.
-				SamlSpSessionUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"SamlIdpSpSession", "nameIdFormat", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlIdpSpSession", "nameIdValue", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlIdpSpSession", "samlSpEntityId", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpAuthRequest", "samlIdpEntityId", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpMessage", "samlIdpEntityId", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "nameIdFormat", "VARCHAR(1024) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "nameIdValue", "VARCHAR(1024) null"));
 
 		registry.register(
 			"1.1.0", "1.1.1",
-			new com.liferay.saml.persistence.internal.upgrade.v1_1_1.
-				SamlSpSessionUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "assertionXml", "TEXT null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "samlSpSessionKey", "VARCHAR(75) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "sessionIndex", "VARCHAR(75) null"));
 
 		registry.register(
 			"1.1.1", "1.1.2",
-			new com.liferay.saml.persistence.internal.upgrade.v1_1_2.
-				SamlSpSessionUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpSession", "jSessionId", "VARCHAR(200) null"));
 
 		registry.register(
 			"1.1.2", "1.1.3",
-			new com.liferay.saml.persistence.internal.upgrade.v1_1_3.
-				SamlSpIdpConnectionUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"SamlSpIdpConnection", "forceAuthn", "BOOLEAN"));
 
 		registry.register(
 			"1.1.3", "1.1.4",
@@ -98,23 +107,26 @@ public class SamlServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.1.4", "2.0.0",
-			new com.liferay.saml.persistence.internal.upgrade.v2_0_0.
-				SamlSpSessionUpgradeProcess(),
+			UpgradeProcessFactory.addColumns(
+				"SamlSpSession", "samlIdpEntityId VARCHAR(1024) null"),
 			new com.liferay.saml.persistence.internal.upgrade.v2_0_0.
 				SamlSpSessionDataUpgradeProcess(_configurationAdmin));
 
 		registry.register(
-			"2.0.0", "2.1.0", new SamlIdpSpConnectionUpgradeProcess());
+			"2.0.0", "2.1.0",
+			UpgradeProcessFactory.addColumns(
+				"SamlIdpSpConnection", "encryptionForced BOOLEAN"));
 
 		registry.register(
 			"2.1.0", "2.2.0",
-			new com.liferay.saml.persistence.internal.upgrade.v2_2_0.
-				SamlSpIdpConnectionUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"SamlSpIdpConnection", "unknownUsersAreStrangers BOOLEAN"));
 
 		registry.register(
 			"2.2.0", "2.3.0",
-			new com.liferay.saml.persistence.internal.upgrade.v2_3_0.
-				SamlSpIdpConnectionUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"SamlSpIdpConnection",
+				"userIdentifierExpression VARCHAR(200) null"));
 
 		registry.register("2.3.0", "2.4.0", SamlPeerBindingTable.create());
 
@@ -127,17 +139,20 @@ public class SamlServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.5.0", "3.0.0",
-			UpgradeStepFactory.dropColumns("SamlIdpSpSession", "nameIdFormat"),
-			UpgradeStepFactory.dropColumns("SamlIdpSpSession", "nameIdValue"),
-			UpgradeStepFactory.dropColumns(
+			UpgradeProcessFactory.dropColumns(
+				"SamlIdpSpSession", "nameIdFormat"),
+			UpgradeProcessFactory.dropColumns(
+				"SamlIdpSpSession", "nameIdValue"),
+			UpgradeProcessFactory.dropColumns(
 				"SamlIdpSpSession", "samlSpEntityId"),
-			UpgradeStepFactory.dropColumns("SamlSpSession", "nameIdFormat"),
-			UpgradeStepFactory.dropColumns(
+			UpgradeProcessFactory.dropColumns("SamlSpSession", "nameIdFormat"),
+			UpgradeProcessFactory.dropColumns(
 				"SamlSpSession", "nameIdNameQualifier"),
-			UpgradeStepFactory.dropColumns(
+			UpgradeProcessFactory.dropColumns(
 				"SamlSpSession", "nameIdSPNameQualifier"),
-			UpgradeStepFactory.dropColumns("SamlSpSession", "nameIdValue"),
-			UpgradeStepFactory.dropColumns("SamlSpSession", "samlIdpEntityId"));
+			UpgradeProcessFactory.dropColumns("SamlSpSession", "nameIdValue"),
+			UpgradeProcessFactory.dropColumns(
+				"SamlSpSession", "samlIdpEntityId"));
 
 		registry.register(
 			"3.0.0", "3.0.1", new SamlSpIdpConnectionDataUpgradeProcess());

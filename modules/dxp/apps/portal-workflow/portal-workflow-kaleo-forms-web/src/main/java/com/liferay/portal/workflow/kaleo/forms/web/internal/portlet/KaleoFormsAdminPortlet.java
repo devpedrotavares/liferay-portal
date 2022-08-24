@@ -25,7 +25,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.PortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -120,13 +120,6 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 			"historyKey", "kaleoProcessId", "kaleoTaskFormPairsData", "mvcPath",
 			"redirect", "tabs1", "translatedLanguagesDescription",
 			"translatedLanguagesName", "workflowDefinition");
-
-		for (Locale availableLocale : LanguageUtil.getAvailableLocales()) {
-			_parameterNames.add(
-				"description" + LocaleUtil.toLanguageId(availableLocale));
-			_parameterNames.add(
-				"name" + LocaleUtil.toLanguageId(availableLocale));
-		}
 	}
 
 	/**
@@ -210,6 +203,13 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	@Activate
 	@Modified
 	protected void activate(Map<String, Object> properties) {
+		for (Locale availableLocale : _language.getAvailableLocales()) {
+			_parameterNames.add(
+				"description" + LocaleUtil.toLanguageId(availableLocale));
+			_parameterNames.add(
+				"name" + LocaleUtil.toLanguageId(availableLocale));
+		}
+
 		_kaleoFormsWebConfiguration = ConfigurableUtil.createConfigurable(
 			KaleoFormsWebConfiguration.class, properties);
 	}
@@ -457,6 +457,9 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 
 	@Reference
 	private KaleoProcessService _kaleoProcessService;
+
+	@Reference
+	private Language _language;
 
 	private final List<String> _parameterNames;
 

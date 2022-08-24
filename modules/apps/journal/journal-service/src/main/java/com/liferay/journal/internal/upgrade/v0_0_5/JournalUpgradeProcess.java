@@ -659,8 +659,8 @@ public class JournalUpgradeProcess extends UpgradeProcess {
 					catch (Exception exception) {
 						_log.error(
 							StringBundler.concat(
-								"ID: ", id, "\nGroup ID: ", id, "\nContent: ",
-								content));
+								"ID: ", id, "\nGroup ID: ", groupId,
+								"\nContent: ", content));
 
 						throw exception;
 					}

@@ -293,6 +293,7 @@ definition {
 	@priority = "5"
 	test CanUploadFromDocumentsAndMedia {
 		property portal.acceptance = "true";
+		property portal.upstream = "quarantine";
 
 		var siteName = TestCase.getSiteName(siteName = "${siteName}");
 

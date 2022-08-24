@@ -557,9 +557,10 @@ AUI.add(
 
 						instance._hideEmptyResultsMessage(searchContainer);
 
-						const searchContainerWrapper = document.querySelector(
-							'div.lfr-search-container-wrapper'
-						);
+						const searchContainerWrapper = instance
+							.get('entriesContainer')
+							.one('div.lfr-search-container-wrapper')
+							.getDOMNode();
 
 						if (searchContainerWrapper) {
 							searchContainerWrapper.style.display = 'block';
@@ -1203,6 +1204,15 @@ AUI.add(
 
 				_onFileSelect(event) {
 					const instance = this;
+
+					// LPS-159994
+
+					if (
+						event.details[0].currentTarget !==
+						instance._entriesContainer
+					) {
+						return;
+					}
 
 					const target = event.details[0].target;
 

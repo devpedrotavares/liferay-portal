@@ -17,8 +17,9 @@ import ClayDropDown, {Align} from '@clayui/drop-down';
 import ClayForm, {ClayInput} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import PropTypes from 'prop-types';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 
+import isValidStyleValue from '../../app/utils/isValidStyleValue';
 import {useId} from '../../app/utils/useId';
 import useControlledState from '../../core/hooks/useControlledState';
 import {ConfigurationFieldPropTypes} from '../../prop-types/index';
@@ -63,7 +64,7 @@ export function LengthField({field, onValueSelect, value}) {
 	}, [value]);
 
 	return (
-		<ClayForm.Group>
+		<ClayForm.Group className="page-editor__length-field">
 			<label className={field.icon ? 'sr-only' : null} htmlFor={inputId}>
 				{field.label}
 			</label>
@@ -87,6 +88,8 @@ LengthField.propTypes = {
 
 const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 	const [active, setActive] = useState(false);
+	const [error, setError] = useState(false);
+	const inputRef = useRef();
 	const [nextValue, setNextValue] = useControlledState(initialValue.value);
 	const [nextUnit, setNextUnit] = useState(initialValue.unit);
 	const triggerId = useId();
@@ -95,17 +98,29 @@ const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 		setActive(false);
 		setNextUnit(unit);
 
-		if (!nextValue) {
+		if (!nextValue || unit === nextUnit) {
 			return;
 		}
 
 		let valueWithUnits = `${nextValue}${unit}`;
 
 		if (unit === CUSTOM) {
-			valueWithUnits = nextValue;
+			inputRef.current.focus();
+
+			setNextValue('');
+
+			return;
 		}
 		else if (isNaN(nextValue)) {
 			valueWithUnits = '';
+
+			inputRef.current.focus();
+
+			if (field.typeOptions?.showLengthField) {
+				setNextValue(valueWithUnits);
+
+				return;
+			}
 		}
 
 		if (valueWithUnits !== value) {
@@ -128,6 +143,22 @@ const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 			valueWithUnits = `${nextValue}${nextUnit}`;
 		}
 
+		if (
+			field.typeOptions?.showLengthField &&
+			(!valueWithUnits ||
+				!isValidStyleValue(field.cssProperty, valueWithUnits))
+		) {
+			const [, number, unit] = value.toLowerCase().match(REGEX) || [];
+
+			setNextValue(number || value);
+			setNextUnit(unit || CUSTOM);
+			setError(true);
+
+			setTimeout(() => setError(false), 1000);
+
+			return;
+		}
+
 		if (valueWithUnits !== value) {
 			onValueSelect(field.name, valueWithUnits);
 		}
@@ -148,9 +179,9 @@ const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 			return;
 		}
 
-		const match = value.toLowerCase().match(REGEX);
+		const [, , unit] = value.toLowerCase().match(REGEX) || [];
 
-		setNextUnit(match ? match[2] : CUSTOM);
+		setNextUnit(unit || CUSTOM);
 	}, [value]);
 
 	return (
@@ -160,13 +191,12 @@ const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 					aria-label={field.label}
 					id={id}
 					insetBefore={Boolean(field.icon)}
-					onBlur={() => {
-						handleValueSelect();
-					}}
+					onBlur={handleValueSelect}
 					onChange={(event) => {
 						setNextValue(event.target.value);
 					}}
 					onKeyDown={handleKeyDown}
+					ref={inputRef}
 					sizing="sm"
 					type={nextUnit === CUSTOM ? 'text' : 'number'}
 					value={nextValue}
@@ -235,6 +265,14 @@ const LengthInput = ({field, id, initialValue, onValueSelect, value}) => {
 					</ClayDropDown.ItemList>
 				</ClayDropDown>
 			</ClayInput.GroupItem>
+
+			{error ? (
+				<span aria-live="assertive" className="sr-only">
+					{Liferay.Language.get(
+						'this-field-requires-a-valid-style-value'
+					)}
+				</span>
+			) : null}
 		</ClayInput.Group>
 	);
 };

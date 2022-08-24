@@ -176,11 +176,6 @@
 	<td></td>
 </tr>
 <tr>
-	<td>EXPIRE</td>
-	<td>//button[*[name()='svg'][contains(@class,'lexicon-icon-time') and not(contains(@class,'circle'))]]</td>
-	<td></td>
-</tr>
-<tr>
 	<td>EXPORT</td>
 	<td>//*[*[name()='svg'][contains(@class,'icon-download')]]</td>
 	<td></td>
@@ -390,7 +385,7 @@
 </tr>
 <tr>
 	<td>SIDEBAR_HEADER_ACTION_VERTICAL_ELLIPSIS_BUTTON</td>
-	<td>//*[contains(@class,'sidebar-header-actions')]//button[contains(@class,'dropdown-toggle')] | //*[contains(@class,'sidebar-header')]//button[contains(@class,'dropdown-toggle')]</td>
+	<td>//*[contains(@class,'sidebar-header')]//*[self::a or self::button][contains(@class,'dropdown-toggle')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -485,7 +480,7 @@
 </tr>
 <tr>
 	<td>TOOLBAR_ELLIPSIS</td>
-	<td>//ul[@class='navbar-nav']/li[contains(@class,'nav-item')]//button[*[name()='svg'][contains(@class,'icon-ellipsis-v')]]</td>
+	<td>//ul[contains(@class,'bar-nav')]/li[contains(@class,'item')]//button//*[name()='svg'][contains(@class,'icon-ellipsis-v')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -24,6 +24,38 @@
 			"conditionExpression": "",
 			"description": "",
 			"name": "Action",
+			"objectActionExecutorKey": "groovy",
+			"objectActionTriggerKey": "onAfterAdd",
+			"parameters": {
+				"script": "invalidFields = false;"
+			},
+			"status": {
+				"code": 0,
+				"label": "never-ran",
+				"label_i18n": "Never Ran"
+			}
+		},
+		{
+			"active": true,
+			"conditionExpression": "",
+			"description": "",
+			"name": "Action",
+			"objectActionExecutorKey": "notification",
+			"objectActionTriggerKey": "onAfterAdd",
+			"parameters": {
+				"notificationTemplateId": 0
+			},
+			"status": {
+				"code": 0,
+				"label": "never-ran",
+				"label_i18n": "Never Ran"
+			}
+		},
+		{
+			"active": true,
+			"conditionExpression": "",
+			"description": "",
+			"name": "Action",
 			"objectActionExecutorKey": "webhook",
 			"objectActionTriggerKey": "onAfterAdd",
 			"parameters": {
@@ -66,6 +98,24 @@
 				"en_US": "Author"
 			},
 			"name": "creator",
+			"objectFieldSettings": [
+			],
+			"required": false,
+			"state": false,
+			"system": true,
+			"type": "String"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"defaultValue": "",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "External Reference Code"
+			},
+			"name": "externalReferenceCode",
 			"objectFieldSettings": [
 			],
 			"required": false,

@@ -535,7 +535,7 @@ definition {
 		PageEditor.gotoTabsFragmentNavItem(navItem = "${navItem}");
 
 		AssertVisible(
-			key_content = "Place fragments here.",
+			key_content = "Place fragments or widgets here.",
 			key_fragmentClass = "content",
 			key_position = "${position}",
 			locator1 = "Fragment#DROP_ZONE_NO_FRAGMENTS_MESSAGE");
@@ -1340,12 +1340,6 @@ definition {
 			Click.clickAtNotVisible(
 				checkboxName = "Hide Fragment",
 				locator1 = "Checkbox#ANY_CHECKBOX");
-
-			if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#BODY", value1 = "This fragment contains a required form field or a submit element. Are you sure you want to hide it?"))) {
-				Click(
-					key_text = "Hide",
-					locator1 = "Modal#MODAL_FOOTER_BUTTON");
-			}
 
 			AssertChecked.assertCheckedNotVisible(
 				checkboxName = "Hide Fragment",
@@ -2519,7 +2513,7 @@ definition {
 							locator1 = "Breadcrumb#BREADCRUMB_ENTRY",
 							value1 = "Sites and Libraries");
 
-						LexiconCard.clickCardTitleLink(card = "${siteName}");
+						LexiconCard.clickCardTitle(card = "${siteName}");
 					}
 
 					Portlet.expandTree();
@@ -3821,12 +3815,7 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 	}
 
 	macro gotoTab {
-		if (IsElementPresent(locator1 = "ProductMenu#PRODUCT_MENU_OPENED")) {
-			Click(
-				key_tabName = "${tabName}",
-				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON");
-		}
-		else if (IsElementNotPresent(locator1 = "ProductMenu#TOGGLE")) {
+		if ((IsElementPresent(locator1 = "ProductMenu#PRODUCT_MENU_OPENED")) && (IsElementNotPresent(key_tabName = "${tabName}", locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON_ACTIVE"))) {
 			Click(
 				key_tabName = "${tabName}",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON");
@@ -3891,12 +3880,6 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 			key_nodeName = "${fragmentName}",
 			locator1 = "Treeview#PAGE_STRUCTURE_TREE_NODE_HIDE_INDEX");
 
-		if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#BODY", value1 = "This fragment contains a required form field or a submit element. Are you sure you want to hide it?"))) {
-			Click(
-				key_text = "Hide",
-				locator1 = "Modal#MODAL_FOOTER_BUTTON");
-		}
-
 		PageEditor.waitForAutoSave();
 	}
 
@@ -3904,6 +3887,17 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 		PageEditor.gotoConfiguration(fragmentName = "${fragmentName}");
 
 		PageEditor.configureFragment(hideFragment = "true");
+	}
+
+	macro mapFormContainerToObject {
+		if (!(isSet(index))) {
+			var index = "1";
+		}
+
+		Select(
+			key_position = "${index}",
+			locator1 = "PageEditor#FORM_CONTAINER_SELECT_FIELD",
+			value1 = "${contentType}");
 	}
 
 	macro openExperienceMenu {
@@ -3924,6 +3918,12 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 		Click(locator1 = "PageEditor#PREVIEW");
 	}
 
+	macro previewInANewTab {
+		LexiconEntry.gotoHeaderMenuItem(menuItem = "Preview in a New Tab");
+
+		SelectWindow.selectPopUp(locator1 = "null");
+	}
+
 	macro prioritizeExperience {
 		var key_experienceName = "${experienceName}";
 
@@ -3935,15 +3935,25 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 	macro publish {
 		Button.click(button = "Publish");
 
-		if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Style Errors Detected"))) {
+		if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Form Errors"))) {
 			Modal.publish(
 				action = "${action}",
-				warningMessage = "Some of the fields have invalid values. If you continue publishing, the latest valid values will display.");
+				warningMessage = "The following errors have been found with the forms on the page. Publishing without fixing these errors may affect form performance. Are you sure you want to publish?");
 		}
-		else if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Required Form Components"))) {
+		else if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Submit Button Missing"))) {
 			Modal.publish(
 				action = "${action}",
-				warningMessage = "This page contains one or several forms with missing or hidden form components. Are you sure you want to publish it?");
+				warningMessage = "${objectName} form has a hidden or missing submit button. If you continue, your users may not be able to submit the form. Are you sure you want to publish it?");
+		}
+		else if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Fragment Mapping Missing"))) {
+			Modal.publish(
+				action = "${action}",
+				warningMessage = "${objectName} form has some fragments not mapped to object fields. Unmapped fragments data will not be stored. Are you sure you want to publish?");
+		}
+		else if ((IsElementPresent(locator1 = "Modal#BODY")) && (IsTextEqual(locator1 = "Modal#HEADER", value1 = "Required Fields Hidden"))) {
+			Modal.publish(
+				action = "${action}",
+				warningMessage = "${objectName} form contains one or more hidden fragments mapped to required fields. A form with missing required fields will not generate a valid entry. Are you sure you want to publish it?");
 		}
 		else {
 			Alert.viewSuccessMessage();
@@ -3953,15 +3963,13 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 	macro removeFragment {
 		var key_fragmentName = "${fragmentName}";
 
-		PageEditor.clickConfigurableField(fragmentName = "${fragmentName}");
+		PageEditor.clickConfigurableField(
+			fragmentName = "${fragmentName}",
+			index = "${index}");
 
 		Click.waitForMenuToggleJSClick(locator1 = "Fragment#FRAGMENT_HEADER_ELLIPSIS");
 
 		MenuItem.click(menuItem = "Delete");
-
-		if (!(isSet(duplicateFragment))) {
-			PageEditor.viewFragmentNotPresent(fragmentName = "${fragmentName}");
-		}
 
 		PageEditor.waitForAutoSave();
 	}
@@ -4195,7 +4203,7 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 	macro viewCannotAddFragmentToOutsideOfDropZone {
 		WaitForPageLoad();
 
-		PageEditor.gotoTab(tabName = "Fragments");
+		Navigator.gotoNavTab(navTab = "Fragments");
 
 		PageEditor.expandFragmentCollection(collectionName = "${collectionName}");
 
@@ -5151,6 +5159,21 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 		AssertTextEquals(
 			locator1 = "ControlMenu#VIEW_COLLECTION_ITEMS_BUTTON",
 			value1 = "${numberOfItems}");
+	}
+
+	macro viewOrderOfSideBarButtons {
+		if (!(isSet(i))) {
+			var i = "1";
+		}
+
+		for (var buttonName : list "${buttonNameList}") {
+			AssertVisible(
+				index = "${i}",
+				key_tabName = "${buttonName}",
+				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON_BY_INDEX");
+
+			var i = ${i} + 1;
+		}
 	}
 
 	macro waitForAutoSave {

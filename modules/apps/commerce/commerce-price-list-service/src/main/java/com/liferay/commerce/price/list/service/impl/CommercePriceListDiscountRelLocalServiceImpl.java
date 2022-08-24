@@ -58,8 +58,7 @@ public class CommercePriceListDiscountRelLocalServiceImpl
 		commercePriceListDiscountRel.setOrder(order);
 		commercePriceListDiscountRel.setExpandoBridgeAttributes(serviceContext);
 
-		commercePriceListLocalService.cleanPriceListCache(
-			serviceContext.getCompanyId());
+		reindexPriceList(commercePriceListId);
 
 		return commercePriceListDiscountRelPersistence.update(
 			commercePriceListDiscountRel);
@@ -78,9 +77,6 @@ public class CommercePriceListDiscountRelLocalServiceImpl
 			commercePriceListDiscountRel.getCommercePriceListDiscountRelId());
 
 		reindexPriceList(commercePriceListDiscountRel.getCommercePriceListId());
-
-		commercePriceListLocalService.cleanPriceListCache(
-			commercePriceListDiscountRel.getCompanyId());
 
 		return commercePriceListDiscountRel;
 	}

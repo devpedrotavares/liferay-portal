@@ -32,12 +32,14 @@ type ContactInfoFormTypes = {
 
 type CoverageFormTypes = {
 	bodilyInjury: string;
-	collision: string;
-	comprehensive: string;
 	medical: string;
 	propertyDamage: string;
 	uninsuredOrUnderinsuredMBI: string;
 	uninsuredOrUnderinsuredMPD: string;
+	vehicles: {
+		collision: string;
+		comprehensive: string;
+	}[];
 };
 
 type AccidentCitationTypes = {
@@ -51,14 +53,14 @@ export type DriverInfoFormTypes = {
 	firstName: string;
 	gender: string;
 	governmentAffiliation: string;
-	hasAccidentOrCitations: boolean;
+	hasAccidentOrCitations: string;
 	highestEducation: string;
 	id: number;
 	lastName: string;
 	maritalStatus: string;
-	militaryAffiliation: string;
-	ocupation: string;
-	otherOcupation: string;
+	millitaryAffiliation: string;
+	occupation: string;
+	otherOccupation: string;
 	relationToContact: string;
 };
 
@@ -133,12 +135,16 @@ const initialState: InitialStateTypes = {
 		coverage: {
 			form: {
 				bodilyInjury: '',
-				collision: '',
-				comprehensive: '',
 				medical: '',
 				propertyDamage: '',
 				uninsuredOrUnderinsuredMBI: '',
 				uninsuredOrUnderinsuredMPD: '',
+				vehicles: [
+					{
+						collision: '',
+						comprehensive: '',
+					},
+				],
 			},
 			index: 3,
 			name: 'Coverage',
@@ -146,24 +152,19 @@ const initialState: InitialStateTypes = {
 		driverInfo: {
 			form: [
 				{
-					accidentCitation: [
-						{
-							id: Number((Math.random() * 1000000).toFixed(0)),
-							value: '',
-						},
-					],
+					accidentCitation: [],
 					ageFirstLicenced: '',
 					firstName: '',
 					gender: '',
 					governmentAffiliation: '',
-					hasAccidentOrCitations: false,
+					hasAccidentOrCitations: '',
 					highestEducation: '',
 					id: Number((Math.random() * 1000000).toFixed(0)),
 					lastName: '',
 					maritalStatus: '',
-					militaryAffiliation: '',
-					ocupation: '',
-					otherOcupation: '',
+					millitaryAffiliation: '',
+					occupation: '',
+					otherOccupation: '',
 					relationToContact: '',
 				},
 			],
@@ -208,6 +209,7 @@ export enum ACTIONS {
 	SET_REMOVE_ACCIDENT_CITATION = 'SET_REMOVE_ACCIDENT_CITATION',
 	SET_REMOVE_DRIVER = 'SET_REMOVE_DRIVER',
 	SET_REMOVE_VEHICLE = 'SET_REMOVE_VEHICLE',
+	UPDATE_DRIVER_INFO_FORM = 'UPDATE_DRIVER_INFO_FORM',
 }
 
 type ActionsPayload = {
@@ -227,14 +229,20 @@ type ActionsPayload = {
 	[ACTIONS.SET_NEW_DRIVER]: DriverInfoFormTypes;
 	[ACTIONS.SET_NEW_VEHICLE]: VehicleInfoFormTypes;
 	[ACTIONS.SET_REMOVE_ACCIDENT_CITATION]: {
-		accidentCitationId: number;
-		formId: number;
+		accidentCitationIndex: number;
+		formIndex: number;
 	};
 	[ACTIONS.SET_REMOVE_DRIVER]: {id: number};
 	[ACTIONS.SET_REMOVE_VEHICLE]: {id: number};
 	[ACTIONS.SET_VEHICLE_INFO_FORM]: {
 		fieldName: string;
 		id: number;
+		value: string;
+	};
+	[ACTIONS.UPDATE_DRIVER_INFO_FORM]: {
+		formId: number;
+		id: number;
+		index: number;
 		value: string;
 	};
 };
@@ -357,6 +365,49 @@ const reducer = (state: InitialStateTypes, action: ApplicationActions) => {
 			};
 		}
 
+		case ACTIONS.UPDATE_DRIVER_INFO_FORM: {
+			const formId = action?.payload?.formId;
+			const index = action?.payload?.index;
+			const id = action?.payload?.id;
+			const value = action?.payload?.value;
+			const forms = state?.steps?.driverInfo?.form;
+
+			const payload = forms[index].accidentCitation.map(
+				(currentAccidentCitation) => {
+					if (currentAccidentCitation.id === id) {
+						return {
+							...currentAccidentCitation,
+							value,
+						};
+					}
+
+					return currentAccidentCitation;
+				}
+			);
+
+			const newPayload = forms.map((currentForm) => {
+				if (currentForm.id === formId) {
+					return {
+						...currentForm,
+						accidentCitation: payload,
+					};
+				}
+
+				return currentForm;
+			});
+
+			return {
+				...state,
+				steps: {
+					...state.steps,
+					driverInfo: {
+						...state.steps.driverInfo,
+						form: newPayload,
+					},
+				},
+			};
+		}
+
 		case ACTIONS.SET_NEW_DRIVER: {
 			const payload = state.steps.driverInfo.form;
 
@@ -415,27 +466,35 @@ const reducer = (state: InitialStateTypes, action: ApplicationActions) => {
 		}
 
 		case ACTIONS.SET_REMOVE_ACCIDENT_CITATION: {
-			const formId = action?.payload?.formId;
-			const accidentCitationId = action?.payload?.accidentCitationId;
 			const payload = state?.steps?.driverInfo?.form;
 
-			const uniqueIdForm = payload.filter((form) => form.id === formId);
+			const accidentCitationIndex =
+				action?.payload?.accidentCitationIndex;
 
-			const formsWithoutUniqueId = payload.filter(
-				(form) => form.id !== formId
+			const formIndex = action?.payload?.formIndex;
+
+			const formId = payload[formIndex].id;
+
+			const accidentCitationId =
+				payload[formIndex].accidentCitation[accidentCitationIndex].id;
+
+			const accidentCitationFiltered = payload[
+				formIndex
+			].accidentCitation.filter(
+				(currentAccidentCitation) =>
+					currentAccidentCitation.id !== accidentCitationId
 			);
 
-			const accidentCitationListFiltered = uniqueIdForm.map(
-				(uniqueIdForm) =>
-					uniqueIdForm.accidentCitation.filter(
-						(accidentCitation) =>
-							accidentCitation.id !== accidentCitationId
-					)
-			);
+			const newPayload = payload.map((currentForm) => {
+				if (currentForm.id === formId) {
+					return {
+						...currentForm,
+						accidentCitation: accidentCitationFiltered,
+					};
+				}
 
-			uniqueIdForm[0].accidentCitation = accidentCitationListFiltered[0];
-
-			formsWithoutUniqueId.push(uniqueIdForm[0]);
+				return currentForm;
+			});
 
 			return {
 				...state,
@@ -443,24 +502,20 @@ const reducer = (state: InitialStateTypes, action: ApplicationActions) => {
 					...state.steps,
 					driverInfo: {
 						...state.steps.driverInfo,
-						form: payload,
+						form: newPayload,
 					},
 				},
 			};
 		}
 
 		case ACTIONS.SET_NEW_VEHICLE: {
-			const payload = state.steps.vehicleInfo.form;
-
-			payload.push(action.payload);
-
 			return {
 				...state,
 				steps: {
 					...state.steps,
 					vehicleInfo: {
 						...state.steps.vehicleInfo,
-						form: payload,
+						form: [...state.steps.vehicleInfo.form, action.payload],
 					},
 				},
 			};
@@ -470,12 +525,21 @@ const reducer = (state: InitialStateTypes, action: ApplicationActions) => {
 			const id = action.payload.id;
 			const forms = state.steps.vehicleInfo.form;
 
-			const payload = forms.filter((form) => form.id !== id);
+			const payload = forms.filter((_, index) => id !== index);
 
 			return {
 				...state,
 				steps: {
 					...state.steps,
+					coverage: {
+						...state.steps.coverage,
+						form: {
+							...state.steps.coverage.form,
+							vehicles: state.steps.coverage.form.vehicles.filter(
+								(_, index) => index !== id
+							),
+						},
+					},
 					vehicleInfo: {
 						...state.steps.vehicleInfo,
 						form: payload,

@@ -15,7 +15,6 @@
 import useFormModal from '../../../hooks/useFormModal';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
 import {TestrayProject, deleteResource} from '../../../services/rest';
 import {Action} from '../../../types';
 
@@ -34,7 +33,7 @@ const useRequirementCaseActions = () => {
 		{
 			action: ({id}: TestrayProject, mutate) =>
 				deleteResource(`/requirements/${id}`)
-					.then(() => removeItemFromList(mutate, id))
+					?.then(() => removeItemFromList(mutate, id))
 					.then(modal.onSuccess)
 					.catch(modal.onError),
 			name: i18n.translate('delete'),
@@ -43,7 +42,7 @@ const useRequirementCaseActions = () => {
 	];
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
+		actions,
 		formModal,
 	};
 };

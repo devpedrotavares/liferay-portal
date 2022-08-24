@@ -16,11 +16,13 @@ package com.liferay.commerce.price.list.internal.upgrade.registry;
 
 import com.liferay.commerce.price.list.internal.upgrade.v1_1_0.CommercePriceEntryUpgradeProcess;
 import com.liferay.commerce.price.list.internal.upgrade.v1_2_0.util.CommercePriceListAccountRelTable;
-import com.liferay.commerce.price.list.internal.upgrade.v2_0_0.CommerceTierPriceEntryUpgradeProcess;
 import com.liferay.commerce.price.list.internal.upgrade.v2_0_0.util.CommercePriceListCommerceAccountGroupRelTable;
 import com.liferay.commerce.price.list.internal.upgrade.v2_1_0.util.CommercePriceListChannelRelTable;
 import com.liferay.commerce.price.list.internal.upgrade.v2_1_0.util.CommercePriceListDiscountRelTable;
 import com.liferay.commerce.price.list.internal.upgrade.v2_2_0.util.CommercePriceListOrderTypeRelTable;
+import com.liferay.commerce.price.list.model.impl.CommercePriceEntryModelImpl;
+import com.liferay.commerce.price.list.model.impl.CommercePriceListAccountRelModelImpl;
+import com.liferay.commerce.price.list.model.impl.CommerceTierPriceEntryModelImpl;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.portal.kernel.log.Log;
@@ -31,6 +33,7 @@ import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -62,12 +65,13 @@ public class CommercePriceListServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.2.0", "2.0.0",
-			new com.liferay.commerce.price.list.internal.upgrade.v2_0_0.
-				CommercePriceEntryUpgradeProcess(),
-			new com.liferay.commerce.price.list.internal.upgrade.v2_0_0.
-				CommercePriceListAccountRelUpgradeProcess(),
+			UpgradeProcessFactory.dropColumns(
+				CommercePriceEntryModelImpl.TABLE_NAME, "groupId"),
+			UpgradeProcessFactory.dropColumns(
+				CommercePriceListAccountRelModelImpl.TABLE_NAME, "groupId"),
 			CommercePriceListCommerceAccountGroupRelTable.create(),
-			new CommerceTierPriceEntryUpgradeProcess());
+			UpgradeProcessFactory.dropColumns(
+				CommerceTierPriceEntryModelImpl.TABLE_NAME, "groupId"));
 
 		registry.register(
 			"2.0.0", "2.1.0",

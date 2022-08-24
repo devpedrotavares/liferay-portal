@@ -686,22 +686,21 @@ function EditSXPBlueprintForm({
 				signal: controllerRef.current.signal,
 			}
 		)
-			.then((response) =>
-				response.json().then((data) => ({
+			.then((response) => {
+				return response.json().then((data) => ({
 					ok: response.ok,
 					responseContent: data,
-					status: response.status,
-				}))
-			)
-			.then(({ok, responseContent, status}) => {
-				const errorResponse = getResultsError(
-					status === 400 ? {msg: responseContent.title} : {}
-				);
-
+				}));
+			})
+			.then(({ok, responseContent}) => {
 				setPreviewInfo({
 					loading: false,
 					results: parseResponseContent(
-						ok ? responseContent : errorResponse
+						ok
+							? responseContent
+							: getResultsError({
+									msg: responseContent?.title,
+							  })
 					),
 				});
 			})
@@ -951,7 +950,6 @@ function EditSXPBlueprintForm({
 				responseString={previewInfo.results.responseString}
 				totalHits={previewInfo.results.searchHits?.totalHits}
 				visible={openSidebar === SIDEBARS.PREVIEW}
-				warnings={previewInfo.results.warnings}
 			/>
 
 			<div

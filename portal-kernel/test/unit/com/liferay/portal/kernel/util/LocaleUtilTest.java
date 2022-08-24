@@ -50,6 +50,18 @@ public class LocaleUtilTest {
 			true
 		);
 
+		Mockito.when(
+			language.isAvailableLanguageCode("en")
+		).thenReturn(
+			false
+		);
+
+		Mockito.when(
+			language.isAvailableLanguageCode("fr")
+		).thenReturn(
+			true
+		);
+
 		try (LogCapture logCapture = LoggerTestUtil.configureJDKLogger(
 				LocaleUtil.class.getName(), Level.WARNING)) {
 
@@ -68,6 +80,11 @@ public class LocaleUtilTest {
 
 			Assert.assertEquals(
 				"en is not a valid language id", logEntry.getMessage());
+
+			logEntries.clear();
+
+			Assert.assertEquals(Locale.FRENCH, LocaleUtil.fromLanguageId("fr"));
+			Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 		}
 	}
 
@@ -105,6 +122,46 @@ public class LocaleUtilTest {
 		Assert.assertEquals(
 			Locale.TRADITIONAL_CHINESE,
 			LocaleUtil.fromLanguageId("zh-Hant-TW"));
+	}
+
+	@Test
+	public void testFromLanguageIdLocaleIsCreatedAndRetrievableWhenNoValidationDone() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		Language language = Mockito.mock(Language.class);
+
+		languageUtil.setLanguage(language);
+
+		Mockito.when(
+			language.isAvailableLocale(Locale.ITALY)
+		).thenReturn(
+			false
+		);
+
+		Assert.assertNotNull(LocaleUtil.fromLanguageId("it_IT", false));
+
+		Assert.assertSame(
+			LocaleUtil.fromLanguageId("it_IT", false),
+			LocaleUtil.fromLanguageId("it_IT", false));
+	}
+
+	@Test
+	public void testFromLanguageValidation() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		Language language = Mockito.mock(Language.class);
+
+		languageUtil.setLanguage(language);
+
+		Mockito.when(
+			language.isAvailableLocale(Locale.GERMANY)
+		).thenReturn(
+			false
+		);
+
+		Assert.assertEquals(
+			Locale.GERMANY, LocaleUtil.fromLanguageId("de_DE", false, false));
+		Assert.assertNull(LocaleUtil.fromLanguageId("de_DE", true, false));
 	}
 
 	@Test

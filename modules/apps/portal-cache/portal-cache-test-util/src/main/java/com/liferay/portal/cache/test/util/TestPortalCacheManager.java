@@ -23,6 +23,7 @@ import java.io.Serializable;
 
 import java.net.URL;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -55,7 +56,7 @@ public class TestPortalCacheManager<K extends Serializable, V>
 
 	@Override
 	protected PortalCache<K, V> createPortalCache(
-		PortalCacheConfiguration portalCacheConfiguration) {
+		PortalCacheConfiguration portalCacheConfiguration, boolean sharded) {
 
 		String portalCacheName = portalCacheConfiguration.getPortalCacheName();
 
@@ -115,6 +116,11 @@ public class TestPortalCacheManager<K extends Serializable, V>
 
 		aggregatedPortalCacheManagerListener.notifyPortalCacheRemoved(
 			portalCache.getPortalCacheName());
+	}
+
+	@Override
+	protected void doRemoveShardedPortalCache(
+		long companyId, Set<PortalCache<K, V>> shardedPortalCaches) {
 	}
 
 	@Override

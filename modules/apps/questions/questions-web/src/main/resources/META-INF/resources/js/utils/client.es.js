@@ -322,6 +322,7 @@ export const getThreadQuery = `
 			friendlyUrlPath
 			headline
 			id
+			messageBoardRootMessageId
 			keywords
 			locked
 			messageBoardSection {
@@ -951,6 +952,7 @@ export const getSubscriptionsQuery = `
 						myRating {
 							ratingValue
 						}
+						showAsQuestion
 						subscribed
 						viewCount
 					}

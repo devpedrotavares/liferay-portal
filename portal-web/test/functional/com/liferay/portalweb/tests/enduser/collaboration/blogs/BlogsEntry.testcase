@@ -39,7 +39,7 @@ definition {
 
 		BlogsEntry.addCustomAbstract(entryAbstractDescription = "Blogs Entry Abstract Description");
 
-		Click.pauseClickAt(
+		Click.clickAt(
 			key_editor = "content",
 			locator1 = "AlloyEditor#EDITOR");
 
@@ -844,6 +844,7 @@ definition {
 		property portal.acceptance = "false";
 		property test.name.skip.portal.instance = "BlogsEntry#CanImportEntryWithImageAfterCleaningDB";
 
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
 		var imageId = JSONBlog.uploadBlogImage(
 			groupName = "Guest",
 			sourceFileName = "Document_1.jpg");
@@ -871,7 +872,13 @@ definition {
 			deleteLiferayHome = "false",
 			keepOsGiState = "true");
 
-		Navigator.openURL();
+		if ("${testRunEnvironment}" == "EE") {
+			License.deployLicenseFile();
+		}
+
+		Open.openInTheNewTab(locator1 = "http://localhost:8080");
+
+		User._clickSignInLink();
 
 		SignIn.agreeToTermsOfUse();
 
@@ -943,6 +950,8 @@ definition {
 		property portal.acceptance = "false";
 		property test.name.skip.portal.instance = "BlogsEntry#CanImportEntryWithSmallImageAfterCleaningDB";
 
+		var testRunEnvironment = PropsUtil.get("test.run.environment");
+
 		BlogsNavigator.openToAddEntry(
 			layoutName = "Blogs Page",
 			siteURLKey = "guest");
@@ -973,7 +982,13 @@ definition {
 			deleteLiferayHome = "false",
 			keepOsGiState = "true");
 
-		Navigator.openURL();
+		if ("${testRunEnvironment}" == "EE") {
+			License.deployLicenseFile();
+		}
+
+		Open.openInTheNewTab(locator1 = "http://localhost:8080");
+
+		User._clickSignInLink();
 
 		SignIn.agreeToTermsOfUse();
 

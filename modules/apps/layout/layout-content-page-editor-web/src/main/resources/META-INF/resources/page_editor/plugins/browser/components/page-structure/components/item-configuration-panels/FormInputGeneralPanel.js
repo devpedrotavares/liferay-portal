@@ -61,6 +61,7 @@ function getInputCommonConfiguration(configurationValues, formFields) {
 		);
 
 		fields.push({
+			cssClass: 'mb-4',
 			defaultValue: isRequiredField,
 			disabled: isRequiredField,
 			label: Liferay.Language.get('mark-as-required'),
@@ -78,6 +79,7 @@ function getInputCommonConfiguration(configurationValues, formFields) {
 			typeOptions: {displayType: 'toggle'},
 		},
 		{
+			cssClass: 'mb-4',
 			defaultValue: '',
 			label: Liferay.Language.get('label'),
 			localizable: true,
@@ -92,6 +94,7 @@ function getInputCommonConfiguration(configurationValues, formFields) {
 			typeOptions: {displayType: 'toggle'},
 		},
 		{
+			cssClass: 'mb-4',
 			defaultValue: Liferay.Language.get('add-your-help-text-here'),
 			label: Liferay.Language.get('help-text'),
 			localizable: true,
@@ -388,7 +391,7 @@ function FormInputMappingOptions({configurationValues, form, onValueSelect}) {
 						'page-editor__mapping-panel__type-label',
 						{
 							'mb-1': subtype,
-							'mb-4': !subtype,
+							'mb-3': !subtype,
 						}
 					)}
 				>
@@ -401,7 +404,7 @@ function FormInputMappingOptions({configurationValues, form, onValueSelect}) {
 			)}
 
 			{subtype && (
-				<p className="mb-4 page-editor__mapping-panel__type-label">
+				<p className="mb-3 page-editor__mapping-panel__type-label">
 					<span className="mr-1">
 						{Liferay.Language.get('subtype')}:
 					</span>

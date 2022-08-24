@@ -660,10 +660,6 @@ public abstract class BaseDDMTestCase {
 		whenLanguageGetLanguageId(LocaleUtil.SPAIN, "es_ES");
 		whenLanguageGetLanguageId(LocaleUtil.US, "en_US");
 
-		whenLanguageIsAvailableLocale("en_US");
-		whenLanguageIsAvailableLocale("es_ES");
-		whenLanguageIsAvailableLocale("pt_BR");
-
 		whenLanguageIsAvailableLocale(LocaleUtil.BRAZIL);
 		whenLanguageIsAvailableLocale(LocaleUtil.SPAIN);
 		whenLanguageIsAvailableLocale(LocaleUtil.US);
@@ -671,6 +667,9 @@ public abstract class BaseDDMTestCase {
 		LanguageUtil languageUtil = new LanguageUtil();
 
 		languageUtil.setLanguage(language);
+
+		ReflectionTestUtil.setFieldValue(
+			ddmFormValuesJSONDeserializer, "_language", language);
 	}
 
 	protected void setUpLanguageUtil(Map<String, String> languageKeys) {
@@ -687,21 +686,9 @@ public abstract class BaseDDMTestCase {
 		);
 
 		languageUtil.setLanguage(language);
-	}
 
-	protected void setUpLocaleUtil() {
-		LocaleUtil localeUtil = ReflectionTestUtil.getFieldValue(
-			LocaleUtil.class, "_localeUtil");
-
-		Map<String, Locale> locales = ReflectionTestUtil.getFieldValue(
-			localeUtil, "_locales");
-
-		locales.clear();
-
-		locales.put("en_US", LocaleUtil.US);
-		locales.put("pt_BR", LocaleUtil.BRAZIL);
-
-		ReflectionTestUtil.setFieldValue(localeUtil, "_locale", LocaleUtil.US);
+		ReflectionTestUtil.setFieldValue(
+			ddmFormValuesJSONDeserializer, "_language", language);
 	}
 
 	protected void setUpLocalizationUtil() {
@@ -803,11 +790,10 @@ public abstract class BaseDDMTestCase {
 		).thenReturn(
 			true
 		);
-	}
 
-	protected void whenLanguageIsAvailableLocale(String languageId) {
 		Mockito.when(
-			language.isAvailableLocale(Mockito.eq(languageId))
+			language.isAvailableLocale(
+				Mockito.eq(LocaleUtil.toLanguageId(locale)))
 		).thenReturn(
 			true
 		);

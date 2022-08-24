@@ -20,13 +20,19 @@ import {useFetch} from '../../hooks/useFetch';
 import useHeader from '../../hooks/useHeader';
 import i18n from '../../i18n';
 import {APIResponse, TestrayProject} from '../../services/rest';
+import useProjectActions from './useProjectActions';
 
 const ProjectOutlet = () => {
 	const {projectId, ...otherParams} = useParams();
+	const shouldUpdate = !Object.keys(otherParams).length;
 	const {pathname} = useLocation();
-	const {setActions, setDropdown, setHeading, setTabs} = useHeader();
+	const {setDropdown, setHeaderActions, setHeading, setTabs} = useHeader({
+		shouldUpdate,
+	});
 
-	const {data: testrayProject, error} = useFetch<TestrayProject>(
+	const {actions} = useProjectActions({isHeaderActions: true});
+
+	const {data: testrayProject, error, mutate} = useFetch<TestrayProject>(
 		`/projects/${projectId}`
 	);
 
@@ -51,42 +57,10 @@ const ProjectOutlet = () => {
 	);
 
 	useEffect(() => {
-		setActions([
-			{
-				items: [
-					{
-						label: i18n.translate('edit-project'),
-					},
-					{
-						label: i18n.translate('delete-project'),
-					},
-				],
-				title: i18n.translate('project'),
-			},
-			{
-				items: [
-					{
-						label: i18n.translate('manage-components'),
-					},
-					{
-						label: i18n.translate('manage-teams'),
-					},
-					{
-						label: i18n.translate('manage-product-version'),
-					},
-				],
-				title: i18n.translate('manage'),
-			},
-			{
-				items: [
-					{
-						label: i18n.translate('export-cases'),
-					},
-				],
-				title: i18n.translate('reports'),
-			},
-		]);
-	}, [setActions]);
+		if (shouldUpdate) {
+			setHeaderActions({actions, item: testrayProject, mutate});
+		}
+	}, [actions, mutate, shouldUpdate, setHeaderActions, testrayProject]);
 
 	useEffect(() => {
 		if (testrayProjects) {
@@ -162,7 +136,9 @@ const ProjectOutlet = () => {
 	}
 
 	if (testrayProject) {
-		return <Outlet context={{testrayProject}} />;
+		return (
+			<Outlet context={{mutateTestrayProject: mutate, testrayProject}} />
+		);
 	}
 
 	return null;

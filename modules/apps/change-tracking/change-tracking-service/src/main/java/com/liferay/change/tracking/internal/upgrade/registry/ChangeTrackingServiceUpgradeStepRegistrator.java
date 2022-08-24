@@ -14,10 +14,10 @@
 
 package com.liferay.change.tracking.internal.upgrade.registry;
 
-import com.liferay.change.tracking.internal.upgrade.v2_2_0.CTPreferencesUpgradeProcess;
 import com.liferay.change.tracking.internal.upgrade.v2_3_0.UpgradeCompanyId;
 import com.liferay.change.tracking.internal.upgrade.v2_4_0.CTSchemaVersionUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -33,8 +33,8 @@ public class ChangeTrackingServiceUpgradeStepRegistrator
 	public void register(Registry registry) {
 		registry.register(
 			"1.0.0", "1.0.1",
-			new com.liferay.change.tracking.internal.upgrade.v1_0_1.
-				CTCollectionUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"CTCollection", "description", "VARCHAR(200) null"));
 
 		registry.register(
 			"1.0.1", "2.0.0",
@@ -46,7 +46,10 @@ public class ChangeTrackingServiceUpgradeStepRegistrator
 			new com.liferay.change.tracking.internal.upgrade.v2_1_0.
 				SchemaUpgradeProcess());
 
-		registry.register("2.1.0", "2.2.0", new CTPreferencesUpgradeProcess());
+		registry.register(
+			"2.1.0", "2.2.0",
+			UpgradeProcessFactory.addColumns(
+				"CTPreferences", "previousCtCollectionId LONG"));
 
 		registry.register("2.2.0", "2.3.0", new UpgradeCompanyId());
 

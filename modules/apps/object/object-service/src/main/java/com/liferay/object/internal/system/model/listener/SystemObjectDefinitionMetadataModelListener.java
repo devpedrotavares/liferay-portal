@@ -33,9 +33,12 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
+import com.liferay.portal.vulcan.extension.EntityExtensionThreadLocal;
 
 import java.util.Collections;
 import java.util.Map;
@@ -81,6 +84,24 @@ public class SystemObjectDefinitionMetadataModelListener<T extends BaseModel<T>>
 	public void onAfterRemove(T baseModel) throws ModelListenerException {
 		_executeObjectActions(
 			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, null, baseModel);
+
+		try {
+			ObjectDefinition objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+					_getCompanyId(baseModel), _modelClass.getName());
+
+			if (objectDefinition == null) {
+				return;
+			}
+
+			_objectEntryLocalService.
+				deleteExtensionDynamicObjectDefinitionTableValues(
+					objectDefinition,
+					GetterUtil.getLong(baseModel.getPrimaryKeyObj()));
+		}
+		catch (PortalException portalException) {
+			throw new ModelListenerException(portalException);
+		}
 	}
 
 	@Override
@@ -98,26 +119,6 @@ public class SystemObjectDefinitionMetadataModelListener<T extends BaseModel<T>>
 	}
 
 	@Override
-	public void onBeforeRemove(T baseModel) throws ModelListenerException {
-		try {
-			ObjectDefinition objectDefinition =
-				_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
-					_getCompanyId(baseModel), _modelClass.getName());
-
-			if (objectDefinition == null) {
-				return;
-			}
-
-			_objectEntryLocalService.deleteRelatedObjectEntries(
-				0, objectDefinition.getObjectDefinitionId(),
-				GetterUtil.getLong(baseModel.getPrimaryKeyObj()));
-		}
-		catch (PortalException portalException) {
-			throw new ModelListenerException(portalException);
-		}
-	}
-
-	@Override
 	public void onBeforeUpdate(T originalModel, T model)
 		throws ModelListenerException {
 
@@ -129,6 +130,14 @@ public class SystemObjectDefinitionMetadataModelListener<T extends BaseModel<T>>
 		throws ModelListenerException {
 
 		try {
+			ObjectDefinition objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+					_getCompanyId(baseModel), _modelClass.getName());
+
+			if (objectDefinition == null) {
+				return;
+			}
+
 			long userId = PrincipalThreadLocal.getUserId();
 
 			if (userId == 0) {
@@ -139,8 +148,8 @@ public class SystemObjectDefinitionMetadataModelListener<T extends BaseModel<T>>
 				_modelClass.getName(), _getCompanyId(baseModel),
 				objectActionTriggerKey,
 				_getPayloadJSONObject(
-					objectActionTriggerKey, originalBaseModel, baseModel,
-					userId),
+					objectActionTriggerKey, objectDefinition, originalBaseModel,
+					baseModel, userId),
 				userId);
 		}
 		catch (PortalException portalException) {
@@ -179,14 +188,32 @@ public class SystemObjectDefinitionMetadataModelListener<T extends BaseModel<T>>
 	}
 
 	private JSONObject _getPayloadJSONObject(
-			String objectActionTriggerKey, T originalBaseModel, T baseModel,
-			long userId)
+			String objectActionTriggerKey, ObjectDefinition objectDefinition,
+			T originalBaseModel, T baseModel, long userId)
 		throws PortalException {
 
 		String dtoConverterType = _getDTOConverterType();
 
 		return JSONUtil.put(
 			"classPK", baseModel.getPrimaryKeyObj()
+		).put(
+			"extendedProperties",
+			() -> {
+				if (!GetterUtil.getBoolean(
+						PropsUtil.get("feature.flag.LPS-135404"))) {
+
+					return null;
+				}
+
+				return HashMapBuilder.<String, Object>putAll(
+					_objectEntryLocalService.
+						getExtensionDynamicObjectDefinitionTableValues(
+							objectDefinition,
+							GetterUtil.getLong(baseModel.getPrimaryKeyObj()))
+				).putAll(
+					EntityExtensionThreadLocal.getExtendedProperties()
+				).build();
+			}
 		).put(
 			"model" + _modelClass.getSimpleName(),
 			baseModel.getModelAttributes()

@@ -829,7 +829,7 @@ definition {
 	@priority = "4"
 	test ModifyPaginationPortalProperties {
 		property app.server.types = "jboss,tcserver,tomcat,weblogic,websphere,wildfly";
-		property custom.properties = "search.container.page.default.delta=2";
+		property custom.properties = "search.container.page.default.delta=1";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver,sybase";
 		property environment.acceptance = "true";
 		property portal.acceptance = "true";
@@ -863,7 +863,7 @@ definition {
 
 		AssertTextEquals(
 			locator1 = "SearchResults#RESULTS_PORTLET_PAGINATION_CONFIG",
-			value1 = "2");
+			value1 = "1");
 
 		IFrame.closeFrame();
 
@@ -877,22 +877,25 @@ definition {
 
 		AssertTextEquals(
 			locator1 = "SearchResults#RESULTS_PORTLET_PAGINATION_CONFIG",
-			value1 = "2");
+			value1 = "1");
 
 		IFrame.closeFrame();
 
 		SearchResultPortlet.viewSearchResults(
-			searchAssetTitle = "WC Title 1",
+			searchAssetTitle = "WC Title",
 			searchAssetType = "Web Content Article");
 
-		SearchResultPortlet.viewSearchResultNotPresent(
-			searchAssetTitle = "WC Title 3",
+		Click(locator1 = "Pagination#NEXT_LINK");
+
+		SearchResultPortlet.viewSearchResults(
+			searchAssetTitle = "WC Title",
 			searchAssetType = "Web Content Article");
 
-		SearchResultPortlet.paginateAndViewSearchResults(
-			searchAssetTitle = "WC Title 3",
-			searchAssetType = "Web Content Article",
-			searchTerm = "WC Title");
+		Click(locator1 = "Pagination#NEXT_LINK");
+
+		SearchResultPortlet.viewSearchResults(
+			searchAssetTitle = "WC Title",
+			searchAssetType = "Web Content Article");
 	}
 
 	@description = "This is a use case for LPS-112599."
@@ -1443,6 +1446,27 @@ definition {
 			searchAssetTitle = "Entry Title",
 			searchAssetType = "Blogs Entry",
 			searchTerm = "Entry Title");
+	}
+
+	@priority = "4"
+	test SearchByClickingMagnifyingGlassIcon {
+		property test.assert.warning.exceptions = "true";
+
+		SearchPortlets.searchEmbedded(
+			clickMagnifyingGlassIcon = "true",
+			searchTerm = "test");
+
+		SearchResultPortlet.viewSearchResults(
+			searchAssetTitle = "Test Test",
+			searchAssetType = "User");
+
+		SearchPortlets.searchWidget(
+			clickMagnifyingGlassIcon = "true",
+			searchTerm = "test");
+
+		SearchResultPortlet.viewSearchResults(
+			searchAssetTitle = "Test Test",
+			searchAssetType = "User");
 	}
 
 	@priority = "4"

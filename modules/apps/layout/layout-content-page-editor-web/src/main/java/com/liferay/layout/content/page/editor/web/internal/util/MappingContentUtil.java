@@ -14,7 +14,6 @@
 
 package com.liferay.layout.content.page.editor.web.internal.util;
 
-import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldSet;
 import com.liferay.info.field.InfoFieldSetEntry;
@@ -22,16 +21,15 @@ import com.liferay.info.field.type.InfoFieldType;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.item.provider.InfoItemFormProvider;
+import com.liferay.layout.content.page.editor.web.internal.info.search.InfoSearchClassMapperTrackerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * @author Eudaldo Alonso
@@ -88,23 +86,18 @@ public class MappingContentUtil {
 			Locale locale)
 		throws Exception {
 
-		// LPS-111037
-
-		if (Objects.equals(
-				DLFileEntryConstants.getClassName(), itemClassName)) {
-
-			itemClassName = FileEntry.class.getName();
-		}
+		String className = InfoSearchClassMapperTrackerUtil.getClassName(
+			itemClassName);
 
 		InfoItemFormProvider<?> infoItemFormProvider =
 			infoItemServiceTracker.getFirstInfoItemService(
-				InfoItemFormProvider.class, itemClassName);
+				InfoItemFormProvider.class, className);
 
 		if (infoItemFormProvider == null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to get info item form provider for class " +
-						itemClassName);
+						className);
 			}
 
 			return JSONFactoryUtil.createJSONArray();

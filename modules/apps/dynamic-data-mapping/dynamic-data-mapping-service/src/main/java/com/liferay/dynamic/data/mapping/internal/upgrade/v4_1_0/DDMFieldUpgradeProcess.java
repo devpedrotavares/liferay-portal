@@ -532,10 +532,22 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 		List<DDMFormFieldValue> newDDMFormFieldValues = new ArrayList<>();
 
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
+			String type = null;
+
+			try {
+				type = ddmFormFieldValue.getType();
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(exception);
+				}
+			}
+
 			if (!ListUtil.isEmpty(
 					ddmFormFieldValue.getNestedDDMFormFieldValues()) &&
+				(type != null) &&
 				!com.liferay.portal.kernel.util.StringUtil.equals(
-					ddmFormFieldValue.getType(), "fieldset")) {
+					type, "fieldset")) {
 
 				DDMFormFieldValue newDDMFormFieldValue =
 					new DDMFormFieldValue() {

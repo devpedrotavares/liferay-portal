@@ -12,39 +12,53 @@
  * details.
  */
 
-import useFormModal from '../../../hooks/useFormModal';
+import {useRef} from 'react';
+import {useNavigate} from 'react-router-dom';
+
+import useFormActions from '../../../hooks/useFormActions';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
-import {TestrayProject, deleteResource} from '../../../services/rest';
-import {Action} from '../../../types';
+import {TestrayRequirement, deleteResource} from '../../../services/rest';
+import {Action, ActionsHookParameter} from '../../../types';
 
-const useRequirementActions = () => {
+const useRequirementActions = ({
+	isHeaderActions,
+}: ActionsHookParameter = {}) => {
+	const {form} = useFormActions();
 	const {removeItemFromList} = useMutate();
+	const navigate = useNavigate();
 
-	const formModal = useFormModal();
-	const modal = formModal.modal;
-
-	const actions: Action[] = [
+	const actionsRef = useRef([
 		{
-			action: (item: TestrayProject) => modal.open(item),
-			name: i18n.translate('edit'),
+			action: (Requirement: TestrayRequirement) =>
+				navigate(
+					isHeaderActions ? 'update' : `${Requirement.id}/update`
+				),
+			icon: 'pencil',
+			name: i18n.translate(isHeaderActions ? 'edit-requirement' : 'edit'),
 			permission: 'UPDATE',
 		},
 		{
-			action: ({id}: TestrayProject, mutate) =>
+			action: ({id}: TestrayRequirement, mutate) =>
 				deleteResource(`/requirements/${id}`)
-					.then(() => removeItemFromList(mutate, id))
-					.then(modal.onSuccess)
-					.catch(modal.onError),
-			name: i18n.translate('delete'),
+					?.then(() => {
+						navigate(-1);
+
+						return removeItemFromList(mutate, id);
+					})
+					.then(form.onSuccess)
+					.catch(form.onError),
+			icon: 'trash',
+			name: i18n.translate(
+				isHeaderActions ? 'delete-requirement' : 'delete'
+			),
 			permission: 'DELETE',
 		},
-	];
+	] as Action[]);
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
-		formModal,
+		actions: actionsRef.current,
+		navigate,
 	};
 };
 

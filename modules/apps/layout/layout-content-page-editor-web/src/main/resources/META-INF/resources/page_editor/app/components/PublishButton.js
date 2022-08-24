@@ -17,15 +17,15 @@ import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
 import {config} from '../config/index';
-import {useHasStyleErrors} from '../contexts/StyleErrorsContext';
-import openWarningModal from '../utils/openWarningModal';
-import useIsSomeFormIncomplete from '../utils/useIsSomeFormIncomplete';
-import {StyleErrorsModal} from './StyleErrorsModal';
+import useCheckFormsValidity from '../utils/useCheckFormsValidity';
+import {FormValidationModal} from './FormValidationModal';
 
 export default function PublishButton({canPublish, formRef, label, onPublish}) {
-	const hasStyleErrors = useHasStyleErrors();
-	const isSomeFormIncomplete = useIsSomeFormIncomplete();
-	const [openStyleErrorsModal, setOpenStyleErrorsModal] = useState(false);
+	const checkFormsValidity = useCheckFormsValidity();
+
+	const [openFormValidationModal, setOpenFormValidationModal] = useState(
+		false
+	);
 
 	return (
 		<>
@@ -41,30 +41,14 @@ export default function PublishButton({canPublish, formRef, label, onPublish}) {
 					disabled={config.pending || !canPublish}
 					displayType="primary"
 					onClick={() => {
-						if (hasStyleErrors) {
-							setOpenStyleErrorsModal(true);
-						}
-						else {
-							isSomeFormIncomplete().then((result) => {
-								if (result) {
-									openWarningModal({
-										action: onPublish,
-										actionLabel: Liferay.Language.get(
-											'publish'
-										),
-										message: Liferay.Language.get(
-											'this-page-contains-one-or-several-forms-with-a-missing-or-hidden-form-components'
-										),
-										title: Liferay.Language.get(
-											'required-form-components'
-										),
-									});
-								}
-								else {
-									onPublish();
-								}
-							});
-						}
+						checkFormsValidity().then((valid) => {
+							if (valid) {
+								onPublish();
+							}
+							else {
+								setOpenFormValidationModal(true);
+							}
+						});
 					}}
 					small
 				>
@@ -72,9 +56,9 @@ export default function PublishButton({canPublish, formRef, label, onPublish}) {
 				</ClayButton>
 			</form>
 
-			{openStyleErrorsModal && hasStyleErrors && (
-				<StyleErrorsModal
-					onCloseModal={() => setOpenStyleErrorsModal(false)}
+			{openFormValidationModal && (
+				<FormValidationModal
+					onCloseModal={() => setOpenFormValidationModal(false)}
 					onPublish={onPublish}
 				/>
 			)}

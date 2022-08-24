@@ -12,13 +12,10 @@
  * details.
  */
 
-import {useEffect} from 'react';
-
 import Container from '../../components/Layout/Container';
 import ListView from '../../components/ListView';
 import {useHeader} from '../../hooks';
 import i18n from '../../i18n';
-import ProjectModal from './ProjectModal';
 import useProjectActions from './useProjectActions';
 
 type ProjectsProps = {
@@ -26,42 +23,30 @@ type ProjectsProps = {
 	addHeading?: boolean;
 };
 
-const Projects: React.FC<ProjectsProps> = ({
-	addHeading = true,
-	PageContainer = Container,
-}) => {
-	const {actions, formModal} = useProjectActions();
+const Projects: React.FC<ProjectsProps> = ({PageContainer = Container}) => {
+	const {actions, navigate} = useProjectActions();
 
-	const {setDropdown, setDropdownIcon, setHeading} = useHeader({
-		shouldUpdate: true,
+	useHeader({
+		useDropdown: [],
+		useHeaderActions: {actions: []},
+		useHeading: [
+			{
+				category: i18n.translate('project'),
+				title: i18n.translate('project-directory'),
+			},
+		],
+		useIcon: 'polls',
 	});
-
-	useEffect(() => {
-		setDropdownIcon('polls');
-		setDropdown([]);
-	}, [setDropdownIcon, setDropdown]);
-
-	useEffect(() => {
-		if (addHeading) {
-			setHeading([
-				{
-					category: i18n.translate('project'),
-					title: i18n.translate('project-directory'),
-				},
-			]);
-		}
-	}, [addHeading, setHeading]);
 
 	return (
 		<PageContainer>
 			<ListView
-				forceRefetch={formModal.forceRefetch}
 				managementToolbarProps={{
-					addButton: () => formModal.modal.open(),
+					addButton: () => navigate('/project/create'),
 					display: {columns: false},
 					title: i18n.translate('projects'),
 				}}
-				resource="/projects"
+				resource="/projects?fields=actions,description,id,name"
 				tableProps={{
 					actions,
 					columns: [
@@ -79,8 +64,6 @@ const Projects: React.FC<ProjectsProps> = ({
 					navigateTo: (project) => `/project/${project.id}/routines`,
 				}}
 			/>
-
-			<ProjectModal modal={formModal.modal} />
 		</PageContainer>
 	);
 };

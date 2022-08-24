@@ -1344,6 +1344,14 @@
 			<category name="Styling" />
 			<description name="Applies rules to enforce consistency in code style." />
 		</check>
+		<check name="PropertiesUpgradeLiferayPluginPackageFileCheck">
+			<category name="Upgrade" />
+			<description name="Performs several upgrade checks in `liferay-plugin-package.properties` file." />
+		</check>
+		<check name="PropertiesUpgradeLiferayPluginPackageLiferayVersionsCheck">
+			<category name="Upgrade" />
+			<description name="Validates and upgrades the version in `liferay-plugin-package.properties` file." />
+		</check>
 		<check name="PropertiesWhitespaceCheck">
 			<category name="Styling" />
 			<description name="Finds missing and unnecessary whitespace in `.properties` files." />
@@ -1590,6 +1598,10 @@
 		<check name="XMLToggleFileCheck">
 			<category name="Styling" />
 			<description name="Checks the order of elements in `.toggle` file." />
+		</check>
+		<check name="XMLUpgradeDTDVersionCheck">
+			<category name="Upgrade" />
+			<description name="Checks and upgrades the DTD version in `*.xml` file." />
 		</check>
 		<check name="XMLUpgradeRemovedDefinitionsCheck">
 			<category name="Upgrade" />

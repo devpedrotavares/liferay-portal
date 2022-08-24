@@ -539,6 +539,11 @@ public abstract class BaseMessageBoardThreadResourceImpl
 				messageBoardThread.getLocked());
 		}
 
+		if (messageBoardThread.getMessageBoardRootMessageId() != null) {
+			existingMessageBoardThread.setMessageBoardRootMessageId(
+				messageBoardThread.getMessageBoardRootMessageId());
+		}
+
 		if (messageBoardThread.getMessageBoardSectionId() != null) {
 			existingMessageBoardThread.setMessageBoardSectionId(
 				messageBoardThread.getMessageBoardSectionId());

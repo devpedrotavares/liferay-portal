@@ -31,17 +31,30 @@ definition {
 				accountEntryType = "${accountType}");
 		}
 
-		JSONAccountEntryUser.addAccountEntryUser(
-			accountEntryName = "${accountName}",
-			userEmailAddress = "${userEmailAddress}",
-			userFirstName = "${userFirstName}",
-			userLastName = "${userLastName}",
-			userScreenName = "${userScreenName}");
+		if (isSet(existingUser) && ("${existingUser}" == "true")) {
+			Accounts.openAccountsAdmin();
 
-		JSONUser.setFirstPassword(
-			agreeToTermsAndAnswerReminderQuery = "${agreeToTermsAndAnswerReminderQuery}",
-			requireReset = "${requireReset}",
-			userEmailAddress = "${userEmailAddress}");
+			LexiconEntry.gotoEntry(rowEntry = "${accountName}");
+
+			Accounts.assignUsers(
+				accountName = "${accountName}",
+				assigneeName = "${userEmailAddress}");
+		}
+		else {
+			JSONAccountEntryUser.addAccountEntryUser(
+				accountEntryName = "${accountName}",
+				userEmailAddress = "${userEmailAddress}",
+				userFirstName = "${userFirstName}",
+				userLastName = "${userLastName}",
+				userScreenName = "${userScreenName}");
+		}
+
+		if (isSet(requireReset) || isSet(agreeToTermsAndAnswerReminderQuery)) {
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "${agreeToTermsAndAnswerReminderQuery}",
+				requireReset = "${requireReset}",
+				userEmailAddress = "${userEmailAddress}");
+		}
 
 		if (isSet(userSiteMembership)) {
 			JSONUser.addUserToSite(
@@ -689,6 +702,13 @@ definition {
 				key_entry = "${uploadFileName}",
 				locator1 = "CommerceNavigation#ANY_ENTRY_NAME_WITHOUT_CONTAINS");
 		}
+	}
+
+	macro clickButtonWithName {
+		Click.javaScriptClick(
+			key_buttonName = "${buttonName}",
+			key_text = "${text}",
+			locator1 = "CommerceEntry#BUTTON_WITH_NAME");
 	}
 
 	macro clickEntryDropdownMenuItem {

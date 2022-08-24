@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
@@ -83,6 +84,13 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 			Field.SCOPE_GROUP_ID, Field.UID);
 		setFilterSearch(true);
 		setPermissionAware(true);
+	}
+
+	@Override
+	public void delete(long companyId, String uuid) throws SearchException {
+		super.delete(companyId, uuid);
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -203,6 +211,8 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		deleteDocument(
 			commercePriceList.getCompanyId(),
 			commercePriceList.getCommercePriceListId());
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -325,6 +335,8 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		_indexWriterHelper.updateDocument(
 			getSearchEngineId(), commercePriceList.getCompanyId(),
 			getDocument(commercePriceList), isCommitImmediately());
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	@Override
@@ -337,6 +349,8 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		long companyId = GetterUtil.getLong(ids[0]);
 
 		_reindexCommercePriceLists(companyId);
+
+		_commercePriceListLocalService.cleanPriceListCache();
 	}
 
 	private long _getCatalogId(CommercePriceList commercePriceList)

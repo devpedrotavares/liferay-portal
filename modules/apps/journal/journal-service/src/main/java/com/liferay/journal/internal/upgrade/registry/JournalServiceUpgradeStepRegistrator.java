@@ -61,8 +61,6 @@ import com.liferay.journal.internal.upgrade.v3_5_0.JournalArticleContentUpgradeP
 import com.liferay.journal.internal.upgrade.v3_5_1.JournalArticleDataFileEntryIdUpgradeProcess;
 import com.liferay.journal.internal.upgrade.v4_0_0.JournalArticleDDMFieldsUpgradeProcess;
 import com.liferay.journal.internal.upgrade.v4_1_0.JournalArticleExternalReferenceCodeUpgradeProcess;
-import com.liferay.journal.internal.upgrade.v4_2_0.JournalFeedUpgradeProcess;
-import com.liferay.journal.internal.upgrade.v4_3_0.JournalFolderExternalReferenceCodeUpgradeProcess;
 import com.liferay.journal.internal.upgrade.v4_3_1.BasicWebContentAssetEntryClassTypeIdUpgradeProcess;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.util.JournalConverter;
@@ -89,10 +87,12 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.SystemEventLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.settings.SettingsFactory;
+import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.BaseSQLServerDatetimeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -210,8 +210,8 @@ public class JournalServiceUpgradeStepRegistrator
 
 		registry.register(
 			"1.1.3", "1.1.4",
-			new com.liferay.journal.internal.upgrade.v1_1_4.
-				JournalArticleUpgradeProcess());
+			UpgradeProcessFactory.alterColumnType(
+				"JournalArticle", "urlTitle", "VARCHAR(255) null"));
 
 		registry.register(
 			"1.1.4", "1.1.5",
@@ -312,11 +312,25 @@ public class JournalServiceUpgradeStepRegistrator
 			"4.0.0", "4.1.0",
 			new JournalArticleExternalReferenceCodeUpgradeProcess());
 
-		registry.register("4.1.0", "4.2.0", new JournalFeedUpgradeProcess());
+		registry.register(
+			"4.1.0", "4.2.0",
+			UpgradeProcessFactory.alterColumnType(
+				"JournalFeed", "DDMRendererTemplateKey", "VARCHAR(75) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"JournalFeed", "DDMStructureKey", "VARCHAR(75) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"JournalFeed", "DDMTemplateKey", "VARCHAR(75) null"));
 
 		registry.register(
 			"4.2.0", "4.3.0",
-			new JournalFolderExternalReferenceCodeUpgradeProcess());
+			new BaseExternalReferenceCodeUpgradeProcess() {
+
+				@Override
+				protected String[][] getTableAndPrimaryKeyColumnNames() {
+					return new String[][] {{"JournalFolder", "folderId"}};
+				}
+
+			});
 
 		registry.register(
 			"4.3.0", "4.3.1",

@@ -12,43 +12,48 @@
  * details.
  */
 
-import useFormModal from '../../../hooks/useFormModal';
+import {useRef} from 'react';
+import {useNavigate} from 'react-router-dom';
+
+import useFormActions from '../../../hooks/useFormActions';
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
-import {Security} from '../../../security';
 import {TestrayRoutine, deleteResource} from '../../../services/rest';
-import {Action} from '../../../types';
+import {Action, ActionsHookParameter} from '../../../types';
 
-const useRoutineActions = () => {
-	const formModal = useFormModal();
+const useRoutineActions = ({isHeaderActions}: ActionsHookParameter = {}) => {
+	const {form} = useFormActions();
+	const navigate = useNavigate();
 	const {removeItemFromList} = useMutate();
 
-	const modal = formModal.modal;
-
-	const actions: Action[] = [
+	const actionsRef = useRef([
 		{
-			action: (routine: TestrayRoutine) => modal.open(routine),
-			name: i18n.translate('edit'),
+			action: (routine: TestrayRoutine) =>
+				navigate(isHeaderActions ? 'update' : `${routine.id}/update`),
+			icon: 'pencil',
+			name: i18n.translate(isHeaderActions ? 'edit-routine' : 'edit'),
 			permission: 'UPDATE',
 		},
 		{
 			action: () => alert('Select Default Environment Factors'),
+			icon: 'display',
 			name: i18n.translate('select-default-environment-factors'),
 		},
 		{
 			action: ({id}: TestrayRoutine, mutate) =>
 				deleteResource(`/routines/${id}`)
-					.then(() => removeItemFromList(mutate, id))
-					.then(modal.onSuccess)
-					.catch(modal.onError),
-			name: i18n.translate('delete'),
+					?.then(() => removeItemFromList(mutate, id))
+					.then(form.onSuccess)
+					.catch(form.onError),
+			icon: 'trash',
+			name: i18n.translate(isHeaderActions ? 'delete-routine' : 'delete'),
 			permission: 'DELETE',
 		},
-	];
+	] as Action[]);
 
 	return {
-		actions: (row: any) => Security.filterActions(actions, row.actions),
-		formModal,
+		actions: actionsRef.current,
+		navigate,
 	};
 };
 

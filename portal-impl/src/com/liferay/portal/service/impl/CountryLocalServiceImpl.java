@@ -14,6 +14,7 @@
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
@@ -306,53 +307,49 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 		);
 
 		return joinStep.where(
-			() -> {
-				Predicate predicate = CountryTable.INSTANCE.companyId.eq(
-					companyId);
+			CountryTable.INSTANCE.companyId.eq(
+				companyId
+			).and(
+				() -> {
+					if (active == null) {
+						return null;
+					}
 
-				if (active != null) {
-					predicate = predicate.and(
-						CountryTable.INSTANCE.active.eq(active));
+					return CountryTable.INSTANCE.active.eq(active);
 				}
-
-				if (Validator.isNotNull(keywords)) {
-					String[] terms = CustomSQLUtil.keywords(keywords, true);
+			).and(
+				() -> {
+					if (Validator.isNull(keywords)) {
+						return null;
+					}
 
 					Predicate keywordsPredicate = null;
 
-					for (String term : terms) {
-						Predicate namePredicate = DSLFunctionFactoryUtil.lower(
-							CountryTable.INSTANCE.name
-						).like(
-							term
-						);
+					for (String keyword :
+							CustomSQLUtil.keywords(keywords, true)) {
 
-						Predicate titlePredicate = DSLFunctionFactoryUtil.lower(
-							CountryLocalizationTable.INSTANCE.title
-						).like(
-							term
-						);
+						for (Column<?, String> column :
+								new Column[] {
+									CountryTable.INSTANCE.a2,
+									CountryTable.INSTANCE.a3,
+									CountryTable.INSTANCE.name,
+									CountryTable.INSTANCE.number,
+									CountryLocalizationTable.INSTANCE.title
+								}) {
 
-						Predicate termPredicate = namePredicate.or(
-							titlePredicate);
-
-						if (keywordsPredicate == null) {
-							keywordsPredicate = termPredicate;
-						}
-						else {
-							keywordsPredicate = keywordsPredicate.or(
-								termPredicate);
+							keywordsPredicate = Predicate.or(
+								keywordsPredicate,
+								DSLFunctionFactoryUtil.lower(
+									column
+								).like(
+									keyword
+								));
 						}
 					}
 
-					if (keywordsPredicate != null) {
-						predicate = predicate.and(
-							keywordsPredicate.withParentheses());
-					}
+					return Predicate.withParentheses(keywordsPredicate);
 				}
-
-				return predicate;
-			});
+			));
 	}
 
 	private boolean _isDuplicateCountry(Country country, long countryId) {

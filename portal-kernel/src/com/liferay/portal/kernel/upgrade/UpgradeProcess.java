@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.ObjectValuePair;
@@ -60,6 +61,13 @@ import java.util.Set;
 public abstract class UpgradeProcess
 	extends BaseDBProcess implements UpgradeStep {
 
+	public UpgradeProcess() {
+	}
+
+	public UpgradeProcess(String upgradeInfo) {
+		_upgradeInfo = upgradeInfo;
+	}
+
 	public void clearIndexesCache() {
 		_portalIndexesSQL.clear();
 	}
@@ -73,10 +81,20 @@ public abstract class UpgradeProcess
 		return 0;
 	}
 
+	public final UpgradeStep[] getUpgradeSteps() {
+		return ArrayUtil.append(
+			getPreUpgradeSteps(), new UpgradeStep[] {this},
+			getPostUpgradeSteps());
+	}
+
 	public void upgrade() throws UpgradeException {
 		long start = System.currentTimeMillis();
 
 		String message = "Completed upgrade process ";
+
+		String info =
+			(_upgradeInfo == null) ? ClassUtil.getClassName(this) :
+				_upgradeInfo;
 
 		try (Connection connection = getConnection()) {
 			this.connection = connection;
@@ -87,15 +105,14 @@ public abstract class UpgradeProcess
 
 			process(
 				companyId -> {
+					String companyInfo = info;
+
+					if (Validator.isNotNull(companyId)) {
+						companyInfo += "#" + companyId;
+					}
+
 					if (_log.isInfoEnabled()) {
-						String info =
-							"Upgrading " + ClassUtil.getClassName(this);
-
-						if (Validator.isNotNull(companyId)) {
-							info += "#" + companyId;
-						}
-
-						_log.info(info);
+						_log.info("Upgrading " + companyInfo);
 					}
 
 					doUpgrade();
@@ -112,7 +129,7 @@ public abstract class UpgradeProcess
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					StringBundler.concat(
-						message, ClassUtil.getClassName(this), " in ",
+						message, info, " in ",
 						System.currentTimeMillis() - start, " ms"));
 			}
 		}
@@ -288,6 +305,14 @@ public abstract class UpgradeProcess
 		return _portalIndexesSQL.get(tableName);
 	}
 
+	protected UpgradeStep[] getPostUpgradeSteps() {
+		return new UpgradeStep[0];
+	}
+
+	protected UpgradeStep[] getPreUpgradeSteps() {
+		return new UpgradeStep[0];
+	}
+
 	/**
 	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
 	 */
@@ -382,5 +407,7 @@ public abstract class UpgradeProcess
 	private static final Map
 		<String, List<ObjectValuePair<String, IndexMetadata>>>
 			_portalIndexesSQL = new HashMap<>();
+
+	private String _upgradeInfo;
 
 }
