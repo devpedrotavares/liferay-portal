@@ -138,6 +138,22 @@ public class EmailNotificationType extends BaseNotificationType {
 	}
 
 	@Override
+	public void resendNotification(
+			NotificationQueueEntry notificationQueueEntry)
+		throws PortalException {
+
+		if (notificationQueueEntry.getStatus() !=
+				NotificationQueueEntryConstants.STATUS_UNSENT) {
+
+			notificationQueueEntryLocalService.updateStatus(
+				notificationQueueEntry.getNotificationQueueEntryId(),
+				NotificationQueueEntryConstants.STATUS_UNSENT);
+		}
+
+		_sendEmail(notificationQueueEntry);
+	}
+
+	@Override
 	public void resendNotifications(int status, String type)
 		throws PortalException {
 
