@@ -42,8 +42,7 @@ public class NotificationQueueConfigurationVisibilityController
 	public boolean isVisible(
 		ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
 
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-155659")) &&
-			(scope == ExtendedObjectClassDefinition.Scope.COMPANY)) {
+		if ((scope == ExtendedObjectClassDefinition.Scope.COMPANY)) {
 
 			return false;
 		}
