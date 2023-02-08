@@ -263,8 +263,9 @@ public class EmailNotificationType extends BaseNotificationType {
 						body, notificationContext,
 						notificationRecipientSettingsEvaluatedMap, subject);
 
-					notificationQueueEntryLocalService.
-						addNotificationQueueEntry(notificationContext);
+					_sendEmail(
+						notificationQueueEntryLocalService.
+							addNotificationQueueEntry(notificationContext));
 
 					continue;
 				}
@@ -274,8 +275,9 @@ public class EmailNotificationType extends BaseNotificationType {
 				user, body, notificationContext,
 				notificationRecipientSettingsEvaluatedMap, subject);
 
-			notificationQueueEntryLocalService.addNotificationQueueEntry(
-				notificationContext);
+			_sendEmail(
+				notificationQueueEntryLocalService.addNotificationQueueEntry(
+					notificationContext));
 		}
 	}
 
