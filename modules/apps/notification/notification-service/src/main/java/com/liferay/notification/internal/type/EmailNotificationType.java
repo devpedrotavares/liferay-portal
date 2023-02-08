@@ -138,6 +138,13 @@ public class EmailNotificationType extends BaseNotificationType {
 	}
 
 	@Override
+	public void resendNotification(
+		NotificationQueueEntry notificationQueueEntry) {
+
+		_sendEmail(notificationQueueEntry);
+	}
+
+	@Override
 	public void resendNotifications(int status, String type) {
 		for (NotificationQueueEntry notificationQueueEntry :
 				notificationQueueEntryLocalService.getNotificationEntries(
