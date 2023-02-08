@@ -80,15 +80,13 @@ public class CheckNotificationQueueEntryMessageListener
 			_notificationTypeServiceTracker.getNotificationType(
 				NotificationConstants.TYPE_EMAIL);
 
-		long companyId = message.getLong("companyId");
-
-		notificationType.sendUnsentNotifications(companyId);
+		notificationType.sendUnsentNotifications();
 
 		long deleteInterval =
 			_notificationQueueConfiguration.deleteInterval() * Time.MINUTE;
 
 		_notificationQueueEntryLocalService.deleteNotificationQueueEntries(
-			companyId, new Date(System.currentTimeMillis() - deleteInterval));
+			new Date(System.currentTimeMillis() - deleteInterval));
 	}
 
 	private NotificationQueueConfiguration _notificationQueueConfiguration;
