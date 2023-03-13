@@ -269,6 +269,11 @@ public class ObjectServiceUpgradeStepRegistrator
 
 		registry.register(
 			"4.0.0", "4.1.0", new ObjectDefinitionUpgradeProcess());
+
+		registry.register(
+			"4.1.0", "4.2.0",
+			new com.liferay.object.internal.upgrade.v4_2_0.
+				ObjectFieldSettingUpgradeProcess(_portalUUID));
 	}
 
 	@Reference
