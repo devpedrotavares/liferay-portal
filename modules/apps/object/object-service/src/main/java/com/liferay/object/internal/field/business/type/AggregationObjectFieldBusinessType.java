@@ -126,7 +126,7 @@ public class AggregationObjectFieldBusinessType
 
 	@Override
 	public void validateObjectFieldSettings(
-			long objectDefinitionId, String objectFieldName,
+			ObjectField objectField,
 			List<ObjectFieldSetting> objectFieldSettings)
 		throws PortalException {
 
@@ -151,6 +151,8 @@ public class AggregationObjectFieldBusinessType
 
 		Set<String> requiredObjectFieldSettingsNames =
 			getRequiredObjectFieldSettingsNames();
+
+		String objectFieldName = objectField.getName();
 
 		if (!ArrayUtil.contains(_FUNCTION, function)) {
 			throw new ObjectFieldSettingValueException.InvalidValue(
@@ -195,7 +197,7 @@ public class AggregationObjectFieldBusinessType
 		try {
 			ObjectRelationship objectRelationship =
 				_objectRelationshipLocalService.getObjectRelationship(
-					objectDefinitionId,
+					objectField.getObjectDefinitionId(),
 					GetterUtil.getString(
 						objectFieldSettingsValuesMap.get(
 							"objectRelationshipName")));
@@ -205,7 +207,7 @@ public class AggregationObjectFieldBusinessType
 					objectRelationship.getObjectDefinitionId2());
 
 			if (!Objects.equals(function, "COUNT")) {
-				ObjectField objectField =
+				ObjectField objectField1 =
 					_objectFieldLocalService.getObjectField(
 						objectDefinition.getObjectDefinitionId(),
 						GetterUtil.getString(
@@ -214,7 +216,7 @@ public class AggregationObjectFieldBusinessType
 
 				if (!ArrayUtil.contains(
 						_NUMERIC_BUSINESS_TYPES,
-						objectField.getBusinessType())) {
+						objectField1.getBusinessType())) {
 
 					throw new ObjectFieldSettingValueException.InvalidValue(
 						objectFieldName, "objectFieldName",
