@@ -98,7 +98,7 @@ public class ObjectStateFlowLocalServiceTest {
 			_listTypeDefinition.getListTypeDefinitionId(),
 			_objectDefinition.getObjectDefinitionId(),
 			ObjectFieldConstants.BUSINESS_TYPE_PICKLIST,
-			ObjectFieldConstants.DB_TYPE_STRING, null, false, true, "",
+			ObjectFieldConstants.DB_TYPE_STRING, false, true, "",
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			StringUtil.randomId(), true, true, Collections.emptyList());
 
@@ -379,7 +379,7 @@ public class ObjectStateFlowLocalServiceTest {
 			null, TestPropsValues.getUserId(), listTypeDefinitionId,
 			_objectDefinition.getObjectDefinitionId(),
 			ObjectFieldConstants.BUSINESS_TYPE_PICKLIST,
-			ObjectFieldConstants.DB_TYPE_STRING, null, false, true, "",
+			ObjectFieldConstants.DB_TYPE_STRING, false, true, "",
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			StringUtil.randomId(), true, state, Collections.emptyList());
 	}
