@@ -21,7 +21,7 @@ import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
-import com.liferay.object.exception.ObjectFieldSettingValueException;
+import com.liferay.object.exception.ObjectFieldDefaultValueException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.render.ObjectFieldRenderingContext;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
@@ -189,7 +189,8 @@ public class PicklistObjectFieldBusinessType
 
 		if ((objectFieldSettingDefaultValue == null) ||
 			(objectFieldSettingDefaultValueType == null) ||
-			objectFieldSettingDefaultValueType.compareValue(
+			StringUtil.equals(
+				objectFieldSettingDefaultValueType.getValue(),
 				ObjectFieldSettingConstants.VALUE_EXPRESSION_BUILDER)) {
 
 			return;
@@ -201,7 +202,7 @@ public class PicklistObjectFieldBusinessType
 				objectFieldSettingDefaultValue.getValue());
 
 		if (listTypeEntry == null) {
-			throw new ObjectFieldSettingValueException(
+			throw new ObjectFieldDefaultValueException(
 				StringBundler.concat(
 					"Default value \"",
 					objectFieldSettingDefaultValue.getValue(),

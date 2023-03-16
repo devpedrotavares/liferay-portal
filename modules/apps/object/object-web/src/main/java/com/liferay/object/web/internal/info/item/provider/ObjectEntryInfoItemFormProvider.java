@@ -33,6 +33,7 @@ import com.liferay.info.localized.bundle.FunctionInfoLocalizedValue;
 import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFieldValidationConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
@@ -229,13 +230,22 @@ public class ObjectEntryInfoItemFormProvider
 				TransformUtil.transform(
 					_listTypeEntryLocalService.getListTypeEntries(
 						objectField.getListTypeDefinitionId()),
-					listTypeEntry -> new MultiselectInfoFieldType.Option(
-						Objects.equals(
-							objectField.getDefaultValue(),
-							listTypeEntry.getKey()),
-						new FunctionInfoLocalizedValue<>(
-							listTypeEntry::getName),
-						listTypeEntry.getKey())));
+					listTypeEntry -> {
+						ObjectFieldSetting objectFieldSetting =
+							_objectFieldSettingLocalService.
+								fetchObjectFieldSetting(
+									objectField.getObjectFieldId(),
+									ObjectFieldSettingConstants.
+										NAME_DEFAULT_VALUE);
+
+						return new MultiselectInfoFieldType.Option(
+							Objects.equals(
+								objectFieldSetting.getValue(),
+								listTypeEntry.getKey()),
+							new FunctionInfoLocalizedValue<>(
+								listTypeEntry::getName),
+							listTypeEntry.getKey());
+					}));
 		}
 		else if (Objects.equals(
 					objectField.getBusinessType(),
@@ -628,10 +638,15 @@ public class ObjectEntryInfoItemFormProvider
 				objectField.getListTypeDefinitionId());
 
 		for (ListTypeEntry listTypeEntry : listTypeEntries) {
+			ObjectFieldSetting objectFieldSetting =
+				_objectFieldSettingLocalService.fetchObjectFieldSetting(
+					objectField.getObjectFieldId(),
+					ObjectFieldSettingConstants.NAME_DEFAULT_VALUE);
+
 			options.add(
 				new SelectInfoFieldType.Option(
 					Objects.equals(
-						objectField.getDefaultValue(), listTypeEntry.getKey()),
+						objectFieldSetting.getValue(), listTypeEntry.getKey()),
 					new FunctionInfoLocalizedValue<>(listTypeEntry::getName),
 					listTypeEntry.getKey()));
 		}
