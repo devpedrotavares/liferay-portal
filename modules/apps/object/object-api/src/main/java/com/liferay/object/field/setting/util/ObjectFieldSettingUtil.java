@@ -14,15 +14,72 @@
 
 package com.liferay.object.field.setting.util;
 
+import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
+import com.liferay.dynamic.data.mapping.expression.DDMExpression;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
+import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * @author Carolina Barbosa
  */
 public class ObjectFieldSettingUtil {
+
+	public static String getDefaultValueAsString(
+			DDMExpressionFactory ddmExpressionFactory, long objectFieldId,
+			ObjectFieldSettingLocalService objectFieldSettingLocalService,
+			Map<String, Object> values)
+		throws DDMExpressionException {
+
+		ObjectFieldSetting objectFieldSetting =
+			objectFieldSettingLocalService.fetchObjectFieldSetting(
+				objectFieldId,
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE);
+
+		if (objectFieldSetting == null) {
+			return StringPool.BLANK;
+		}
+
+		ObjectFieldSetting objectFieldSettingDefaultValue =
+			objectFieldSettingLocalService.fetchObjectFieldSetting(
+				objectFieldId, ObjectFieldSettingConstants.NAME_DEFAULT_VALUE);
+
+		if (StringUtil.equals(
+				objectFieldSetting.getValue(),
+				ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE)) {
+
+			return objectFieldSettingDefaultValue.getValue();
+		}
+
+		if (ddmExpressionFactory == null) {
+			return StringPool.BLANK;
+		}
+
+		if (StringUtil.equals(
+				objectFieldSetting.getValue(),
+				ObjectFieldSettingConstants.VALUE_EXPRESSION_BUILDER)) {
+
+			DDMExpression<String> ddmExpression =
+				ddmExpressionFactory.createExpression(
+					CreateExpressionRequest.Builder.newBuilder(
+						objectFieldSettingDefaultValue.getValue()
+					).build());
+
+			ddmExpression.setVariables(values);
+
+			return ddmExpression.evaluate();
+		}
+
+		return StringPool.BLANK;
+	}
 
 	public static String getValue(String name, ObjectField objectField) {
 		for (ObjectFieldSetting objectFieldSetting :
