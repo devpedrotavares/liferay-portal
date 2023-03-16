@@ -14,6 +14,9 @@
 
 package com.liferay.object.field.business.type;
 
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
+import com.liferay.object.exception.ObjectFieldDefaultValueException;
 import com.liferay.object.exception.ObjectFieldSettingNameException;
 import com.liferay.object.exception.ObjectFieldSettingValueException;
 import com.liferay.object.field.render.ObjectFieldRenderingContext;
@@ -21,6 +24,7 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.extension.PropertyDefinition;
 
@@ -30,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -85,7 +90,7 @@ public interface ObjectFieldBusinessType {
 	}
 
 	public default void validateObjectFieldSettings(
-			long objectDefinitionId, String objectFieldName,
+			ObjectField objectField,
 			List<ObjectFieldSetting> objectFieldSettings)
 		throws PortalException {
 
@@ -112,7 +117,7 @@ public interface ObjectFieldBusinessType {
 
 		if (!missingRequiredObjectFieldSettingsNames.isEmpty()) {
 			throw new ObjectFieldSettingValueException.MissingRequiredValues(
-				objectFieldName, missingRequiredObjectFieldSettingsNames);
+				objectField.getName(), missingRequiredObjectFieldSettingsNames);
 		}
 
 		Set<String> notAllowedObjectFieldSettingsNames = new HashSet<>(
@@ -125,7 +130,32 @@ public interface ObjectFieldBusinessType {
 
 		if (!notAllowedObjectFieldSettingsNames.isEmpty()) {
 			throw new ObjectFieldSettingNameException.NotAllowedNames(
-				objectFieldName, notAllowedObjectFieldSettingsNames);
+				objectField.getName(), notAllowedObjectFieldSettingsNames);
+		}
+
+		validateObjectFieldSettingsDefaultValue(
+			objectField, objectFieldSettings);
+	}
+
+	public default void validateObjectFieldSettingsDefaultValue(
+			ObjectField objectField,
+			List<ObjectFieldSetting> objectFieldSettings)
+		throws PortalException {
+
+		for (ObjectFieldSetting objectFieldSetting : objectFieldSettings) {
+			String name = objectFieldSetting.getName();
+
+			if (name.equals(ObjectFieldSettingConstants.NAME_DEFAULT_VALUE) &&
+				!Objects.equals(
+					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST,
+					objectField.getBusinessType())) {
+
+				throw new ObjectFieldDefaultValueException(
+					StringBundler.concat(
+						"Object field can only have a default type when the ",
+						"business type is \"",
+						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST, "\""));
+			}
 		}
 	}
 
