@@ -16,13 +16,16 @@ package com.liferay.object.internal.action.util;
 
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.internal.dynamic.data.mapping.expression.ObjectEntryDDMExpressionParameterAccessor;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalServiceUtil;
+import com.liferay.object.service.ObjectFieldSettingLocalServiceUtil;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
@@ -291,7 +294,8 @@ public class ObjectEntryVariablesUtil {
 	}
 
 	private static Map<String, Object> _getDefaultVariables(
-		ObjectDefinition objectDefinition, Set<String> keys) {
+			ObjectDefinition objectDefinition, Set<String> keys)
+		throws DDMExpressionException {
 
 		Map<String, Object> defaultVariables = new HashMap<>();
 
@@ -299,7 +303,10 @@ public class ObjectEntryVariablesUtil {
 				ObjectFieldLocalServiceUtil.getObjectFields(
 					objectDefinition.getObjectDefinitionId())) {
 
-			String defaultValue = objectField.getDefaultValue();
+			String defaultValue =
+				ObjectFieldSettingUtil.getDefaultValueAsString(
+					null, objectField.getObjectFieldId(),
+					ObjectFieldSettingLocalServiceUtil.getService(), null);
 
 			if (Validator.isNotNull(defaultValue) &&
 				keys.contains(objectField.getName())) {
