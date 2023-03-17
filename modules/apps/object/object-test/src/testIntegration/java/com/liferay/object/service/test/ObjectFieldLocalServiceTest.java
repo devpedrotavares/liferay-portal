@@ -182,9 +182,8 @@ public class ObjectFieldLocalServiceTest {
 
 		_testAddCustomObjectField(
 			StringBundler.concat(
-				"Object field can only have a default type when the business ",
-				"type is \"", ObjectFieldConstants.BUSINESS_TYPE_PICKLIST,
-				"\""),
+				"The settings defaultValue, defaultValueType are not allowed ",
+				"for object field ", name),
 			new ObjectFieldBuilder(
 			).businessType(
 				ObjectFieldConstants.BUSINESS_TYPE_TEXT
@@ -219,8 +218,12 @@ public class ObjectFieldLocalServiceTest {
 					_createObjectFieldSetting(
 						ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE,
 						ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE))
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
 			).listTypeDefinitionId(
 				_listTypeDefinition.getListTypeDefinitionId()
+			).name(
+				"a" + RandomTestUtil.randomString()
 			).build());
 
 		_testAddCustomObjectField(
