@@ -22,6 +22,7 @@ import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.exception.ObjectFieldDefaultValueException;
+import com.liferay.object.exception.ObjectFieldStateException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.render.ObjectFieldRenderingContext;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
@@ -35,6 +36,7 @@ import com.liferay.object.service.ObjectStateFlowLocalService;
 import com.liferay.object.service.ObjectStateLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -211,6 +213,14 @@ public class PicklistObjectFieldBusinessType
 					objectFieldSettingDefaultValue.getValue(),
 					"\" is not a list entry in list definition ",
 					String.valueOf(objectField.getListTypeDefinitionId())));
+		}
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-163716") &&
+			!objectField.isState()) {
+
+			throw new ObjectFieldStateException(
+				"Object field default value can only be set when the " +
+					"picklist is a state");
 		}
 	}
 

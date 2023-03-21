@@ -30,6 +30,7 @@ import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.object.service.ObjectStateFlowLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -72,6 +73,15 @@ public class ObjectFieldSettingUtil {
 			serviceBuilderObjectFieldSettings,
 			ObjectFieldSettingModel::getName);
 
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-163716") &&
+			(serviceBuilderObjectFieldSettingNames.contains(
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE) ||
+			 serviceBuilderObjectFieldSettingNames.contains(
+				 ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE))) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		if (serviceBuilderObjectFieldSettingNames.contains(
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE) ||
 			Validator.isNull(objectField.getDefaultValue())) {
@@ -103,7 +113,13 @@ public class ObjectFieldSettingUtil {
 		com.liferay.object.model.ObjectFieldSetting
 			serviceBuilderObjectFieldSetting) {
 
-		if (serviceBuilderObjectFieldSetting == null) {
+		if ((serviceBuilderObjectFieldSetting == null) ||
+			(!FeatureFlagManagerUtil.isEnabled("LPS-163716") &&
+			 (serviceBuilderObjectFieldSetting.compareName(
+				 ObjectFieldSettingConstants.NAME_DEFAULT_VALUE) ||
+			  serviceBuilderObjectFieldSetting.compareName(
+				  ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE)))) {
+
 			return null;
 		}
 
