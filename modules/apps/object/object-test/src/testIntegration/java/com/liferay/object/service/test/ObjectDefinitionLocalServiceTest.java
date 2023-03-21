@@ -1328,9 +1328,6 @@ public class ObjectDefinitionLocalServiceTest {
 		Assert.assertEquals(
 			expectedObjectField.getDBType(), objectField.getDBType());
 		Assert.assertEquals(
-			expectedObjectField.getDefaultValue(),
-			objectField.getDefaultValue());
-		Assert.assertEquals(
 			expectedObjectField.isIndexed(), objectField.isIndexed());
 		Assert.assertEquals(
 			expectedObjectField.isIndexedAsKeyword(),

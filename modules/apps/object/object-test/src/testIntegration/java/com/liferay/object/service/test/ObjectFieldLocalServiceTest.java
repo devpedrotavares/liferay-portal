@@ -22,6 +22,7 @@ import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.ObjectFieldBusinessTypeException;
 import com.liferay.object.exception.ObjectFieldDBTypeException;
@@ -1012,8 +1013,8 @@ public class ObjectFieldLocalServiceTest {
 			objectField.getExternalReferenceCode(), objectField.getUserId(),
 			objectField.getListTypeDefinitionId(),
 			objectField.getObjectDefinitionId(), objectField.getBusinessType(),
-			objectField.getDBType(), objectField.getDefaultValue(),
-			objectField.isIndexed(), objectField.isIndexedAsKeyword(),
+			objectField.getDBType(), objectField.isIndexed(),
+			objectField.isIndexedAsKeyword(),
 			objectField.getIndexedLanguageId(), objectField.getLabelMap(),
 			objectField.getName(), objectField.isRequired(),
 			objectField.isState(), objectField.getObjectFieldSettings());
@@ -1051,9 +1052,12 @@ public class ObjectFieldLocalServiceTest {
 			).build());
 
 		_testUpdateCustomObjectField(
-			objectFieldBuilder.defaultValue(
-				_listTypeEntryKey
-			).required(
+			objectFieldBuilder.objectFieldSettings(Arrays.asList(
+				_createObjectFieldSetting("defaultValue", _listTypeEntryKey),
+						_createObjectFieldSetting(ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE, ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE)
+					)
+				)
+			.required(
 				true
 			).state(
 				true
@@ -1066,8 +1070,6 @@ public class ObjectFieldLocalServiceTest {
 			ObjectFieldConstants.BUSINESS_TYPE_TEXT
 		).dbColumnName(
 			"baker_"
-		).defaultValue(
-			StringPool.BLANK
 		).indexed(
 			true
 		).indexedLanguageId(
@@ -1336,7 +1338,6 @@ public class ObjectFieldLocalServiceTest {
 				expectedObjectField.getListTypeDefinitionId(),
 				expectedObjectField.getBusinessType(),
 				expectedObjectField.getDBType(),
-				expectedObjectField.getDefaultValue(),
 				expectedObjectField.isIndexed(),
 				expectedObjectField.isIndexedAsKeyword(),
 				expectedObjectField.getIndexedLanguageId(),
@@ -1353,9 +1354,6 @@ public class ObjectFieldLocalServiceTest {
 			objectField.getDBColumnName());
 		Assert.assertEquals(
 			expectedObjectField.getDBType(), objectField.getDBType());
-		Assert.assertEquals(
-			expectedObjectField.getDefaultValue(),
-			objectField.getDefaultValue());
 		Assert.assertEquals(
 			expectedObjectField.isIndexed(), objectField.isIndexed());
 		Assert.assertEquals(
@@ -1405,8 +1403,7 @@ public class ObjectFieldLocalServiceTest {
 				StringPool.BLANK, objectField.getObjectFieldId(),
 				objectField.getListTypeDefinitionId(),
 				objectField.getBusinessType(),
-				ObjectFieldConstants.DB_TYPE_STRING,
-				objectField.getDefaultValue(), objectField.isIndexed(),
+				ObjectFieldConstants.DB_TYPE_STRING, objectField.isIndexed(),
 				objectField.isIndexedAsKeyword(),
 				objectField.getIndexedLanguageId(), objectField.getLabelMap(),
 				"able", objectField.isRequired(), objectField.isState(),
