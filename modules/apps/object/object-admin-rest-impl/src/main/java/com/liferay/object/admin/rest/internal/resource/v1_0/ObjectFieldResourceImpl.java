@@ -216,6 +216,16 @@ public class ObjectFieldResourceImpl
 					contextUser.getUserId())));
 	}
 
+	@Override
+	protected void preparePatch(
+		ObjectField objectField, ObjectField existingObjectField) {
+
+		if (existingObjectField.getObjectFieldSettings() != null) {
+			existingObjectField.setObjectFieldSettings(
+				objectField.getObjectFieldSettings());
+		}
+	}
+
 	private Page<ObjectField> _getObjectFieldsPage(
 			com.liferay.object.model.ObjectDefinition objectDefinition,
 			String search, Filter filter, Pagination pagination, Sort[] sorts)
