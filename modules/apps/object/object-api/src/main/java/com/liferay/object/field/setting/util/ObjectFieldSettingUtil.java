@@ -38,31 +38,28 @@ public class ObjectFieldSettingUtil {
 		ObjectFieldSettingLocalService objectFieldSettingLocalService,
 		Map<String, Object> values) {
 
-		ObjectFieldSetting objectFieldSetting =
-			objectFieldSettingLocalService.fetchObjectFieldSetting(
-				objectFieldId,
-				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE);
-
-		if (objectFieldSetting == null) {
-			return StringPool.BLANK;
-		}
-
 		ObjectFieldSetting objectFieldSettingDefaultValue =
 			objectFieldSettingLocalService.fetchObjectFieldSetting(
 				objectFieldId, ObjectFieldSettingConstants.NAME_DEFAULT_VALUE);
 
-		if (StringUtil.equals(
-				objectFieldSetting.getValue(),
+		if (objectFieldSettingDefaultValue == null) {
+			return null;
+		}
+
+		ObjectFieldSetting objectFieldSettingDefaultValueType =
+			objectFieldSettingLocalService.fetchObjectFieldSetting(
+				objectFieldId,
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE);
+
+		if ((objectFieldSettingDefaultValueType == null) ||
+			StringUtil.equals(
+				objectFieldSettingDefaultValueType.getValue(),
 				ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE)) {
 
 			return objectFieldSettingDefaultValue.getValue();
 		}
 
-		if ((ddmExpressionFactory == null) ||
-			!StringUtil.equals(
-				objectFieldSetting.getValue(),
-				ObjectFieldSettingConstants.VALUE_EXPRESSION_BUILDER)) {
-
+		if (ddmExpressionFactory == null) {
 			return StringPool.BLANK;
 		}
 
