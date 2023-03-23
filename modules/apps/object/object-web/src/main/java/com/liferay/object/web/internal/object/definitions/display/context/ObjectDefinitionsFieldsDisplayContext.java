@@ -166,6 +166,20 @@ public class ObjectDefinitionsFieldsDisplayContext
 		return null;
 	}
 
+	public List<Map<String, Object>> getObjectFieldCodeEditorElements(
+		String businessType) {
+
+		if ((businessType == null) ||
+			!businessType.equals(ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
+
+			return getObjectFieldCodeEditorElements();
+		}
+
+		return ObjectCodeEditorUtil.getCodeEditorElements(
+			null, objectRequestHelper.getLocale(), getObjectDefinitionId(),
+			objectField -> !objectField.isSystem());
+	}
+
 	public JSONObject getObjectFieldJSONObject(ObjectField objectField) {
 		return ObjectFieldUtil.toJSONObject(
 			_listTypeDefinitionService, objectField,
