@@ -1142,6 +1142,18 @@ public class OpenAPIResourceImpl implements OpenAPIResource {
 					schema.setFormat("date");
 					schema.setType("string");
 				}
+				else if (type.equals("DateTime")) {
+					schema.setFormat("date-time");
+					schema.setType("string");
+
+					if (StringUtil.equals(
+							MapUtil.getString(
+								dtoProperty.getExtensions(), "x-timeStorage"),
+							"useInputAsEntered")) {
+
+						schema.setExample("2023-05-03T12:34:56.789");
+					}
+				}
 				else if (type.equals("Double")) {
 					schema.setFormat("double");
 					schema.setType("number");
