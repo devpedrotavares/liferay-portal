@@ -618,7 +618,7 @@ public class OpenAPIResourceImpl implements OpenAPIResource {
 			}
 			else if (propertyType ==
 						PropertyDefinition.PropertyType.DATE_TIME) {
-
+				//todo: Nao passa por aqui, mas pensar sobre mudar essa parte
 				type = "Date";
 			}
 			else if (propertyType == PropertyDefinition.PropertyType.DECIMAL) {
@@ -1140,6 +1140,16 @@ public class OpenAPIResourceImpl implements OpenAPIResource {
 				}
 				else if (type.equals("Date")) {
 					schema.setFormat("date");
+					schema.setType("string");
+				}
+				else if (type.equals("DateTime")) {
+					if(dtoProperty.getExtensions().get("timeStorage") != null && StringUtil.equals(dtoProperty.getExtensions().get("timeStorage").toString(), "convertToUTC")) {
+						schema.setFormat("date-time");
+					}
+					else {
+						schema.setFormat("string");
+						schema.setPattern("^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(02)-(0[1-9]|[12][0-9]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])\\.[0-9]{3}$");
+					}
 					schema.setType("string");
 				}
 				else if (type.equals("Double")) {

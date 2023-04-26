@@ -20,6 +20,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.rest.dto.v1_0.FileEntry;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
@@ -35,6 +36,8 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.vulcan.batch.engine.Field;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -48,6 +51,7 @@ import io.swagger.v3.oas.models.media.Schema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -181,6 +185,31 @@ public class ObjectEntryOpenAPIResourceImpl
 			dtoProperty.setRequired(objectField.isRequired());
 
 			return dtoProperty;
+		}
+
+		if (Objects.equals(
+			objectField.getBusinessType(),
+			ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
+
+			HashMap<String, Object> extensions = new HashMap<>();
+
+			extensions.put("x-parent-map", "properties");
+
+			for(ObjectFieldSetting objectFieldSetting : objectField.getObjectFieldSettings()) {
+				if(StringUtil.equals(objectFieldSetting.getName(), "timeStorage")) {
+					extensions.put("timeStorage", objectFieldSetting.getValue());
+				}
+			}
+
+			return new DTOProperty(
+				extensions,
+				objectField.getName(),
+				objectField.getBusinessType()) {
+
+				{
+					setRequired(objectField.isRequired());
+				}
+			};
 		}
 
 		if (objectField.getListTypeDefinitionId() != 0) {
