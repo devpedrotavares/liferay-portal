@@ -99,7 +99,7 @@ public class IntegerObjectFieldBusinessType
 	}
 
 	@Override
-	public Set<String> getUnmodifiablObjectFieldSettingsNames() {
+	public Set<String> getUnmodifiableObjectFieldSettingsNames() {
 		if (!FeatureFlagManagerUtil.isEnabled("LPS-135398")) {
 			return Collections.emptySet();
 		}

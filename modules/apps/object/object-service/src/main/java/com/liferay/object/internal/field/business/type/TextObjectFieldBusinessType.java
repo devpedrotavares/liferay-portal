@@ -89,7 +89,7 @@ public class TextObjectFieldBusinessType extends BaseObjectFieldBusinessType {
 	}
 
 	@Override
-	public Set<String> getUnmodifiablObjectFieldSettingsNames() {
+	public Set<String> getUnmodifiableObjectFieldSettingsNames() {
 		if (!FeatureFlagManagerUtil.isEnabled("LPS-135398")) {
 			return Collections.emptySet();
 		}
