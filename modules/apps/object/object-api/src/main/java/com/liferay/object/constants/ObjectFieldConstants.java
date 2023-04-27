@@ -27,6 +27,8 @@ public class ObjectFieldConstants {
 
 	public static final String BUSINESS_TYPE_DATE = "Date";
 
+	public static final String BUSINESS_TYPE_DATE_TIME = "DateTime";
+
 	public static final String BUSINESS_TYPE_DECIMAL = "Decimal";
 
 	public static final String BUSINESS_TYPE_ENCRYPTED = "Encrypted";

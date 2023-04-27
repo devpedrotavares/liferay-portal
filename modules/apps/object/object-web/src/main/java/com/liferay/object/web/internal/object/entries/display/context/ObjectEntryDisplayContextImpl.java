@@ -87,6 +87,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -1100,7 +1101,8 @@ public class ObjectEntryDisplayContextImpl
 				_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
 					objectField.getBusinessType());
 
-			return objectFieldBusinessType.getValue(objectField, values);
+			return objectFieldBusinessType.getValue(
+				objectField, PrincipalThreadLocal.getUserId(), values);
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {

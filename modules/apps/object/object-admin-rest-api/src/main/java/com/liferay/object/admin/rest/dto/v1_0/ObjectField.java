@@ -958,7 +958,7 @@ public class ObjectField implements Serializable {
 	public static enum BusinessType {
 
 		AGGREGATION("Aggregation"), ATTACHMENT("Attachment"),
-		BOOLEAN("Boolean"), DATE("Date"), DECIMAL("Decimal"),
+		BOOLEAN("Boolean"), DATE("Date"), DATETIME("DateTime"), DECIMAL("Decimal"),
 		ENCRYPTED("Encrypted"), FORMULA("Formula"), INTEGER("Integer"),
 		LONG_INTEGER("LongInteger"), LONG_TEXT("LongText"),
 		MULTISELECT_PICKLIST("MultiselectPicklist"), PICKLIST("Picklist"),
@@ -1002,7 +1002,7 @@ public class ObjectField implements Serializable {
 	public static enum DBType {
 
 		BIG_DECIMAL("BigDecimal"), BOOLEAN("Boolean"), CLOB("Clob"),
-		DATE("Date"), DOUBLE("Double"), INTEGER("Integer"), LONG("Long"),
+		DATE("Date"), DATETIME("DateTime"), DOUBLE("Double"), INTEGER("Integer"), LONG("Long"),
 		STRING("String");
 
 		@JsonCreator
@@ -1080,7 +1080,7 @@ public class ObjectField implements Serializable {
 	public static enum Type {
 
 		BIG_DECIMAL("BigDecimal"), BOOLEAN("Boolean"), CLOB("Clob"),
-		DATE("Date"), DOUBLE("Double"), INTEGER("Integer"), LONG("Long"),
+		DATE("Date"), DATETIME("DateTime"), DOUBLE("Double"), INTEGER("Integer"), LONG("Long"),
 		STRING("String");
 
 		@JsonCreator

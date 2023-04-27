@@ -1301,7 +1301,7 @@ public class DefaultObjectEntryManagerImpl
 						String.valueOf(value), null));
 			}
 			else if (Objects.equals(
-						objectField.getDBType(),
+						objectField.getBusinessType(),
 						ObjectFieldConstants.DB_TYPE_DATE)) {
 
 				values.put(

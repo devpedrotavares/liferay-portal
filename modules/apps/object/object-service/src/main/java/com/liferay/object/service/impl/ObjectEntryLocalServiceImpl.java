@@ -189,6 +189,8 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
 import java.sql.Types;
 
+import java.time.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -2874,6 +2876,9 @@ public class ObjectEntryLocalServiceImpl
 		else if (javaTypeClass == Date.class) {
 			values.put(name, (Date)object);
 		}
+		else if (javaTypeClass == Timestamp.class) {
+			values.put(name, (Timestamp)object);
+		}
 		else if (javaTypeClass == Double.class) {
 			Number number = (Number)object;
 
@@ -3009,6 +3014,54 @@ public class ObjectEntryLocalServiceImpl
 
 				preparedStatement.setTimestamp(
 					index, new Timestamp(date.getTime()));
+			}
+			/*else if (value instanceof ZonedDateTime) {
+				ZonedDateTime zonedDateTime = (ZonedDateTime)value;
+
+				Timestamp.valueOf()
+
+				preparedStatement.setTimestamp(
+					index, Timestamp.valueOf(offsetDateTime.toInstant()));
+			}*/
+			else if (value instanceof LocalDateTime) {
+				LocalDateTime localDateTime = (LocalDateTime)value;
+
+				preparedStatement.setTimestamp(
+					index, Timestamp.valueOf(localDateTime));
+			}
+			else if (valueString.isEmpty()) {
+				preparedStatement.setTimestamp(index, null);
+			}
+			else {
+				Date date = DateUtil.parseDate(
+					"yyyy-MM-dd", valueString, LocaleUtil.getSiteDefault());
+
+				preparedStatement.setTimestamp(
+					index, new Timestamp(date.getTime()));
+			}
+		}
+		else if (sqlType == Types.TIMESTAMP) {
+			String valueString = GetterUtil.getString(value);
+
+			if (value instanceof Date) {
+				Date date = (Date)value;
+
+				preparedStatement.setTimestamp(
+					index, new Timestamp(date.getTime()));
+			}
+			/*else if (value instanceof ZonedDateTime) {
+				ZonedDateTime zonedDateTime = (ZonedDateTime)value;
+
+				Timestamp.valueOf()
+
+				preparedStatement.setTimestamp(
+					index, Timestamp.valueOf(offsetDateTime.toInstant()));
+			}*/
+			else if (value instanceof LocalDateTime) {
+				LocalDateTime localDateTime = (LocalDateTime)value;
+
+				preparedStatement.setTimestamp(
+					index, Timestamp.valueOf(localDateTime));
 			}
 			else if (valueString.isEmpty()) {
 				preparedStatement.setTimestamp(index, null);
