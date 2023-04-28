@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.vulcan.extension.EntityExtensionHandler;
@@ -618,7 +619,9 @@ public class OpenAPIResourceImpl implements OpenAPIResource {
 			}
 			else if (propertyType ==
 						PropertyDefinition.PropertyType.DATE_TIME) {
-				//todo: Nao passa por aqui, mas pensar sobre mudar essa parte
+
+				// TODO: Nao passa por aqui, mas pensar sobre mudar essa parte
+
 				type = "Date";
 			}
 			else if (propertyType == PropertyDefinition.PropertyType.DECIMAL) {
@@ -1143,13 +1146,27 @@ public class OpenAPIResourceImpl implements OpenAPIResource {
 					schema.setType("string");
 				}
 				else if (type.equals("DateTime")) {
-					if(dtoProperty.getExtensions().get("timeStorage") != null && StringUtil.equals(dtoProperty.getExtensions().get("timeStorage").toString(), "convertToUTC")) {
+					Map<String, Object> extensions =
+						dtoProperty.getExtensions();
+
+					if ((extensions.get("timeStorage") != null) &&
+						StringUtil.equals(
+							String.valueOf(extensions.get("timeStorage")),
+							"convertToUTC")) {
+
 						schema.setFormat("date-time");
 					}
 					else {
 						schema.setFormat("string");
-						schema.setPattern("^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|(02)-(0[1-9]|[12][0-9]))T(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-5][0-9])\\.[0-9]{3}$");
+						schema.setPattern(
+							StringBundler.concat(
+								"^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-",
+								"9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)",
+								"|(02)-(0[1-9]|[12][0-9]))T(0[0-9]|1[0-9]|",
+								"2[0-3]):(0[0-9]|[1-5][0-9]):(0[0-9]|",
+								"[1-5][0-9])\\.[0-9]{3}$"));
 					}
+
 					schema.setType("string");
 				}
 				else if (type.equals("Double")) {
