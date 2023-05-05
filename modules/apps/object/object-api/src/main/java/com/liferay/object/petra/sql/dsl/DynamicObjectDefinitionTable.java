@@ -219,7 +219,7 @@ public class DynamicObjectDefinitionTable
 	).put(
 		"Date", "DATE"
 	).put(
-		"DateTime", "DATETIME"
+		"DateTime", "DATETIME(6)"
 	).put(
 		"Double", "DOUBLE"
 	).put(
