@@ -35,6 +35,7 @@ import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectFilterConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
@@ -47,6 +48,7 @@ import com.liferay.object.field.builder.DateObjectFieldBuilder;
 import com.liferay.object.field.builder.DecimalObjectFieldBuilder;
 import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
+import com.liferay.object.field.builder.ObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.PrecisionDecimalObjectFieldBuilder;
 import com.liferay.object.field.builder.RichTextObjectFieldBuilder;
@@ -133,6 +135,9 @@ import java.math.MathContext;
 
 import java.text.DateFormat;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -238,6 +243,19 @@ public class DefaultObjectEntryManagerImplTest {
 					"dateObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).build(),
+				new ObjectFieldBuilder(
+				).businessType(
+					ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME
+				).dbType(
+					ObjectFieldConstants.DB_TYPE_DATE_TIME
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"dateTimeObjectFieldName"
+				).objectFieldSettings(
+					Collections.singletonList(_createObjectFieldSetting(ObjectFieldSettingConstants.NAME_TIME_STORAGE, ObjectFieldSettingConstants.VALUE_CONVERT_TO_UTC))
 				).build(),
 				new DecimalObjectFieldBuilder(
 				).labelMap(
@@ -703,6 +721,18 @@ public class DefaultObjectEntryManagerImplTest {
 			).put(
 				"name", listTypeEntry.getName(LocaleUtil.US)
 			).build());
+
+		// DateTime convertToUTC
+
+
+		//todo: This should pass, but the return value is getting rounded on the seconds
+
+		LocalDateTime now = LocalDateTime.now();
+
+		_assertDateTimeObjectField(
+			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(now), now
+		);
+
 	}
 
 	@Test
@@ -2263,6 +2293,28 @@ public class DefaultObjectEntryManagerImplTest {
 					{
 						properties = HashMapBuilder.<String, Object>put(
 							"picklistObjectFieldName", picklistObjectFieldValue
+						).build();
+					}
+				},
+				ObjectDefinitionConstants.SCOPE_COMPANY));
+	}
+
+	private void _assertDateTimeObjectField(String expectedDateTimeFieldValue, Object dateTimeObjectFieldValue)
+		throws Exception {
+		_assertEquals(
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"dateTimeObjectFieldName", expectedDateTimeFieldValue
+					).build();
+				}
+			},
+			_objectEntryManager.addObjectEntry(
+				_dtoConverterContext, _objectDefinition2,
+				new ObjectEntry() {
+					{
+						properties = HashMapBuilder.<String, Object>put(
+							"dateTimeObjectFieldName", dateTimeObjectFieldValue
 						).build();
 					}
 				},

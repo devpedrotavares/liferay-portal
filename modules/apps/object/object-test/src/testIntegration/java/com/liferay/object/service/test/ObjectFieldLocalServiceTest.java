@@ -327,6 +327,27 @@ public class ObjectFieldLocalServiceTest {
 
 		_assertFailure(
 			ObjectFieldSettingValueException.MissingRequiredValues.class,
+			"The settings timeStorage " +
+			"are required for object field datetime",
+			() -> ObjectDefinitionTestUtil.addObjectDefinition(
+				_objectDefinitionLocalService,
+				Collections.singletonList(
+					new ObjectFieldBuilder(
+					).businessType(
+						ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME
+					).dbType(
+						ObjectFieldConstants.DB_TYPE_DATE_TIME
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"datetime"
+					).objectFieldSettings(
+						Collections.emptyList()
+					).build())));
+
+		_assertFailure(
+			ObjectFieldSettingValueException.MissingRequiredValues.class,
 			"The settings defaultValue, defaultValueType are required for " +
 				"object field picklist",
 			() -> ObjectDefinitionTestUtil.addObjectDefinition(
