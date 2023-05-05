@@ -108,7 +108,7 @@ public class ObjectFieldSettingUtil {
 					objectFieldSettingValue,
 					ObjectFieldSettingConstants.VALUE_USE_INPUT_AS_ENTERED)) {
 
-			return StringPool.UTC;
+			return null;
 		}
 
 		return objectFieldSettingValue;
