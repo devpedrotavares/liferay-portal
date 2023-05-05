@@ -44,6 +44,7 @@ import com.liferay.object.exception.RequiredObjectRelationshipException;
 import com.liferay.object.field.builder.AggregationObjectFieldBuilder;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
+import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
 import com.liferay.object.field.builder.DecimalObjectFieldBuilder;
 import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
@@ -132,6 +133,11 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 import java.text.DateFormat;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -238,6 +244,31 @@ public class DefaultObjectEntryManagerImplTest {
 					"dateObjectFieldName"
 				).objectFieldSettings(
 					Collections.emptyList()
+				).build(),
+				new DateTimeObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"dateTimeUTCObjectFieldName"
+				).objectFieldSettings(
+					Collections.singletonList(
+						_createObjectFieldSetting(
+							ObjectFieldSettingConstants.NAME_TIME_STORAGE,
+							ObjectFieldSettingConstants.VALUE_CONVERT_TO_UTC))
+				).build(),
+				new DateTimeObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"dateTimeObjectFieldName"
+				).objectFieldSettings(
+					Collections.singletonList(
+						_createObjectFieldSetting(
+							ObjectFieldSettingConstants.NAME_TIME_STORAGE,
+							ObjectFieldSettingConstants.
+								VALUE_USE_INPUT_AS_ENTERED))
 				).build(),
 				new DecimalObjectFieldBuilder(
 				).labelMap(
@@ -703,6 +734,66 @@ public class DefaultObjectEntryManagerImplTest {
 			).put(
 				"name", listTypeEntry.getName(LocaleUtil.US)
 			).build());
+
+		// DateTime useInputAsEntered
+
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+		ObjectEntry dateTimeObjectEntry = _objectEntryManager.addObjectEntry(
+			_dtoConverterContext, _objectDefinition2,
+			new ObjectEntry() {
+				{
+					properties = Collections.singletonMap(
+						"dateTimeObjectFieldName", localDateTime);
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+
+		Assert.assertEquals(
+			localDateTime.format(
+				DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")),
+			MapUtil.getString(
+				dateTimeObjectEntry.getProperties(),
+				"dateTimeObjectFieldName"));
+
+		// DateTime convertToUTC
+
+		User user = UserTestUtil.addOmniAdminUser();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(user));
+		PrincipalThreadLocal.setName(user.getUserId());
+
+		user.setTimeZoneId("America/Sao_Paulo");
+
+		_userLocalService.updateUser(user);
+
+		ObjectEntry dateTimeUTCObjectEntry = _objectEntryManager.addObjectEntry(
+			new DefaultDTOConverterContext(
+				false, Collections.emptyMap(), _dtoConverterRegistry, null,
+				LocaleUtil.getDefault(), null, user),
+			_objectDefinition2,
+			new ObjectEntry() {
+				{
+					properties = HashMapBuilder.<String, Object>put(
+						"dateTimeUTCObjectFieldName", localDateTime
+					).build();
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+
+		ZonedDateTime zonedDateTime = localDateTime.atZone(
+			ZoneId.of(user.getTimeZoneId()));
+
+		LocalDateTime convertToUTC = LocalDateTime.from(
+			zonedDateTime.withZoneSameInstant(ZoneId.of(StringPool.UTC)));
+
+		Assert.assertEquals(
+			convertToUTC.format(
+				DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")),
+			MapUtil.getString(
+				dateTimeUTCObjectEntry.getProperties(),
+				"dateTimeUTCObjectFieldName"));
 	}
 
 	@Test
