@@ -204,6 +204,7 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -2045,6 +2046,17 @@ public class ObjectEntryLocalServiceImpl
 		throw new IllegalArgumentException("Invalid function " + function);
 	}
 
+	private Iterable<Object> _getIterable(Object value) {
+		if (value instanceof Iterable) {
+			return (Iterable)value;
+		}
+
+		return Arrays.asList(
+			StringUtil.split(
+				GetterUtil.getString(String.valueOf(value)),
+				StringPool.COMMA_AND_SPACE));
+	}
+
 	private Key _getKey() throws PortalException {
 		return new SecretKeySpec(
 			Base64.decode(PropsValues.OBJECT_ENCRYPTION_KEY),
@@ -3870,6 +3882,23 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
+	private void _validateListTypeEntryKey(
+			Map.Entry<String, Serializable> entry, String listTypeEntryKey,
+			ObjectField objectField)
+		throws PortalException {
+
+		ListTypeEntry listTypeEntry =
+			_listTypeEntryLocalService.fetchListTypeEntry(
+				objectField.getListTypeDefinitionId(), listTypeEntryKey);
+
+		if ((listTypeEntry == null) &&
+			(Validator.isNotNull(listTypeEntryKey) ||
+			 objectField.isRequired())) {
+
+			throw new ObjectEntryValuesException.ListTypeEntry(entry.getKey());
+		}
+	}
+
 	private void _validateObjectStateTransition(
 			Map.Entry<String, Serializable> entry, long listTypeDefinitionId,
 			ObjectEntry objectEntry, long objectFieldId, long userId)
@@ -4288,30 +4317,23 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		if (objectField.getListTypeDefinitionId() != 0) {
-			ListTypeEntry listTypeEntry = null;
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
 
-			String value = String.valueOf(values.get(entry.getKey()));
-
-			for (ListTypeEntry curListTypeEntry :
-					_listTypeEntryLocalService.getListTypeEntries(
-						objectField.getListTypeDefinitionId())) {
-
-				if (Objects.equals(value, curListTypeEntry.getKey())) {
-					listTypeEntry = curListTypeEntry;
-
-					break;
+				for (Object listTypeEntryKey : _getIterable(entry.getValue())) {
+					_validateListTypeEntryKey(
+						entry, String.valueOf(listTypeEntryKey), objectField);
 				}
 			}
+			else {
+				_validateListTypeEntryKey(
+					entry, String.valueOf(entry.getValue()), objectField);
 
-			if ((listTypeEntry == null) && objectField.isRequired()) {
-				throw new ObjectEntryValuesException.ListTypeEntry(
-					entry.getKey());
-			}
-
-			if ((objectEntry != null) && objectField.isState()) {
-				_validateObjectStateTransition(
-					entry, objectField.getListTypeDefinitionId(), objectEntry,
-					objectField.getObjectFieldId(), userId);
+				if ((objectEntry != null) && objectField.isState()) {
+					_validateObjectStateTransition(
+						entry, objectField.getListTypeDefinitionId(),
+						objectEntry, objectField.getObjectFieldId(), userId);
+				}
 			}
 		}
 	}
