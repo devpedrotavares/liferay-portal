@@ -14,6 +14,7 @@
 
 package com.liferay.object.admin.rest.resource.v1_0.test;
 
+import com.liferay.account.model.AccountEntry;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.client.dto.v1_0.ObjectField;
@@ -22,8 +23,11 @@ import com.liferay.object.admin.rest.client.pagination.Page;
 import com.liferay.object.admin.rest.client.problem.Problem;
 import com.liferay.object.admin.rest.client.serdes.v1_0.ObjectDefinitionSerDes;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -31,6 +35,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -40,6 +45,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -231,6 +237,63 @@ public class ObjectDefinitionResourceTest
 
 		assertEquals(postObjectDefinition, randomObjectDefinition);
 		assertValid(postObjectDefinition);
+	}
+
+	@Test
+	public void testPutAccountEntryWithAccountRestriction() throws Exception {
+		com.liferay.object.model.ObjectDefinition
+			serviceBuilderAccountEntryObjectDefinition =
+				_objectDefinitionLocalService.fetchSystemObjectDefinition(
+					AccountEntry.class.getSimpleName());
+
+		ObjectDefinition randomObjectDefinition = randomObjectDefinition();
+
+		randomObjectDefinition.setSystem(false);
+
+		ObjectDefinition customObjectDefinition =
+			objectDefinitionResource.postObjectDefinition(
+				randomObjectDefinition);
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				serviceBuilderAccountEntryObjectDefinition.
+					getObjectDefinitionId(),
+				customObjectDefinition.getId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_DISASSOCIATE,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"a" + RandomTestUtil.randomString(),
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		_objectDefinitionLocalService.enableAccountEntryRestricted(
+			objectRelationship);
+
+		customObjectDefinition = objectDefinitionResource.getObjectDefinition(
+			customObjectDefinition.getId());
+
+		Assert.assertTrue(customObjectDefinition.getAccountEntryRestricted());
+
+		String getAccountEntryRestrictedObjectFieldName =
+			customObjectDefinition.getAccountEntryRestrictedObjectFieldName();
+
+		ObjectDefinition accountEntryObjectDefinition =
+			objectDefinitionResource.getObjectDefinition(
+				serviceBuilderAccountEntryObjectDefinition.
+					getObjectDefinitionId());
+
+		accountEntryObjectDefinition.setExternalReferenceCode(
+			RandomTestUtil.randomString());
+
+		objectDefinitionResource.putObjectDefinition(
+			accountEntryObjectDefinition.getId(), accountEntryObjectDefinition);
+
+		customObjectDefinition = objectDefinitionResource.getObjectDefinition(
+			customObjectDefinition.getId());
+
+		Assert.assertTrue(customObjectDefinition.getAccountEntryRestricted());
+		Assert.assertEquals(
+			getAccountEntryRestrictedObjectFieldName,
+			customObjectDefinition.getAccountEntryRestrictedObjectFieldName());
 	}
 
 	@Override
@@ -426,5 +489,8 @@ public class ObjectDefinitionResourceTest
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Inject
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
 }
