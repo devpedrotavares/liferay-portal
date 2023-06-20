@@ -43,6 +43,8 @@ public class ExportImportMVCResourceCommand extends BaseMVCResourceCommand {
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
+		// todo: aqui tambem
+
 		String cmd = ParamUtil.getString(resourceRequest, Constants.CMD);
 
 		PortletRequestDispatcher portletRequestDispatcher = null;
