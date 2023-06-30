@@ -19,24 +19,39 @@ import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceVersion;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.UnlocalizedValue;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalServiceUtil;
+import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormValuesTestUtil;
+import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Rafael Praxedes
@@ -200,6 +215,55 @@ public class DDMFormInstanceLocalServiceTest extends BaseDDMServiceTestCase {
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_APPROVED,
 			secondFormInstanceVersion.getStatus());
+	}
+
+	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Test
+	public void testAddDDMFormInstanceWithObjectStorageType()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _objectDefinitionLocalService.addCustomObjectDefinition(
+			TestPropsValues.getUserId(), false, false,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			"Test", null, null,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			true, ObjectDefinitionConstants.SCOPE_COMPANY,
+			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+			Collections.singletonList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING,
+					RandomTestUtil.randomString(), "textField")));
+
+		DDMForm ddmForm = DDMFormTestUtil.createDDMForm("textField");
+
+		ddmForm.getDDMFormFields().get(0).setProperty("objectFieldName", "[\"textField\"]");
+
+		DDMStructure structure = ddmStructureTestHelper.addStructure(
+			ddmForm, "object");
+
+		DDMFormValues settingsDDMFormValues =
+			DDMFormValuesTestUtil.createDDMFormValues(ddmForm);
+
+		DDMFormFieldValue objectDefinitionIdFieldValue =
+			DDMFormValuesTestUtil.createDDMFormFieldValue("objectDefinitionId",
+				new UnlocalizedValue(String.valueOf(objectDefinition.getObjectDefinitionId())));
+
+		settingsDDMFormValues.addDDMFormFieldValue(objectDefinitionIdFieldValue);
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				group, TestPropsValues.getUserId());
+
+		DDMFormInstance formInstance =
+			DDMFormInstanceLocalServiceUtil.addFormInstance(
+				structure.getUserId(), structure.getGroupId(),
+				structure.getStructureId(), structure.getNameMap(),
+				structure.getNameMap(), settingsDDMFormValues, serviceContext);
+
+		Assert.assertEquals("object", formInstance.getStorageType());
 	}
 
 	@Test
