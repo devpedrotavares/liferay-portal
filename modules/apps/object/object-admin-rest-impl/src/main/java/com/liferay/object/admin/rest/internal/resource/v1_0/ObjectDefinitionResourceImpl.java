@@ -298,6 +298,7 @@ public class ObjectDefinitionResourceImpl
 						objectDefinition.getPluralLabel()),
 					GetterUtil.getBoolean(objectDefinition.getPortlet(), true),
 					objectDefinition.getScope(),
+					objectDefinition.getShowPanelApp(),
 					objectDefinition.getStorageType(),
 					transformToList(
 						ArrayUtil.filter(
