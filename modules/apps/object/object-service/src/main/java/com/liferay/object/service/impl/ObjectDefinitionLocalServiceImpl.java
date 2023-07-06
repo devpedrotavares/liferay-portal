@@ -164,7 +164,7 @@ public class ObjectDefinitionLocalServiceImpl
 			long userId, boolean enableComments, boolean enableLocalization,
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, Map<Locale, String> pluralLabelMap,
-			boolean portlet, String scope, String storageType,
+			boolean portlet, boolean showPanel, String scope, String storageType,
 			List<ObjectField> objectFields)
 		throws PortalException {
 
@@ -1003,6 +1003,7 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setSystem(system);
 		objectDefinition.setVersion(version);
 		objectDefinition.setStatus(status);
+		objectDefinition.setShowPanelApp(!objectDefinition.getName().endsWith("hidden"));
 
 		objectDefinition = objectDefinitionPersistence.update(objectDefinition);
 

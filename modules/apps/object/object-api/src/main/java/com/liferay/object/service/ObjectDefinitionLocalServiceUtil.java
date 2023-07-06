@@ -41,14 +41,14 @@ public class ObjectDefinitionLocalServiceUtil {
 			Map<java.util.Locale, String> labelMap, String name,
 			String panelAppOrder, String panelCategoryKey,
 			Map<java.util.Locale, String> pluralLabelMap, boolean portlet,
-			String scope, String storageType,
+			boolean showPanel, String scope, String storageType,
 			List<com.liferay.object.model.ObjectField> objectFields)
 		throws PortalException {
 
 		return getService().addCustomObjectDefinition(
 			userId, enableComments, enableLocalization, labelMap, name,
-			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, scope,
-			storageType, objectFields);
+			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, showPanel,
+			scope, storageType, objectFields);
 	}
 
 	/**
