@@ -100,6 +100,9 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 		createColumn(
 			"panelCategoryKey", String.class, Types.VARCHAR,
 			Column.FLAG_DEFAULT);
+	public final Column<ObjectDefinitionTable, Boolean> showPanelApp =
+		createColumn(
+			"showPanelApp", Boolean.class, Types.BOOLEAN, Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, String>
 		pkObjectFieldDBColumnName = createColumn(
 			"pkObjectFieldDBColumnName", String.class, Types.VARCHAR,

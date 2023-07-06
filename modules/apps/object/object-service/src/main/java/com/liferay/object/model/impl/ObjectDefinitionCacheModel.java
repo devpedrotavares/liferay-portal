@@ -69,7 +69,7 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(69);
+		StringBundler sb = new StringBundler(71);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -121,6 +121,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(panelAppOrder);
 		sb.append(", panelCategoryKey=");
 		sb.append(panelCategoryKey);
+		sb.append(", showPanelApp=");
+		sb.append(showPanelApp);
 		sb.append(", pkObjectFieldDBColumnName=");
 		sb.append(pkObjectFieldDBColumnName);
 		sb.append(", pkObjectFieldName=");
@@ -247,6 +249,8 @@ public class ObjectDefinitionCacheModel
 			objectDefinitionImpl.setPanelCategoryKey(panelCategoryKey);
 		}
 
+		objectDefinitionImpl.setShowPanelApp(showPanelApp);
+
 		if (pkObjectFieldDBColumnName == null) {
 			objectDefinitionImpl.setPKObjectFieldDBColumnName("");
 		}
@@ -334,6 +338,8 @@ public class ObjectDefinitionCacheModel
 		name = objectInput.readUTF();
 		panelAppOrder = objectInput.readUTF();
 		panelCategoryKey = objectInput.readUTF();
+
+		showPanelApp = objectInput.readBoolean();
 		pkObjectFieldDBColumnName = objectInput.readUTF();
 		pkObjectFieldName = objectInput.readUTF();
 		pluralLabel = objectInput.readUTF();
@@ -445,6 +451,8 @@ public class ObjectDefinitionCacheModel
 			objectOutput.writeUTF(panelCategoryKey);
 		}
 
+		objectOutput.writeBoolean(showPanelApp);
+
 		if (pkObjectFieldDBColumnName == null) {
 			objectOutput.writeUTF("");
 		}
@@ -514,6 +522,7 @@ public class ObjectDefinitionCacheModel
 	public String name;
 	public String panelAppOrder;
 	public String panelCategoryKey;
+	public boolean showPanelApp;
 	public String pkObjectFieldDBColumnName;
 	public String pkObjectFieldName;
 	public String pluralLabel;

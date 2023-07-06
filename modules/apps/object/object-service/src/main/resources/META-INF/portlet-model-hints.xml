@@ -59,6 +59,7 @@
 		<field name="name" type="String" />
 		<field name="panelAppOrder" type="String" />
 		<field name="panelCategoryKey" type="String" />
+		<field name="showPanelApp" type="boolean" />
 		<field name="PKObjectFieldDBColumnName" type="String" />
 		<field name="PKObjectFieldName" type="String" />
 		<field localized="true" name="pluralLabel" type="String">

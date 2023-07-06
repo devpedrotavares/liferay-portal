@@ -579,6 +579,27 @@ public interface ObjectDefinitionModel
 	public void setPanelCategoryKey(String panelCategoryKey);
 
 	/**
+	 * Returns the show panel app of this object definition.
+	 *
+	 * @return the show panel app of this object definition
+	 */
+	public boolean getShowPanelApp();
+
+	/**
+	 * Returns <code>true</code> if this object definition is show panel app.
+	 *
+	 * @return <code>true</code> if this object definition is show panel app; <code>false</code> otherwise
+	 */
+	public boolean isShowPanelApp();
+
+	/**
+	 * Sets whether this object definition is show panel app.
+	 *
+	 * @param showPanelApp the show panel app of this object definition
+	 */
+	public void setShowPanelApp(boolean showPanelApp);
+
+	/**
 	 * Returns the pk object field db column name of this object definition.
 	 *
 	 * @return the pk object field db column name of this object definition

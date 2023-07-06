@@ -63,6 +63,7 @@ public class ObjectDefinitionWrapper
 		attributes.put("name", getName());
 		attributes.put("panelAppOrder", getPanelAppOrder());
 		attributes.put("panelCategoryKey", getPanelCategoryKey());
+		attributes.put("showPanelApp", isShowPanelApp());
 		attributes.put(
 			"pkObjectFieldDBColumnName", getPKObjectFieldDBColumnName());
 		attributes.put("pkObjectFieldName", getPKObjectFieldName());
@@ -235,6 +236,12 @@ public class ObjectDefinitionWrapper
 
 		if (panelCategoryKey != null) {
 			setPanelCategoryKey(panelCategoryKey);
+		}
+
+		Boolean showPanelApp = (Boolean)attributes.get("showPanelApp");
+
+		if (showPanelApp != null) {
+			setShowPanelApp(showPanelApp);
 		}
 
 		String pkObjectFieldDBColumnName = (String)attributes.get(
@@ -756,6 +763,16 @@ public class ObjectDefinitionWrapper
 	}
 
 	/**
+	 * Returns the show panel app of this object definition.
+	 *
+	 * @return the show panel app of this object definition
+	 */
+	@Override
+	public boolean getShowPanelApp() {
+		return model.getShowPanelApp();
+	}
+
+	/**
 	 * Returns the status of this object definition.
 	 *
 	 * @return the status of this object definition
@@ -933,6 +950,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public boolean isPortlet() {
 		return model.isPortlet();
+	}
+
+	/**
+	 * Returns <code>true</code> if this object definition is show panel app.
+	 *
+	 * @return <code>true</code> if this object definition is show panel app; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isShowPanelApp() {
+		return model.isShowPanelApp();
 	}
 
 	/**
@@ -1352,6 +1379,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public void setScope(String scope) {
 		model.setScope(scope);
+	}
+
+	/**
+	 * Sets whether this object definition is show panel app.
+	 *
+	 * @param showPanelApp the show panel app of this object definition
+	 */
+	@Override
+	public void setShowPanelApp(boolean showPanelApp) {
+		model.setShowPanelApp(showPanelApp);
 	}
 
 	/**
