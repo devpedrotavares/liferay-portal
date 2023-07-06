@@ -94,6 +94,7 @@
 		<column name="name" type="String" />
 		<column name="panelAppOrder" type="String" />
 		<column name="panelCategoryKey" type="String" />
+		<column name="showPanelApp" type="boolean" />
 		<column method-name="PKObjectFieldDBColumnName" name="pkObjectFieldDBColumnName" type="String" />
 		<column method-name="PKObjectFieldName" name="pkObjectFieldName" type="String" />
 		<column localized="true" name="pluralLabel" type="String" />
