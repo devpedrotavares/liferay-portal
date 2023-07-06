@@ -887,6 +887,34 @@ public class ObjectDefinition implements Serializable {
 	protected String scope;
 
 	@Schema
+	public Boolean getShowPanelApp() {
+		return showPanelApp;
+	}
+
+	public void setShowPanelApp(Boolean showPanelApp) {
+		this.showPanelApp = showPanelApp;
+	}
+
+	@JsonIgnore
+	public void setShowPanelApp(
+		UnsafeSupplier<Boolean, Exception> showPanelAppUnsafeSupplier) {
+
+		try {
+			showPanelApp = showPanelAppUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean showPanelApp;
+
+	@Schema
 	@Valid
 	public Status getStatus() {
 		return status;
@@ -1417,6 +1445,16 @@ public class ObjectDefinition implements Serializable {
 			sb.append(_escape(scope));
 
 			sb.append("\"");
+		}
+
+		if (showPanelApp != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"showPanelApp\": ");
+
+			sb.append(showPanelApp);
 		}
 
 		if (status != null) {

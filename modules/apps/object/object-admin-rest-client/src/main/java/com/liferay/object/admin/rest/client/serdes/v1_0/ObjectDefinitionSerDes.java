@@ -478,6 +478,16 @@ public class ObjectDefinitionSerDes {
 			sb.append("\"");
 		}
 
+		if (objectDefinition.getShowPanelApp() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"showPanelApp\": ");
+
+			sb.append(objectDefinition.getShowPanelApp());
+		}
+
 		if (objectDefinition.getStatus() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -800,6 +810,15 @@ public class ObjectDefinitionSerDes {
 			map.put("scope", String.valueOf(objectDefinition.getScope()));
 		}
 
+		if (objectDefinition.getShowPanelApp() == null) {
+			map.put("showPanelApp", null);
+		}
+		else {
+			map.put(
+				"showPanelApp",
+				String.valueOf(objectDefinition.getShowPanelApp()));
+		}
+
 		if (objectDefinition.getStatus() == null) {
 			map.put("status", null);
 		}
@@ -1105,6 +1124,12 @@ public class ObjectDefinitionSerDes {
 			else if (Objects.equals(jsonParserFieldName, "scope")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setScope((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "showPanelApp")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setShowPanelApp(
+						(Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "status")) {

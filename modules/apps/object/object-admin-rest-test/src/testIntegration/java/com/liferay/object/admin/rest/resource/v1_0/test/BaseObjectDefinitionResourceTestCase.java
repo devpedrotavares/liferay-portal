@@ -1320,6 +1320,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("showPanelApp", additionalAssertFieldName)) {
+				if (objectDefinition.getShowPanelApp() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("status", additionalAssertFieldName)) {
 				if (objectDefinition.getStatus() == null) {
 					valid = false;
@@ -1809,6 +1817,17 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getScope(),
 						objectDefinition2.getScope())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("showPanelApp", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getShowPanelApp(),
+						objectDefinition2.getShowPanelApp())) {
 
 					return false;
 				}
@@ -2498,6 +2517,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("showPanelApp")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("status")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -2670,6 +2694,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				restContextPath = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				scope = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				showPanelApp = RandomTestUtil.randomBoolean();
 				storageType = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				system = RandomTestUtil.randomBoolean();

@@ -648,6 +648,27 @@ public class ObjectDefinition implements Cloneable, Serializable {
 
 	protected String scope;
 
+	public Boolean getShowPanelApp() {
+		return showPanelApp;
+	}
+
+	public void setShowPanelApp(Boolean showPanelApp) {
+		this.showPanelApp = showPanelApp;
+	}
+
+	public void setShowPanelApp(
+		UnsafeSupplier<Boolean, Exception> showPanelAppUnsafeSupplier) {
+
+		try {
+			showPanelApp = showPanelAppUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean showPanelApp;
+
 	public Status getStatus() {
 		return status;
 	}
