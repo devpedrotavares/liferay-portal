@@ -180,6 +180,8 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setPanelCategoryKey(RandomTestUtil.randomString());
 
+		newObjectDefinition.setShowPanelApp(RandomTestUtil.randomBoolean());
+
 		newObjectDefinition.setPKObjectFieldDBColumnName(
 			RandomTestUtil.randomString());
 
@@ -277,6 +279,9 @@ public class ObjectDefinitionPersistenceTest {
 		Assert.assertEquals(
 			existingObjectDefinition.getPanelCategoryKey(),
 			newObjectDefinition.getPanelCategoryKey());
+		Assert.assertEquals(
+			existingObjectDefinition.isShowPanelApp(),
+			newObjectDefinition.isShowPanelApp());
 		Assert.assertEquals(
 			existingObjectDefinition.getPKObjectFieldDBColumnName(),
 			newObjectDefinition.getPKObjectFieldDBColumnName());
@@ -460,8 +465,8 @@ public class ObjectDefinitionPersistenceTest {
 			"label", true, "className", true, "enableCategorization", true,
 			"enableComments", true, "enableLocalization", true,
 			"enableObjectEntryHistory", true, "modifiable", true, "name", true,
-			"panelAppOrder", true, "panelCategoryKey", true,
-			"pkObjectFieldDBColumnName", true, "pkObjectFieldName", true,
+			"panelAppOrder", true, "panelCategoryKey", true, "showPanelApp",
+			true, "pkObjectFieldDBColumnName", true, "pkObjectFieldName", true,
 			"pluralLabel", true, "portlet", true, "scope", true, "storageType",
 			true, "system", true, "version", true, "status", true);
 	}
@@ -826,6 +831,8 @@ public class ObjectDefinitionPersistenceTest {
 		objectDefinition.setPanelAppOrder(RandomTestUtil.randomString());
 
 		objectDefinition.setPanelCategoryKey(RandomTestUtil.randomString());
+
+		objectDefinition.setShowPanelApp(RandomTestUtil.randomBoolean());
 
 		objectDefinition.setPKObjectFieldDBColumnName(
 			RandomTestUtil.randomString());
