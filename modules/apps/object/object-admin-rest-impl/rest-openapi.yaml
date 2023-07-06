@@ -121,6 +121,8 @@ components:
                     items:
                         $ref: "#/components/schemas/ObjectView"
                     type: array
+                showPanelApp:
+                    type: boolean
                 panelAppOrder:
                     type: string
                 panelCategoryKey:
