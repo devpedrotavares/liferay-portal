@@ -637,7 +637,7 @@ public class ObjectFieldLocalServiceImpl
 			newObjectField.getObjectDefinitionId());
 
 		_validateListTypeDefinitionId(listTypeDefinitionId, businessType);
-		_validateBusinessTypeEncrypted(
+		_validateBusinessType(
 			newObjectField.getObjectDefinitionId(), businessType);
 		_validateIndexed(
 			businessType, dbType, indexed, indexedAsKeyword, indexedLanguageId);
@@ -784,11 +784,11 @@ public class ObjectFieldLocalServiceImpl
 			objectDefinitionId);
 
 		_validateListTypeDefinitionId(listTypeDefinitionId, businessType);
-		_validateBusinessTypeEncrypted(objectDefinitionId, businessType);
 		_validateIndexed(
 			businessType, dbType, indexed, indexedAsKeyword, indexedLanguageId);
 		_validateLabel(labelMap, null);
 		_validateLocalized(businessType, localized, objectDefinition, required);
+		_validateBusinessType(objectDefinitionId, businessType);
 		_validateName(0, objectDefinition, name, system);
 		_validateReadOnlyAndReadOnlyConditionExpression(
 			businessType, readOnly, readOnlyConditionExpression);
@@ -1146,16 +1146,38 @@ public class ObjectFieldLocalServiceImpl
 		}
 	}
 
-	private void _validateBusinessTypeEncrypted(
+	private void _validateBusinessType(
 			long objectDefinitionId, String businessType)
 		throws PortalException {
 
-		if (!Objects.equals(
+		if (Objects.equals(
+				businessType, ObjectFieldConstants.BUSINESS_TYPE_AGGREGATION) ||
+			Objects.equals(
+				businessType, ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT) ||
+			Objects.equals(
 				businessType, ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
 
-			return;
+			ObjectDefinition objectDefinition =
+				_objectDefinitionPersistence.findByPrimaryKey(
+					objectDefinitionId);
+
+			if (!objectDefinition.isDefaultStorageType()) {
+				throw new ObjectFieldBusinessTypeException(
+					String.format(
+						"Business type %s can only be used in object " +
+							"definitions with a default storage type",
+						businessType));
+			}
 		}
 
+		if (Objects.equals(
+				businessType, ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
+
+			_validateBusinessTypeEncrypted();
+		}
+	}
+
+	private void _validateBusinessTypeEncrypted() throws PortalException {
 		if (!PropsValues.OBJECT_ENCRYPTION_ENABLED) {
 			throw new ObjectFieldBusinessTypeException(
 				"Business type encrypted is disabled");
@@ -1169,15 +1191,6 @@ public class ObjectFieldLocalServiceImpl
 		if (Validator.isNull(PropsValues.OBJECT_ENCRYPTION_KEY)) {
 			throw new ObjectFieldBusinessTypeException(
 				"Encryption key is required for business type encrypted");
-		}
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
-
-		if (!objectDefinition.isDefaultStorageType()) {
-			throw new ObjectFieldBusinessTypeException(
-				"Business type encrypted can only be used in object " +
-					"definitions with a default storage type");
 		}
 
 		try {
