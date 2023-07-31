@@ -21,6 +21,7 @@ import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectValidationRuleConstants;
+import com.liferay.object.constants.ObjectValidationRuleSettingConstants;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectEntryValuesException;
@@ -43,6 +44,7 @@ import com.liferay.object.model.ObjectState;
 import com.liferay.object.model.ObjectStateFlow;
 import com.liferay.object.model.ObjectStateTransition;
 import com.liferay.object.model.ObjectValidationRule;
+import com.liferay.object.model.ObjectValidationRuleSetting;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
@@ -51,7 +53,9 @@ import com.liferay.object.service.ObjectStateFlowLocalService;
 import com.liferay.object.service.ObjectStateLocalService;
 import com.liferay.object.service.ObjectStateTransitionLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
+import com.liferay.object.service.persistence.ObjectValidationRuleSettingUtil;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
+import com.liferay.object.validation.rule.ObjectValidationRuleResult;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
@@ -95,6 +99,7 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
@@ -139,6 +144,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
  * @author Marco Leo
  * @author Brian Wing Shun Chan
  */
+@FeatureFlags("LPS-187846")
 @RunWith(Arquillian.class)
 public class ObjectEntryLocalServiceTest {
 
@@ -653,38 +659,38 @@ public class ObjectEntryLocalServiceTest {
 
 	@Test
 	public void testAddObjectEntryWithObjectValidationRule() throws Exception {
+		List<Map<String, String>> expectedObjectValidationRuleResults =
+			new ArrayList<>();
 
 		// Date time must be in the future
 
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
 			"yyyy-MM-dd HH:mm");
 
-		ObjectValidationRule objectValidationRule =
-			_objectValidationRuleLocalService.addObjectValidationRule(
-				TestPropsValues.getUserId(),
-				_objectDefinition.getObjectDefinitionId(), true,
-				ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
-				LocalizedMapUtil.getLocalizedMap(
-					"Date time must be in the future"),
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
-				String.format(
-					"futureDates(time, \"%s\")",
-					dateTimeFormatter.format(LocalDateTime.now())),
-				Collections.emptyList());
+		ObjectField objectField = _objectFieldLocalService.fetchObjectField(
+			_objectDefinition.getObjectDefinitionId(), "time");
 
-		AssertUtils.assertFailure(
-			ModelListenerException.class,
-			ObjectValidationRuleEngineException.InvalidFields.class.getName() +
-				": Date time must be in the future",
-			() -> _addObjectEntry(
-				HashMapBuilder.<String, Serializable>put(
-					"emailAddressRequired", RandomTestUtil.randomString()
-				).put(
-					"listTypeEntryKeyRequired", "listTypeEntryKey1"
-				).put(
-					"time", "2000-12-25 08:50"
-				).build()));
+		_objectValidationRuleLocalService.addObjectValidationRule(
+			TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(), true,
+			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+			LocalizedMapUtil.getLocalizedMap("Date time must be in the future"),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			ObjectValidationRuleConstants.OUTPUT_TYPE_PARTIAL_VALIDATION,
+			String.format(
+				"futureDates(%s, \"%s\")", objectField.getName(),
+				dateTimeFormatter.format(LocalDateTime.now())),
+			Collections.singletonList(
+				_getObjectValidationRuleSetting(
+					ObjectValidationRuleSettingConstants.NAME_OBJECT_FIELD_ID,
+					String.valueOf(objectField.getObjectFieldId()))));
+
+		expectedObjectValidationRuleResults.add(
+			HashMapBuilder.put(
+				"errorMessage", "Date time must be in the future"
+			).put(
+				"objectFieldName", objectField.getName()
+			).build());
 
 		_addObjectEntry(
 			HashMapBuilder.<String, Serializable>put(
@@ -697,42 +703,20 @@ public class ObjectEntryLocalServiceTest {
 
 		_assertCount(1);
 
-		_objectValidationRuleLocalService.updateObjectValidationRule(
-			objectValidationRule.getObjectValidationRuleId(), false,
-			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
-			String.format(
-				"futureDates(time, \"%s\")",
-				dateTimeFormatter.format(LocalDateTime.now())),
-			Collections.emptyList());
-
 		// Field must be an email address
 
-		objectValidationRule =
-			_objectValidationRuleLocalService.addObjectValidationRule(
-				TestPropsValues.getUserId(),
-				_objectDefinition.getObjectDefinitionId(), true,
-				ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
-				LocalizedMapUtil.getLocalizedMap(
-					"Field must be an email address"),
-				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
-				"isEmailAddress(emailAddress)", Collections.emptyList());
+		_objectValidationRuleLocalService.addObjectValidationRule(
+			TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(), true,
+			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+			LocalizedMapUtil.getLocalizedMap("Field must be an email address"),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
+			"isEmailAddress(emailAddress)", Collections.emptyList());
 
-		AssertUtils.assertFailure(
-			ModelListenerException.class,
-			ObjectValidationRuleEngineException.InvalidFields.class.getName() +
-				": Field must be an email address",
-			() -> _addObjectEntry(
-				HashMapBuilder.<String, Serializable>put(
-					"emailAddress", RandomTestUtil.randomString()
-				).put(
-					"emailAddressRequired", "john@liferay.com"
-				).put(
-					"listTypeEntryKeyRequired", "listTypeEntryKey1"
-				).build()));
+		expectedObjectValidationRuleResults.add(
+			Collections.singletonMap(
+				"errorMessage", "Field must be an email address"));
 
 		_addObjectEntry(
 			HashMapBuilder.<String, Serializable>put(
@@ -741,30 +725,11 @@ public class ObjectEntryLocalServiceTest {
 				"emailAddressRequired", "bob@liferay.com"
 			).put(
 				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).put(
+				"time", dateTimeFormatter.format(LocalDateTime.now())
 			).build());
 
 		_assertCount(2);
-
-		// Deactivate object validation rule
-
-		_objectValidationRuleLocalService.updateObjectValidationRule(
-			objectValidationRule.getObjectValidationRuleId(), false,
-			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
-			"isEmailAddress(emailAddress)", Collections.emptyList());
-
-		_addObjectEntry(
-			HashMapBuilder.<String, Serializable>put(
-				"emailAddress", RandomTestUtil.randomString()
-			).put(
-				"emailAddressRequired", "john@liferay.com"
-			).put(
-				"listTypeEntryKeyRequired", "listTypeEntryKey1"
-			).build());
-
-		_assertCount(3);
 
 		// Must be over 18 years old
 
@@ -784,18 +749,9 @@ public class ObjectEntryLocalServiceTest {
 					testName.getMethodName(), ".groovy")),
 			Collections.emptyList());
 
-		AssertUtils.assertFailure(
-			ModelListenerException.class,
-			ObjectValidationRuleEngineException.InvalidFields.class.getName() +
-				": Must be over 18 years old",
-			() -> _addObjectEntry(
-				HashMapBuilder.<String, Serializable>put(
-					"birthday", "2010-12-25"
-				).put(
-					"emailAddressRequired", "bob@liferay.com"
-				).put(
-					"listTypeEntryKeyRequired", "listTypeEntryKey1"
-				).build()));
+		expectedObjectValidationRuleResults.add(
+			Collections.singletonMap(
+				"errorMessage", "Must be over 18 years old"));
 
 		_addObjectEntry(
 			HashMapBuilder.<String, Serializable>put(
@@ -804,39 +760,26 @@ public class ObjectEntryLocalServiceTest {
 				"emailAddressRequired", "bob@liferay.com"
 			).put(
 				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).put(
+				"time", dateTimeFormatter.format(LocalDateTime.now())
 			).build());
 
-		_assertCount(4);
+		_assertCount(3);
 
 		// Names must be equals
 
-		_objectValidationRuleLocalService.addObjectValidationRule(
-			TestPropsValues.getUserId(),
-			_objectDefinition.getObjectDefinitionId(), true,
-			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
-			LocalizedMapUtil.getLocalizedMap("Names must be equals"),
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
-			"equals(lastName, middleName)", Collections.emptyList());
+		ObjectValidationRule objectValidationRule =
+			_objectValidationRuleLocalService.addObjectValidationRule(
+				TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId(), true,
+				ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+				LocalizedMapUtil.getLocalizedMap("Names must be equals"),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
+				"equals(lastName, middleName)", Collections.emptyList());
 
-		AssertUtils.assertFailure(
-			ModelListenerException.class,
-			ObjectValidationRuleEngineException.InvalidFields.class.getName() +
-				": Names must be equals",
-			() -> _addObjectEntry(
-				HashMapBuilder.<String, Serializable>put(
-					"birthday", "2000-12-25"
-				).put(
-					"emailAddress", "john@liferay.com"
-				).put(
-					"emailAddressRequired", "bob@liferay.com"
-				).put(
-					"lastName", RandomTestUtil.randomString()
-				).put(
-					"listTypeEntryKeyRequired", "listTypeEntryKey1"
-				).put(
-					"middleName", RandomTestUtil.randomString()
-				).build()));
+		expectedObjectValidationRuleResults.add(
+			Collections.singletonMap("errorMessage", "Names must be equals"));
 
 		_addObjectEntry(
 			HashMapBuilder.<String, Serializable>put(
@@ -851,6 +794,92 @@ public class ObjectEntryLocalServiceTest {
 				"listTypeEntryKeyRequired", "listTypeEntryKey1"
 			).put(
 				"middleName", "Doe"
+			).put(
+				"time", dateTimeFormatter.format(LocalDateTime.now())
+			).build());
+
+		_assertCount(4);
+
+		try {
+			_addObjectEntry(
+				HashMapBuilder.<String, Serializable>put(
+					"birthday", "2010-12-25"
+				).put(
+					"emailAddress", RandomTestUtil.randomString()
+				).put(
+					"emailAddressRequired", RandomTestUtil.randomString()
+				).put(
+					"lastName", RandomTestUtil.randomString()
+				).put(
+					"listTypeEntryKeyRequired", "listTypeEntryKey1"
+				).put(
+					"middleName", RandomTestUtil.randomString()
+				).put(
+					"time", "2000-12-25 08:50"
+				).build());
+
+			Assert.fail();
+		}
+		catch (ModelListenerException modelListenerException) {
+			Assert.assertEquals(
+				modelListenerException.getCause(
+				).getClass(),
+				ObjectValidationRuleEngineException.class);
+
+			ObjectValidationRuleEngineException
+				objectValidationRuleEngineException =
+					(ObjectValidationRuleEngineException)
+						modelListenerException.getCause();
+
+			List<ObjectValidationRuleResult> objectValidationRuleResults =
+				objectValidationRuleEngineException.
+					getObjectValidationRuleResults();
+
+			Assert.assertEquals(
+				objectValidationRuleResults.toString(),
+				expectedObjectValidationRuleResults.size(),
+				objectValidationRuleResults.size());
+
+			for (int i = 0; i < objectValidationRuleResults.size(); i++) {
+				Map<String, String> expectedObjectValidationRuleResult =
+					expectedObjectValidationRuleResults.get(i);
+
+				ObjectValidationRuleResult objectValidationRuleResult =
+					objectValidationRuleResults.get(i);
+
+				Assert.assertEquals(
+					expectedObjectValidationRuleResult.get("errorMessage"),
+					objectValidationRuleResult.getErrorMessage());
+				Assert.assertEquals(
+					expectedObjectValidationRuleResult.get("objectFieldName"),
+					objectValidationRuleResult.getObjectFieldName());
+			}
+		}
+
+		// Deactivate
+
+		_objectValidationRuleLocalService.updateObjectValidationRule(
+			objectValidationRule.getObjectValidationRuleId(), false,
+			objectValidationRule.getEngine(),
+			objectValidationRule.getErrorLabelMap(),
+			objectValidationRule.getNameMap(),
+			objectValidationRule.getOutputType(),
+			objectValidationRule.getScript(),
+			objectValidationRule.getObjectValidationRuleSettings());
+
+		_addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"birthday", "2000-12-25"
+			).put(
+				"emailAddressRequired", "bob@liferay.com"
+			).put(
+				"lastName", RandomTestUtil.randomString()
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).put(
+				"middleName", RandomTestUtil.randomString()
+			).put(
+				"time", dateTimeFormatter.format(LocalDateTime.now())
 			).build());
 
 		_assertCount(5);
@@ -2331,6 +2360,19 @@ public class ObjectEntryLocalServiceTest {
 		BigDecimal bigDecimal = BigDecimal.valueOf(value);
 
 		return bigDecimal.setScale(16);
+	}
+
+	private ObjectValidationRuleSetting _getObjectValidationRuleSetting(
+		String name, String value) {
+
+		ObjectValidationRuleSetting objectValidationRuleSetting =
+			ObjectValidationRuleSettingUtil.create(0L);
+
+		objectValidationRuleSetting.setName(name);
+
+		objectValidationRuleSetting.setValue(value);
+
+		return objectValidationRuleSetting;
 	}
 
 	private Map<String, Serializable> _getValuesFromCacheField(
