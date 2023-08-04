@@ -230,7 +230,7 @@ public class RenderLayoutStructureDisplayContext {
 
 		DefaultFragmentRendererContext defaultFragmentRendererContext =
 			new DefaultFragmentRendererContext(fragmentEntryLink);
-
+		//todo: it comes from the _httpServletRequest
 		InfoItemReference infoItemReference =
 			(InfoItemReference)_httpServletRequest.getAttribute(
 				InfoDisplayWebKeys.INFO_ITEM_REFERENCE);
