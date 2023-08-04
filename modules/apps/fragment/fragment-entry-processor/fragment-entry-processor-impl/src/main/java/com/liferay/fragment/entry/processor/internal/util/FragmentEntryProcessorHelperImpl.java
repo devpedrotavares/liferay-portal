@@ -148,22 +148,15 @@ public class FragmentEntryProcessorHelperImpl
 			InfoItemIdentifier infoItemIdentifier =
 				infoItemReference.getInfoItemIdentifier();
 
-			if (!(infoItemIdentifier instanceof ClassPKInfoItemIdentifier)) {
-				String objectClassName = infoItemReference.getClassName();
-				int i = objectClassName.indexOf('#');
-
-				try {
-					classPK = Long.parseLong(objectClassName.substring(i + 1));
-				}
-				catch(Exception e) {
-					return null;
-				}
-			}
-			else {
+			if (infoItemIdentifier instanceof ClassPKInfoItemIdentifier) {
 				ClassPKInfoItemIdentifier classPKInfoItemIdentifier =
 					(ClassPKInfoItemIdentifier)
 						infoItemReference.getInfoItemIdentifier();
+
 				classPK = classPKInfoItemIdentifier.getClassPK();
+			}
+			else if (!(infoItemIdentifier instanceof ERCInfoItemIdentifier)) {
+				return null;
 			}
 
 			className = infoItemReference.getClassName();
