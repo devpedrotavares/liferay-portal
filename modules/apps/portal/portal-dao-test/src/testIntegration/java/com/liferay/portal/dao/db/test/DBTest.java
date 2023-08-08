@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
+import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -20,10 +21,12 @@ import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -289,9 +292,30 @@ public class DBTest {
 
 	@Test
 	public void testAlterTableDropIndexedColumn() throws Exception {
+
+		// Change connection
+
+		DriverManager.registerDriver(
+			new com.microsoft.sqlserver.jdbc.SQLServerDriver());
+
+		Connection newConnection = DriverManager.getConnection(
+			"jdbc:sqlserver://localhost:1434;databaseName=lportal", "sa",
+			"Liferay123");
+
+		Assert.assertNotNull(newConnection);
+		Assert.assertNotEquals(_connection, newConnection);
+
+		// Add default constraint
+
+		_db.runSQL(
+			newConnection,
+			String.format(
+				"ALTER TABLE %s ADD CONSTRAINT DF_UniqueDefaultConstraint DEFAULT 'This is the default value' FOR %s",
+				_TABLE_NAME_1, "typeVarchar"));
+
 		_addIndex(new String[] {"typeVarchar", "typeBoolean"});
 
-		_db.alterTableDropColumn(_connection, _TABLE_NAME_1, "typeVarchar");
+		_db.alterTableDropColumn(newConnection, _TABLE_NAME_1, "typeVarchar");
 
 		Assert.assertFalse(
 			_dbInspector.hasColumn(_TABLE_NAME_1, "typeVarchar"));
@@ -301,7 +325,7 @@ public class DBTest {
 			new Class<?>[] {
 				Connection.class, String.class, String.class, boolean.class
 			},
-			_connection, _TABLE_NAME_1, "typeVarchar", false);
+			newConnection, _TABLE_NAME_1, "typeVarchar", false);
 
 		Assert.assertEquals(
 			indexMetadatas.toString(), 0, indexMetadatas.size());
@@ -590,8 +614,9 @@ public class DBTest {
 	}
 
 	private void _addIndex(String[] columnNames) {
-		List<IndexMetadata> indexMetadatas = Arrays.asList(
-			new IndexMetadata(_INDEX_NAME, _TABLE_NAME_1, false, columnNames));
+		List<IndexMetadata> indexMetadatas = Collections.singletonList(
+			IndexMetadataFactoryUtil.createIndexMetadata(
+				false, _TABLE_NAME_1, columnNames[0]));
 
 		ReflectionTestUtil.invoke(
 			_db, "addIndexes", new Class<?>[] {Connection.class, List.class},
