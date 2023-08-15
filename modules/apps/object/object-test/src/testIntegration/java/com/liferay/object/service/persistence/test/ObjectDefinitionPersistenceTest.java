@@ -154,6 +154,8 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setClassName(RandomTestUtil.randomString());
 
+		newObjectDefinition.setCreationPolicy(RandomTestUtil.randomString());
+
 		newObjectDefinition.setEnableCategorization(
 			RandomTestUtil.randomBoolean());
 
@@ -250,6 +252,9 @@ public class ObjectDefinitionPersistenceTest {
 		Assert.assertEquals(
 			existingObjectDefinition.getClassName(),
 			newObjectDefinition.getClassName());
+		Assert.assertEquals(
+			existingObjectDefinition.getCreationPolicy(),
+			newObjectDefinition.getCreationPolicy());
 		Assert.assertEquals(
 			existingObjectDefinition.isEnableCategorization(),
 			newObjectDefinition.isEnableCategorization());
@@ -461,13 +466,13 @@ public class ObjectDefinitionPersistenceTest {
 			true, "descriptionObjectFieldId", true, "objectFolderId", true,
 			"titleObjectFieldId", true, "accountEntryRestricted", true,
 			"active", true, "dbTableName", true, "label", true, "className",
-			true, "enableCategorization", true, "enableComments", true,
-			"enableLocalization", true, "enableObjectEntryHistory", true,
-			"modifiable", true, "name", true, "panelAppOrder", true,
-			"panelCategoryKey", true, "pkObjectFieldDBColumnName", true,
-			"pkObjectFieldName", true, "pluralLabel", true, "portlet", true,
-			"scope", true, "storageType", true, "system", true, "version", true,
-			"status", true);
+			true, "creationPolicy", true, "enableCategorization", true,
+			"enableComments", true, "enableLocalization", true,
+			"enableObjectEntryHistory", true, "modifiable", true, "name", true,
+			"panelAppOrder", true, "panelCategoryKey", true,
+			"pkObjectFieldDBColumnName", true, "pkObjectFieldName", true,
+			"pluralLabel", true, "portlet", true, "scope", true, "storageType",
+			true, "system", true, "version", true, "status", true);
 	}
 
 	@Test
@@ -814,6 +819,8 @@ public class ObjectDefinitionPersistenceTest {
 		objectDefinition.setLabel(RandomTestUtil.randomString());
 
 		objectDefinition.setClassName(RandomTestUtil.randomString());
+
+		objectDefinition.setCreationPolicy(RandomTestUtil.randomString());
 
 		objectDefinition.setEnableCategorization(
 			RandomTestUtil.randomBoolean());

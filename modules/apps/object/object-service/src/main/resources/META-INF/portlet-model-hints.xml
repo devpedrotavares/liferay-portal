@@ -52,6 +52,7 @@
 		<field name="className" type="String">
 			<hint name="max-length">255</hint>
 		</field>
+		<field name="creationPolicy" type="String" />
 		<field name="enableCategorization" type="boolean" />
 		<field name="enableComments" type="boolean" />
 		<field name="enableLocalization" type="boolean" />

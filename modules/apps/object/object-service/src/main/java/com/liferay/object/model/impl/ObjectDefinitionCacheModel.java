@@ -69,7 +69,7 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(71);
+		StringBundler sb = new StringBundler(73);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -107,6 +107,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(label);
 		sb.append(", className=");
 		sb.append(className);
+		sb.append(", creationPolicy=");
+		sb.append(creationPolicy);
 		sb.append(", enableCategorization=");
 		sb.append(enableCategorization);
 		sb.append(", enableComments=");
@@ -222,6 +224,13 @@ public class ObjectDefinitionCacheModel
 			objectDefinitionImpl.setClassName(className);
 		}
 
+		if (creationPolicy == null) {
+			objectDefinitionImpl.setCreationPolicy("");
+		}
+		else {
+			objectDefinitionImpl.setCreationPolicy(creationPolicy);
+		}
+
 		objectDefinitionImpl.setEnableCategorization(enableCategorization);
 		objectDefinitionImpl.setEnableComments(enableComments);
 		objectDefinitionImpl.setEnableLocalization(enableLocalization);
@@ -326,6 +335,7 @@ public class ObjectDefinitionCacheModel
 		dbTableName = objectInput.readUTF();
 		label = objectInput.readUTF();
 		className = objectInput.readUTF();
+		creationPolicy = objectInput.readUTF();
 
 		enableCategorization = objectInput.readBoolean();
 
@@ -421,6 +431,13 @@ public class ObjectDefinitionCacheModel
 			objectOutput.writeUTF(className);
 		}
 
+		if (creationPolicy == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(creationPolicy);
+		}
+
 		objectOutput.writeBoolean(enableCategorization);
 
 		objectOutput.writeBoolean(enableComments);
@@ -514,6 +531,7 @@ public class ObjectDefinitionCacheModel
 	public String dbTableName;
 	public String label;
 	public String className;
+	public String creationPolicy;
 	public boolean enableCategorization;
 	public boolean enableComments;
 	public boolean enableLocalization;

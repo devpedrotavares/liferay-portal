@@ -55,6 +55,7 @@ public class ObjectDefinitionWrapper
 		attributes.put("dbTableName", getDBTableName());
 		attributes.put("label", getLabel());
 		attributes.put("className", getClassName());
+		attributes.put("creationPolicy", getCreationPolicy());
 		attributes.put("enableCategorization", isEnableCategorization());
 		attributes.put("enableComments", isEnableComments());
 		attributes.put("enableLocalization", isEnableLocalization());
@@ -191,6 +192,12 @@ public class ObjectDefinitionWrapper
 
 		if (className != null) {
 			setClassName(className);
+		}
+
+		String creationPolicy = (String)attributes.get("creationPolicy");
+
+		if (creationPolicy != null) {
+			setCreationPolicy(creationPolicy);
 		}
 
 		Boolean enableCategorization = (Boolean)attributes.get(
@@ -368,6 +375,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the creation policy of this object definition.
+	 *
+	 * @return the creation policy of this object definition
+	 */
+	@Override
+	public String getCreationPolicy() {
+		return model.getCreationPolicy();
 	}
 
 	/**
@@ -1048,6 +1065,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the creation policy of this object definition.
+	 *
+	 * @param creationPolicy the creation policy of this object definition
+	 */
+	@Override
+	public void setCreationPolicy(String creationPolicy) {
+		model.setCreationPolicy(creationPolicy);
 	}
 
 	/**

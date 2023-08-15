@@ -443,6 +443,21 @@ public interface ObjectDefinitionModel
 	public void setClassName(String className);
 
 	/**
+	 * Returns the creation policy of this object definition.
+	 *
+	 * @return the creation policy of this object definition
+	 */
+	@AutoEscape
+	public String getCreationPolicy();
+
+	/**
+	 * Sets the creation policy of this object definition.
+	 *
+	 * @param creationPolicy the creation policy of this object definition
+	 */
+	public void setCreationPolicy(String creationPolicy);
+
+	/**
 	 * Returns the enable categorization of this object definition.
 	 *
 	 * @return the enable categorization of this object definition

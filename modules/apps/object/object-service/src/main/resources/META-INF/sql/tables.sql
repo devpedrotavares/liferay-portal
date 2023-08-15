@@ -40,6 +40,7 @@ create table ObjectDefinition (
 	dbTableName VARCHAR(75) null,
 	label STRING null,
 	className VARCHAR(255) null,
+	creationPolicy VARCHAR(75) null,
 	enableCategorization BOOLEAN,
 	enableComments BOOLEAN,
 	enableLocalization BOOLEAN,

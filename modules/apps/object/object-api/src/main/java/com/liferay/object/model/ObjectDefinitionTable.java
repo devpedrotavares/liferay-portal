@@ -75,6 +75,9 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 		"label", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, String> className = createColumn(
 		"className", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<ObjectDefinitionTable, String> creationPolicy =
+		createColumn(
+			"creationPolicy", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, Boolean> enableCategorization =
 		createColumn(
 			"enableCategorization", Boolean.class, Types.BOOLEAN,
