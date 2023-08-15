@@ -241,6 +241,7 @@ public class ObjectEntryLocalServiceImpl
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
 
+		_validateStatus(objectDefinition, status);
 		_validateGroupId(groupId, objectDefinition.getScope());
 
 		User user = _userLocalService.getUser(userId);
@@ -3964,6 +3965,18 @@ public class ObjectEntryLocalServiceImpl
 			throw new ObjectEntryValuesException.OneToOneConstraintViolation(
 				dbColumnName, dbColumnValue,
 				dynamicObjectDefinitionTable.getTableName());
+		}
+	}
+
+	private void _validateStatus(ObjectDefinition objectDefinition, int status)
+		throws PortalException {
+
+		if (StringUtil.equals(
+				objectDefinition.getCreationPolicy(),
+				ObjectDefinitionConstants.CREATION_POLICY_DEFAULT) &&
+			(status == WorkflowConstants.STATUS_DRAFT)) {
+
+			throw new PortalException();
 		}
 	}
 
