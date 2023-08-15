@@ -158,7 +158,8 @@ public class ObjectEntryInfoItemFormProviderTest {
 		throws Exception {
 
 		return _objectDefinitionLocalService.addCustomObjectDefinition(
-			TestPropsValues.getUserId(), 0, false, false,
+			TestPropsValues.getUserId(), 0,
+			ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false, false,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			"A" + RandomTestUtil.randomString(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),

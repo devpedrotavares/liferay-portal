@@ -41,7 +41,8 @@ public class ObjectActionResourceTest extends BaseObjectActionResourceTestCase {
 
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, false, false,
+				TestPropsValues.getUserId(), 0,
+				ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false, false,
 				LocalizedMapUtil.getLocalizedMap(value), value, null, null,
 				LocalizedMapUtil.getLocalizedMap(value), true,
 				ObjectDefinitionConstants.SCOPE_COMPANY,

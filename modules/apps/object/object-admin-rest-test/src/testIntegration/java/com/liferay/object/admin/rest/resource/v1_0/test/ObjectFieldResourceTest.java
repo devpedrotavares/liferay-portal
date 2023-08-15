@@ -48,7 +48,8 @@ public class ObjectFieldResourceTest extends BaseObjectFieldResourceTestCase {
 
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, false, true,
+				TestPropsValues.getUserId(), 0,
+				ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false, true,
 				LocalizedMapUtil.getLocalizedMap(value), value, null, null,
 				LocalizedMapUtil.getLocalizedMap(value), true,
 				ObjectDefinitionConstants.SCOPE_COMPANY,

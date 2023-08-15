@@ -202,7 +202,8 @@ public class ObjectDefinitionServiceTest {
 			user.getUserId(), objectDefinition.getObjectDefinitionId());*/
 
 		return _objectDefinitionLocalService.addCustomObjectDefinition(
-			user.getUserId(), 0, false, false,
+			user.getUserId(), 0,
+			ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false, false,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			"A" + RandomTestUtil.randomString(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -312,7 +313,9 @@ public class ObjectDefinitionServiceTest {
 
 			objectDefinition =
 				_objectDefinitionLocalService.addCustomObjectDefinition(
-					user.getUserId(), 0, false, false,
+					user.getUserId(), 0,
+					ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false,
+					false,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					"A" + RandomTestUtil.randomString(), null, null,
@@ -349,7 +352,9 @@ public class ObjectDefinitionServiceTest {
 
 			objectDefinition =
 				_objectDefinitionLocalService.addCustomObjectDefinition(
-					ownerUser.getUserId(), 0, false, false,
+					ownerUser.getUserId(), 0,
+					ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false,
+					false,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					"A" + RandomTestUtil.randomString(), null, null,
@@ -392,7 +397,9 @@ public class ObjectDefinitionServiceTest {
 
 			objectDefinition =
 				_objectDefinitionLocalService.addCustomObjectDefinition(
-					ownerUser.getUserId(), 0, false, false,
+					ownerUser.getUserId(), 0,
+					ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false,
+					false,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					"A" + RandomTestUtil.randomString(), null, null,

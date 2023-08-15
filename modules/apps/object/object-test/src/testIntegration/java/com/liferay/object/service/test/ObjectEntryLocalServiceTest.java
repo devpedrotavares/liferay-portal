@@ -1208,6 +1208,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectDefinition.getDescriptionObjectFieldId(), 0,
 			_objectDefinition.getTitleObjectFieldId(),
 			_objectDefinition.isAccountEntryRestricted(), false,
+			ObjectDefinitionConstants.CREATION_POLICY_DEFAULT,
 			_objectDefinition.isEnableCategorization(),
 			_objectDefinition.isEnableComments(),
 			_objectDefinition.isEnableLocalization(),
