@@ -293,7 +293,9 @@ public class ObjectEntryLocalServiceImpl
 			serviceContext.getAssetLinkEntryIds(),
 			serviceContext.getAssetPriority());
 
-		_startWorkflowInstance(userId, objectEntry, serviceContext);
+		if (status == WorkflowConstants.STATUS_APPROVED) {
+			_startWorkflowInstance(userId, objectEntry, serviceContext);
+		}
 
 		_reindex(objectEntry);
 
