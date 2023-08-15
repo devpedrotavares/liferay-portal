@@ -118,6 +118,27 @@ public class ObjectDefinition implements Cloneable, Serializable {
 
 	protected Boolean active;
 
+	public String getCreationPolicy() {
+		return creationPolicy;
+	}
+
+	public void setCreationPolicy(String creationPolicy) {
+		this.creationPolicy = creationPolicy;
+	}
+
+	public void setCreationPolicy(
+		UnsafeSupplier<String, Exception> creationPolicyUnsafeSupplier) {
+
+		try {
+			creationPolicy = creationPolicyUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String creationPolicy;
+
 	public Date getDateCreated() {
 		return dateCreated;
 	}

@@ -174,6 +174,34 @@ public class ObjectDefinition implements Serializable {
 	protected Boolean active;
 
 	@Schema
+	public String getCreationPolicy() {
+		return creationPolicy;
+	}
+
+	public void setCreationPolicy(String creationPolicy) {
+		this.creationPolicy = creationPolicy;
+	}
+
+	@JsonIgnore
+	public void setCreationPolicy(
+		UnsafeSupplier<String, Exception> creationPolicyUnsafeSupplier) {
+
+		try {
+			creationPolicy = creationPolicyUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String creationPolicy;
+
+	@Schema
 	public Date getDateCreated() {
 		return dateCreated;
 	}
@@ -1104,6 +1132,20 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"active\": ");
 
 			sb.append(active);
+		}
+
+		if (creationPolicy != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"creationPolicy\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(creationPolicy));
+
+			sb.append("\"");
 		}
 
 		if (dateCreated != null) {

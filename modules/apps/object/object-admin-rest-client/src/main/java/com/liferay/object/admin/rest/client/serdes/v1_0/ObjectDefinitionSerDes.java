@@ -107,6 +107,20 @@ public class ObjectDefinitionSerDes {
 			sb.append(objectDefinition.getActive());
 		}
 
+		if (objectDefinition.getCreationPolicy() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"creationPolicy\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getCreationPolicy()));
+
+			sb.append("\"");
+		}
+
 		if (objectDefinition.getDateCreated() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -600,6 +614,15 @@ public class ObjectDefinitionSerDes {
 			map.put("active", String.valueOf(objectDefinition.getActive()));
 		}
 
+		if (objectDefinition.getCreationPolicy() == null) {
+			map.put("creationPolicy", null);
+		}
+		else {
+			map.put(
+				"creationPolicy",
+				String.valueOf(objectDefinition.getCreationPolicy()));
+		}
+
 		if (objectDefinition.getDateCreated() == null) {
 			map.put("dateCreated", null);
 		}
@@ -904,6 +927,12 @@ public class ObjectDefinitionSerDes {
 			else if (Objects.equals(jsonParserFieldName, "active")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setActive((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "creationPolicy")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setCreationPolicy(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {

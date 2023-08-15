@@ -178,6 +178,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		ObjectDefinition objectDefinition = randomObjectDefinition();
 
 		objectDefinition.setAccountEntryRestrictedObjectFieldName(regex);
+		objectDefinition.setCreationPolicy(regex);
 		objectDefinition.setDefaultLanguageId(regex);
 		objectDefinition.setExternalReferenceCode(regex);
 		objectDefinition.setName(regex);
@@ -197,6 +198,7 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 		Assert.assertEquals(
 			regex, objectDefinition.getAccountEntryRestrictedObjectFieldName());
+		Assert.assertEquals(regex, objectDefinition.getCreationPolicy());
 		Assert.assertEquals(regex, objectDefinition.getDefaultLanguageId());
 		Assert.assertEquals(regex, objectDefinition.getExternalReferenceCode());
 		Assert.assertEquals(regex, objectDefinition.getName());
@@ -1131,6 +1133,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("creationPolicy", additionalAssertFieldName)) {
+				if (objectDefinition.getCreationPolicy() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals(
 					"defaultLanguageId", additionalAssertFieldName)) {
 
@@ -1535,6 +1545,17 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getActive(),
 						objectDefinition2.getActive())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("creationPolicy", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						objectDefinition1.getCreationPolicy(),
+						objectDefinition2.getCreationPolicy())) {
 
 					return false;
 				}
@@ -2058,6 +2079,52 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		if (entityFieldName.equals("active")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("creationPolicy")) {
+			Object object = objectDefinition.getCreationPolicy();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("dateCreated")) {
@@ -2727,6 +2794,8 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				accountEntryRestrictedObjectFieldName = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				active = RandomTestUtil.randomBoolean();
+				creationPolicy = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
 				defaultLanguageId = StringUtil.toLowerCase(
