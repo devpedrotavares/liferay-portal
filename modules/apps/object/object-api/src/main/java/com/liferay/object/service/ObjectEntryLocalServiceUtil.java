@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -43,7 +44,8 @@ public class ObjectEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().addObjectEntry(
-			userId, groupId, objectDefinitionId, values, serviceContext);
+			userId, groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	/**
@@ -87,7 +89,8 @@ public class ObjectEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().addOrUpdateObjectEntry(
-			externalReferenceCode, userId, groupId, objectDefinitionId, values,
+			externalReferenceCode, userId, groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values,
 			serviceContext);
 	}
 
@@ -607,7 +610,7 @@ public class ObjectEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().updateObjectEntry(
-			userId, objectEntryId, values, serviceContext);
+			userId, objectEntryId, WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	/**

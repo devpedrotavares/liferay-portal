@@ -94,7 +94,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 		_validateSubmissionLimit(objectDefinitionId, getUser());
 
 		return objectEntryLocalService.addObjectEntry(
-			getUserId(), groupId, objectDefinitionId, values, serviceContext);
+			getUserId(), groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	@Override
@@ -120,7 +121,7 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 		return objectEntryLocalService.addOrUpdateObjectEntry(
 			externalReferenceCode, getUserId(), groupId, objectDefinitionId,
-			values, serviceContext);
+			WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	@Override
@@ -390,7 +391,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 		}
 
 		return objectEntryLocalService.updateObjectEntry(
-			getUserId(), objectEntryId, values, serviceContext);
+			getUserId(), objectEntryId, WorkflowConstants.STATUS_APPROVED,
+			values, serviceContext);
 	}
 
 	@Activate

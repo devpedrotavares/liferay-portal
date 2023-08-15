@@ -80,6 +80,7 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -841,6 +842,7 @@ public class ObjectFieldLocalServiceTest {
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			customObjectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"upload",
 				() -> {
@@ -1747,7 +1749,8 @@ public class ObjectFieldLocalServiceTest {
 
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0, objectField.getObjectDefinitionId(),
-			values, ServiceContextTestUtil.getServiceContext());
+			WorkflowConstants.STATUS_APPROVED, values,
+			ServiceContextTestUtil.getServiceContext());
 
 		values = objectEntry.getValues();
 

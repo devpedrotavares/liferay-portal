@@ -5,8 +5,13 @@
 
 package com.liferay.object.service;
 
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 import com.liferay.portal.kernel.service.persistence.BasePersistence;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Provides a wrapper for {@link ObjectEntryLocalService}.
@@ -31,13 +36,14 @@ public class ObjectEntryLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry addObjectEntry(
-			long userId, long groupId, long objectDefinitionId,
-			java.util.Map<String, java.io.Serializable> values,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		long userId, long groupId, long objectDefinitionId,
+		int status, Map<String, Serializable> values,
+		ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryLocalService.addObjectEntry(
-			userId, groupId, objectDefinitionId, values, serviceContext);
+			userId, groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	/**
@@ -82,14 +88,15 @@ public class ObjectEntryLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry addOrUpdateObjectEntry(
-			String externalReferenceCode, long userId, long groupId,
-			long objectDefinitionId,
-			java.util.Map<String, java.io.Serializable> values,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		String externalReferenceCode, long userId, long groupId,
+		long objectDefinitionId,
+		int status, Map<String, Serializable> values,
+		ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryLocalService.addOrUpdateObjectEntry(
-			externalReferenceCode, userId, groupId, objectDefinitionId, values,
+			externalReferenceCode, userId, groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values,
 			serviceContext);
 	}
 
@@ -694,13 +701,13 @@ public class ObjectEntryLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry updateObjectEntry(
-			long userId, long objectEntryId,
-			java.util.Map<String, java.io.Serializable> values,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		long userId, long objectEntryId,
+		int status, Map<String, Serializable> values,
+		ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryLocalService.updateObjectEntry(
-			userId, objectEntryId, values, serviceContext);
+			userId, objectEntryId, WorkflowConstants.STATUS_APPROVED, values, serviceContext);
 	}
 
 	/**

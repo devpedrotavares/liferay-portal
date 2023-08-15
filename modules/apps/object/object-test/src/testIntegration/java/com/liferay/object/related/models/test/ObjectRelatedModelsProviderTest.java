@@ -599,7 +599,8 @@ public class ObjectRelatedModelsProviderTest {
 		throws Exception {
 
 		return _objectEntryLocalService.addObjectEntry(
-			TestPropsValues.getUserId(), groupId, objectDefinitionId, values,
+			TestPropsValues.getUserId(), groupId, objectDefinitionId,
+			WorkflowConstants.STATUS_APPROVED, values,
 			ServiceContextTestUtil.getServiceContext());
 	}
 
@@ -765,7 +766,7 @@ public class ObjectRelatedModelsProviderTest {
 
 			ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 				user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
-				Collections.emptyMap(),
+				WorkflowConstants.STATUS_APPROVED, Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext());
 
 			_objectEntryLocalService.
@@ -1128,7 +1129,8 @@ public class ObjectRelatedModelsProviderTest {
 		throws Exception {
 
 		return _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntryId, values,
+			TestPropsValues.getUserId(), objectEntryId,
+			WorkflowConstants.STATUS_APPROVED, values,
 			ServiceContextTestUtil.getServiceContext());
 	}
 

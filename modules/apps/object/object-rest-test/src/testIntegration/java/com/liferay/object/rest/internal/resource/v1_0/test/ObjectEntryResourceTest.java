@@ -83,6 +83,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.URLCodec;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.filter.InvalidFilterException;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
@@ -3788,6 +3789,7 @@ public class ObjectEntryResourceTest {
 				_objectEntryLocalService.addObjectEntry(
 					TestPropsValues.getUserId(), 0,
 					objectDefinition.getObjectDefinitionId(),
+					WorkflowConstants.STATUS_APPROVED,
 					HashMapBuilder.<String, Serializable>put(
 						"authorOfGospel", true
 					).put(
@@ -3811,6 +3813,7 @@ public class ObjectEntryResourceTest {
 
 			_objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"authorOfGospel", false
 				).put(
