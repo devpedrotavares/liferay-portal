@@ -10,6 +10,10 @@ package com.liferay.object.constants;
  */
 public class ObjectDefinitionConstants {
 
+	public static final String CREATION_POLICY_ALLOW_DRAFT = "allowDraft";
+
+	public static final String CREATION_POLICY_DEFAULT = "default";
+
 	public static final String SCOPE_COMPANY = "company";
 
 	public static final String SCOPE_DEPOT = "depot";
