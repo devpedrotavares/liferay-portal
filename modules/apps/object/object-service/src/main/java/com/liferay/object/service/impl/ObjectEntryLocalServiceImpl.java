@@ -252,7 +252,8 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectDefinitionId, null,
-			objectDefinition.getPortletId(), serviceContext, userId, values);
+			objectDefinition.getPortletId(), serviceContext, status, userId,
+			values);
 
 		long objectEntryId = counterLocalService.increment();
 
@@ -336,7 +337,8 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectDefinition.getObjectDefinitionId(), null,
-			objectDefinition.getClassName(), serviceContext, userId, values);
+			objectDefinition.getClassName(), serviceContext,
+			WorkflowConstants.STATUS_APPROVED, userId, values);
 
 		insertIntoOrUpdateExtensionTable(
 			userId, objectDefinition.getObjectDefinitionId(), primaryKey,
@@ -1359,7 +1361,7 @@ public class ObjectEntryLocalServiceImpl
 		_validateValues(
 			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
 			objectEntry, objectDefinition.getPortletId(), serviceContext,
-			userId, values);
+			status, userId, values);
 
 		Map<String, Serializable> transientValues = objectEntry.getValues();
 
@@ -4059,8 +4061,8 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _validateValues(
 			boolean guestUser, long objectDefinitionId, ObjectEntry objectEntry,
-			String portletId, ServiceContext serviceContext, long userId,
-			Map<String, Serializable> values)
+			String portletId, ServiceContext serviceContext, int status,
+			long userId, Map<String, Serializable> values)
 		throws PortalException {
 
 		List<ObjectField> objectFields =
@@ -4097,14 +4099,14 @@ public class ObjectEntryLocalServiceImpl
 		for (Map.Entry<String, Serializable> entry : values.entrySet()) {
 			_validateValues(
 				guestUser, entry, objectDefinitionId, objectEntry, portletId,
-				serviceContext, userId, values);
+				serviceContext, status, userId, values);
 		}
 	}
 
 	private void _validateValues(
 			boolean guestUser, Map.Entry<String, Serializable> entry,
 			long objectDefinitionId, ObjectEntry objectEntry, String portletId,
-			ServiceContext serviceContext, long userId,
+			ServiceContext serviceContext, int status, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
 
@@ -4123,7 +4125,8 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		if (Validator.isNull(values.get(objectField.getName())) &&
-			objectField.isRequired()) {
+			objectField.isRequired() &&
+			(status == WorkflowConstants.STATUS_APPROVED)) {
 
 			throw new ObjectEntryValuesException.Required(
 				objectField.getName());
