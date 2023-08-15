@@ -31,7 +31,7 @@ public class ObjectDefinitionServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectDefinitionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static ObjectDefinition addCustomObjectDefinition(
-			long objectFolderId, boolean enableComments,
+			long objectFolderId, String creationPolicy, boolean enableComments,
 			boolean enableLocalization, Map<java.util.Locale, String> labelMap,
 			String name, String panelAppOrder, String panelCategoryKey,
 			Map<java.util.Locale, String> pluralLabelMap, boolean portlet,
@@ -40,9 +40,9 @@ public class ObjectDefinitionServiceUtil {
 		throws PortalException {
 
 		return getService().addCustomObjectDefinition(
-			objectFolderId, enableComments, enableLocalization, labelMap, name,
-			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, scope,
-			storageType, objectFields);
+			objectFolderId, creationPolicy, enableComments, enableLocalization,
+			labelMap, name, panelAppOrder, panelCategoryKey, pluralLabelMap,
+			portlet, scope, storageType, objectFields);
 	}
 
 	public static ObjectDefinition addObjectDefinition(
@@ -147,7 +147,7 @@ public class ObjectDefinitionServiceUtil {
 			long accountEntryRestrictedObjectFieldId,
 			long descriptionObjectFieldId, long objectFolderId,
 			long titleObjectFieldId, boolean accountEntryRestricted,
-			boolean active, boolean enableCategorization,
+			boolean active, String creationPolicy, boolean enableCategorization,
 			boolean enableComments, boolean enableLocalization,
 			boolean enableObjectEntryHistory,
 			Map<java.util.Locale, String> labelMap, String name,
@@ -159,9 +159,9 @@ public class ObjectDefinitionServiceUtil {
 			externalReferenceCode, objectDefinitionId,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
 			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			enableCategorization, enableComments, enableLocalization,
-			enableObjectEntryHistory, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, pluralLabelMap, scope);
+			creationPolicy, enableCategorization, enableComments,
+			enableLocalization, enableObjectEntryHistory, labelMap, name,
+			panelAppOrder, panelCategoryKey, portlet, pluralLabelMap, scope);
 	}
 
 	public static ObjectDefinition updateExternalReferenceCode(

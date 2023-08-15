@@ -230,7 +230,8 @@ public class ObjectDefinitionServiceTest {
 
 			objectDefinition =
 				_objectDefinitionService.addCustomObjectDefinition(
-					0, false, false,
+					0, ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, false,
+					false,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),
 					"A" + RandomTestUtil.randomString(), null, null,
@@ -366,10 +367,11 @@ public class ObjectDefinitionServiceTest {
 			objectDefinition =
 				_objectDefinitionService.updateCustomObjectDefinition(
 					null, objectDefinition.getObjectDefinitionId(), 0, 0, 0, 0,
-					false, objectDefinition.isActive(), true, false, false,
-					false, LocalizedMapUtil.getLocalizedMap("Able"), "Able",
-					null, null, false,
-					LocalizedMapUtil.getLocalizedMap("Ables"),
+					false, objectDefinition.isActive(),
+					ObjectDefinitionConstants.CREATION_POLICY_DEFAULT, true,
+					false, false, false,
+					LocalizedMapUtil.getLocalizedMap("Able"), "Able", null,
+					null, false, LocalizedMapUtil.getLocalizedMap("Ables"),
 					objectDefinition.getScope());
 		}
 		finally {

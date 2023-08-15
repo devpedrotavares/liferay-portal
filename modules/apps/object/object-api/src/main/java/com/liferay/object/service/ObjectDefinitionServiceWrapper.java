@@ -5,7 +5,12 @@
 
 package com.liferay.object.service;
 
+import com.liferay.object.model.ObjectField;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Provides a wrapper for {@link ObjectDefinitionService}.
@@ -30,19 +35,19 @@ public class ObjectDefinitionServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectDefinition addCustomObjectDefinition(
-			long objectFolderId, boolean enableComments,
-			boolean enableLocalization,
-			java.util.Map<java.util.Locale, String> labelMap, String name,
-			String panelAppOrder, String panelCategoryKey,
-			java.util.Map<java.util.Locale, String> pluralLabelMap,
-			boolean portlet, String scope, String storageType,
-			java.util.List<com.liferay.object.model.ObjectField> objectFields)
+		long objectFolderId, String creationPolicy, boolean enableComments,
+		boolean enableLocalization,
+		Map<Locale, String> labelMap, String name,
+		String panelAppOrder, String panelCategoryKey,
+		Map<Locale, String> pluralLabelMap,
+		boolean portlet, String scope, String storageType,
+		List<ObjectField> objectFields)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionService.addCustomObjectDefinition(
-			objectFolderId, enableComments, enableLocalization, labelMap, name,
-			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, scope,
-			storageType, objectFields);
+			objectFolderId, creationPolicy, enableComments, enableLocalization,
+			labelMap, name, panelAppOrder, panelCategoryKey, pluralLabelMap,
+			portlet, scope, storageType, objectFields);
 	}
 
 	@Override
@@ -175,9 +180,9 @@ public class ObjectDefinitionServiceWrapper
 				long accountEntryRestrictedObjectFieldId,
 				long descriptionObjectFieldId, long objectFolderId,
 				long titleObjectFieldId, boolean accountEntryRestricted,
-				boolean active, boolean enableCategorization,
-				boolean enableComments, boolean enableLocalization,
-				boolean enableObjectEntryHistory,
+				boolean active, String creationPolicy,
+				boolean enableCategorization, boolean enableComments,
+				boolean enableLocalization, boolean enableObjectEntryHistory,
 				java.util.Map<java.util.Locale, String> labelMap, String name,
 				String panelAppOrder, String panelCategoryKey, boolean portlet,
 				java.util.Map<java.util.Locale, String> pluralLabelMap,
@@ -188,9 +193,9 @@ public class ObjectDefinitionServiceWrapper
 			externalReferenceCode, objectDefinitionId,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
 			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			enableCategorization, enableComments, enableLocalization,
-			enableObjectEntryHistory, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, pluralLabelMap, scope);
+			creationPolicy, enableCategorization, enableComments,
+			enableLocalization, enableObjectEntryHistory, labelMap, name,
+			panelAppOrder, panelCategoryKey, portlet, pluralLabelMap, scope);
 	}
 
 	@Override
