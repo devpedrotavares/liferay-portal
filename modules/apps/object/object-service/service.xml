@@ -87,6 +87,7 @@
 		<column method-name="DBTableName" name="dbTableName" type="String" />
 		<column localized="true" name="label" type="String" />
 		<column name="className" type="String" />
+		<column name="creationPolicy" type="String" />
 		<column name="enableCategorization" type="boolean" />
 		<column name="enableComments" type="boolean" />
 		<column name="enableLocalization" type="boolean" />
