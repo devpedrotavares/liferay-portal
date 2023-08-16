@@ -120,7 +120,8 @@ public class ObjectEntryServiceTest {
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
 				ServiceContextTestUtil.getServiceContext(
-					TestPropsValues.getGroupId(), _adminUser.getUserId())));
+					TestPropsValues.getGroupId(), _adminUser.getUserId()),
+				WorkflowConstants.STATUS_APPROVED));
 
 		_setUser(_guestUser);
 
@@ -148,7 +149,8 @@ public class ObjectEntryServiceTest {
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
 				ServiceContextTestUtil.getServiceContext(
-					TestPropsValues.getGroupId(), _guestUser.getUserId())));
+					TestPropsValues.getGroupId(), _guestUser.getUserId()),
+				WorkflowConstants.STATUS_APPROVED));
 
 		_setUser(_user);
 
@@ -159,7 +161,8 @@ public class ObjectEntryServiceTest {
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
 				ServiceContextTestUtil.getServiceContext(
-					TestPropsValues.getGroupId(), _guestUser.getUserId())));
+					TestPropsValues.getGroupId(), _guestUser.getUserId()),
+				WorkflowConstants.STATUS_APPROVED));
 	}
 
 	@Test
@@ -347,7 +350,8 @@ public class ObjectEntryServiceTest {
 					).build(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(),
-						permissionChecker.getUserId()));
+						permissionChecker.getUserId()),
+					WorkflowConstants.STATUS_APPROVED);
 			}
 
 			Assert.fail();

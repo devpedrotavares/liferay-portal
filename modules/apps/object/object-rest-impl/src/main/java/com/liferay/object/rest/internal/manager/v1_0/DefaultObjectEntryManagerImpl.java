@@ -143,7 +143,8 @@ public class DefaultObjectEntryManagerImpl
 					dtoConverterContext.getUserId(), objectDefinition,
 					objectEntry, dtoConverterContext.getLocale()),
 				_createServiceContext(
-					objectEntry, dtoConverterContext.getUserId()));
+					objectEntry, dtoConverterContext.getUserId()),
+				objectEntry.getStatus().getLabel().equals("draft") ? WorkflowConstants.STATUS_DRAFT : WorkflowConstants.STATUS_APPROVED);
 
 		return _toObjectEntry(
 			dtoConverterContext, objectDefinition,

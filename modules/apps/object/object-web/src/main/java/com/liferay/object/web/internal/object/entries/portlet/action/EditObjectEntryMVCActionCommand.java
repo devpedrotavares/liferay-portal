@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -109,7 +110,8 @@ public class EditObjectEntryMVCActionCommand extends BaseMVCActionCommand {
 					objectDefinition.getObjectDefinitionId(),
 					_getValues(actionRequest),
 					ServiceContextFactory.getInstance(
-						objectDefinition.getClassName(), actionRequest));
+						objectDefinition.getClassName(), actionRequest),
+					WorkflowConstants.STATUS_APPROVED);
 			}
 			else {
 				_objectEntryService.updateObjectEntry(

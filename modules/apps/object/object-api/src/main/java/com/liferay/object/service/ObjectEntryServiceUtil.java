@@ -7,6 +7,7 @@ package com.liferay.object.service;
 
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -39,7 +40,8 @@ public class ObjectEntryServiceUtil {
 		throws PortalException {
 
 		return getService().addObjectEntry(
-			groupId, objectDefinitionId, values, serviceContext);
+			groupId, objectDefinitionId, values, serviceContext,
+			WorkflowConstants.STATUS_APPROVED);
 	}
 
 	public static ObjectEntry addOrUpdateObjectEntry(

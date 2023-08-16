@@ -81,8 +81,9 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 	@Override
 	public ObjectEntry addObjectEntry(
-			long groupId, long objectDefinitionId,
-			Map<String, Serializable> values, ServiceContext serviceContext)
+		long groupId, long objectDefinitionId,
+		Map<String, Serializable> values, ServiceContext serviceContext,
+		int status)
 		throws PortalException {
 
 		if (!ObjectEntryThreadLocal.isSkipObjectEntryResourcePermission()) {
@@ -95,7 +96,7 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 		return objectEntryLocalService.addObjectEntry(
 			getUserId(), groupId, objectDefinitionId,
-			WorkflowConstants.STATUS_APPROVED, values, serviceContext);
+			status, values, serviceContext);
 	}
 
 	@Override

@@ -5,7 +5,12 @@
 
 package com.liferay.object.service;
 
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceWrapper;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Provides a wrapper for {@link ObjectEntryService}.
@@ -27,13 +32,14 @@ public class ObjectEntryServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry addObjectEntry(
-			long groupId, long objectDefinitionId,
-			java.util.Map<String, java.io.Serializable> values,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		long groupId, long objectDefinitionId,
+		Map<String, Serializable> values,
+		ServiceContext serviceContext, int status)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.addObjectEntry(
-			groupId, objectDefinitionId, values, serviceContext);
+			groupId, objectDefinitionId, values, serviceContext,
+			WorkflowConstants.STATUS_APPROVED);
 	}
 
 	@Override
