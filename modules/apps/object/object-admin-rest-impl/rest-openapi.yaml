@@ -79,6 +79,8 @@ components:
                     type: boolean
                 enableComments:
                     type: boolean
+                enableEntryAsDraft:
+                    type: boolean
                 enableLocalization:
                     type: boolean
                 enableObjectEntryHistory:
