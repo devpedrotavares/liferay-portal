@@ -54,6 +54,7 @@
 		</field>
 		<field name="enableCategorization" type="boolean" />
 		<field name="enableComments" type="boolean" />
+		<field name="enableEntryAsDraft" type="boolean" />
 		<field name="enableLocalization" type="boolean" />
 		<field name="enableObjectEntryHistory" type="boolean" />
 		<field name="modifiable" type="boolean" />
