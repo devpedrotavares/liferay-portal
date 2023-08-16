@@ -43,6 +43,7 @@ create table ObjectDefinition (
 	className VARCHAR(255) null,
 	enableCategorization BOOLEAN,
 	enableComments BOOLEAN,
+	enableEntryAsDraft BOOLEAN,
 	enableLocalization BOOLEAN,
 	enableObjectEntryHistory BOOLEAN,
 	modifiable BOOLEAN,

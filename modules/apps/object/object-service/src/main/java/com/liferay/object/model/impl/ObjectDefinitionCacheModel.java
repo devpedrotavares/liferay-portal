@@ -69,7 +69,7 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(73);
+		StringBundler sb = new StringBundler(75);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -113,6 +113,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(enableCategorization);
 		sb.append(", enableComments=");
 		sb.append(enableComments);
+		sb.append(", enableEntryAsDraft=");
+		sb.append(enableEntryAsDraft);
 		sb.append(", enableLocalization=");
 		sb.append(enableLocalization);
 		sb.append(", enableObjectEntryHistory=");
@@ -227,6 +229,7 @@ public class ObjectDefinitionCacheModel
 
 		objectDefinitionImpl.setEnableCategorization(enableCategorization);
 		objectDefinitionImpl.setEnableComments(enableComments);
+		objectDefinitionImpl.setEnableEntryAsDraft(enableEntryAsDraft);
 		objectDefinitionImpl.setEnableLocalization(enableLocalization);
 		objectDefinitionImpl.setEnableObjectEntryHistory(
 			enableObjectEntryHistory);
@@ -336,6 +339,8 @@ public class ObjectDefinitionCacheModel
 
 		enableComments = objectInput.readBoolean();
 
+		enableEntryAsDraft = objectInput.readBoolean();
+
 		enableLocalization = objectInput.readBoolean();
 
 		enableObjectEntryHistory = objectInput.readBoolean();
@@ -432,6 +437,8 @@ public class ObjectDefinitionCacheModel
 
 		objectOutput.writeBoolean(enableComments);
 
+		objectOutput.writeBoolean(enableEntryAsDraft);
+
 		objectOutput.writeBoolean(enableLocalization);
 
 		objectOutput.writeBoolean(enableObjectEntryHistory);
@@ -524,6 +531,7 @@ public class ObjectDefinitionCacheModel
 	public String className;
 	public boolean enableCategorization;
 	public boolean enableComments;
+	public boolean enableEntryAsDraft;
 	public boolean enableLocalization;
 	public boolean enableObjectEntryHistory;
 	public boolean modifiable;
