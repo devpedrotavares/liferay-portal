@@ -957,6 +957,7 @@ public class ObjectDefinitionResourceImpl
 					}
 				).build();
 				active = objectDefinition.isActive();
+				creationPolicy = objectDefinition.getCreationPolicy();
 				dateCreated = objectDefinition.getCreateDate();
 				dateModified = objectDefinition.getModifiedDate();
 				defaultLanguageId = _localization.getDefaultLanguageId(
