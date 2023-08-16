@@ -57,6 +57,7 @@ public class ObjectDefinitionWrapper
 		attributes.put("className", getClassName());
 		attributes.put("enableCategorization", isEnableCategorization());
 		attributes.put("enableComments", isEnableComments());
+		attributes.put("enableEntryAsDraft", isEnableEntryAsDraft());
 		attributes.put("enableLocalization", isEnableLocalization());
 		attributes.put(
 			"enableObjectEntryHistory", isEnableObjectEntryHistory());
@@ -204,6 +205,13 @@ public class ObjectDefinitionWrapper
 
 		if (enableComments != null) {
 			setEnableComments(enableComments);
+		}
+
+		Boolean enableEntryAsDraft = (Boolean)attributes.get(
+			"enableEntryAsDraft");
+
+		if (enableEntryAsDraft != null) {
+			setEnableEntryAsDraft(enableEntryAsDraft);
 		}
 
 		Boolean enableLocalization = (Boolean)attributes.get(
@@ -418,6 +426,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public boolean getEnableComments() {
 		return model.getEnableComments();
+	}
+
+	/**
+	 * Returns the enable entry as draft of this object definition.
+	 *
+	 * @return the enable entry as draft of this object definition
+	 */
+	@Override
+	public boolean getEnableEntryAsDraft() {
+		return model.getEnableEntryAsDraft();
 	}
 
 	/**
@@ -913,6 +931,16 @@ public class ObjectDefinitionWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this object definition is enable entry as draft.
+	 *
+	 * @return <code>true</code> if this object definition is enable entry as draft; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isEnableEntryAsDraft() {
+		return model.isEnableEntryAsDraft();
+	}
+
+	/**
 	 * Returns <code>true</code> if this object definition is enable localization.
 	 *
 	 * @return <code>true</code> if this object definition is enable localization; <code>false</code> otherwise
@@ -1088,6 +1116,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public void setEnableComments(boolean enableComments) {
 		model.setEnableComments(enableComments);
+	}
+
+	/**
+	 * Sets whether this object definition is enable entry as draft.
+	 *
+	 * @param enableEntryAsDraft the enable entry as draft of this object definition
+	 */
+	@Override
+	public void setEnableEntryAsDraft(boolean enableEntryAsDraft) {
+		model.setEnableEntryAsDraft(enableEntryAsDraft);
 	}
 
 	/**
