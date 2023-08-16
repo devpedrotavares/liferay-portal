@@ -499,6 +499,27 @@ public interface ObjectDefinitionModel
 	public void setEnableComments(boolean enableComments);
 
 	/**
+	 * Returns the enable entry as draft of this object definition.
+	 *
+	 * @return the enable entry as draft of this object definition
+	 */
+	public boolean getEnableEntryAsDraft();
+
+	/**
+	 * Returns <code>true</code> if this object definition is enable entry as draft.
+	 *
+	 * @return <code>true</code> if this object definition is enable entry as draft; <code>false</code> otherwise
+	 */
+	public boolean isEnableEntryAsDraft();
+
+	/**
+	 * Sets whether this object definition is enable entry as draft.
+	 *
+	 * @param enableEntryAsDraft the enable entry as draft of this object definition
+	 */
+	public void setEnableEntryAsDraft(boolean enableEntryAsDraft);
+
+	/**
 	 * Returns the enable localization of this object definition.
 	 *
 	 * @return the enable localization of this object definition
