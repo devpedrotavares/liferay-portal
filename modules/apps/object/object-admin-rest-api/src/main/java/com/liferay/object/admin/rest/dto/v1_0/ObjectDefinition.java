@@ -314,6 +314,34 @@ public class ObjectDefinition implements Serializable {
 	protected Boolean enableComments;
 
 	@Schema
+	public Boolean getEnableEntryAsDraft() {
+		return enableEntryAsDraft;
+	}
+
+	public void setEnableEntryAsDraft(Boolean enableEntryAsDraft) {
+		this.enableEntryAsDraft = enableEntryAsDraft;
+	}
+
+	@JsonIgnore
+	public void setEnableEntryAsDraft(
+		UnsafeSupplier<Boolean, Exception> enableEntryAsDraftUnsafeSupplier) {
+
+		try {
+			enableEntryAsDraft = enableEntryAsDraftUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean enableEntryAsDraft;
+
+	@Schema
 	public Boolean getEnableLocalization() {
 		return enableLocalization;
 	}
@@ -1199,6 +1227,16 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"enableComments\": ");
 
 			sb.append(enableComments);
+		}
+
+		if (enableEntryAsDraft != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableEntryAsDraft\": ");
+
+			sb.append(enableEntryAsDraft);
 		}
 
 		if (enableLocalization != null) {

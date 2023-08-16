@@ -223,6 +223,27 @@ public class ObjectDefinition implements Cloneable, Serializable {
 
 	protected Boolean enableComments;
 
+	public Boolean getEnableEntryAsDraft() {
+		return enableEntryAsDraft;
+	}
+
+	public void setEnableEntryAsDraft(Boolean enableEntryAsDraft) {
+		this.enableEntryAsDraft = enableEntryAsDraft;
+	}
+
+	public void setEnableEntryAsDraft(
+		UnsafeSupplier<Boolean, Exception> enableEntryAsDraftUnsafeSupplier) {
+
+		try {
+			enableEntryAsDraft = enableEntryAsDraftUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean enableEntryAsDraft;
+
 	public Boolean getEnableLocalization() {
 		return enableLocalization;
 	}
