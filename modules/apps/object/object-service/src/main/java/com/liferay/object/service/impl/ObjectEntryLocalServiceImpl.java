@@ -275,7 +275,7 @@ public class ObjectEntryLocalServiceImpl
 		objectEntry.setUserName(user.getFullName());
 		objectEntry.setCreateDate(new Date());
 		objectEntry.setObjectDefinitionId(objectDefinitionId);
-		objectEntry.setStatus(WorkflowConstants.STATUS_DRAFT);
+		objectEntry.setStatus(status);
 		objectEntry.setStatusByUserId(user.getUserId());
 		objectEntry.setStatusDate(serviceContext.getModifiedDate(null));
 
@@ -293,7 +293,9 @@ public class ObjectEntryLocalServiceImpl
 			serviceContext.getAssetLinkEntryIds(),
 			serviceContext.getAssetPriority());
 
-		_startWorkflowInstance(userId, objectEntry, serviceContext);
+		if (status == WorkflowConstants.STATUS_APPROVED) {
+			_startWorkflowInstance(userId, objectEntry, serviceContext);
+		}
 
 		_reindex(objectEntry);
 
