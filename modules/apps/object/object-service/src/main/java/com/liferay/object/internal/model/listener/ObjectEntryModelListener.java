@@ -148,7 +148,7 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 	public void onBeforeCreate(ObjectEntry objectEntry)
 		throws ModelListenerException {
 
-		_validateObjectEntry(null, objectEntry);
+		//_validateObjectEntry(null, objectEntry);
 
 		_runRelevantObjectEntryModelListeners(
 			objectEntry,
@@ -171,7 +171,7 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			ObjectEntry originalObjectEntry, ObjectEntry objectEntry)
 		throws ModelListenerException {
 
-		_validateObjectEntry(originalObjectEntry, objectEntry);
+		//_validateObjectEntry(originalObjectEntry, objectEntry);
 
 		_runRelevantObjectEntryModelListeners(
 			objectEntry,

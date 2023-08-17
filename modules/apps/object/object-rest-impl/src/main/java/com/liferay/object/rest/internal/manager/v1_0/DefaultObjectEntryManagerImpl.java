@@ -974,6 +974,10 @@ public class DefaultObjectEntryManagerImpl
 
 		ServiceContext serviceContext = new ServiceContext();
 
+		if(objectEntry.getStatus() != null && objectEntry.getStatus().getCode() == 2) {
+			serviceContext.setAttribute("saveEntryAsDraft", true);
+		}
+
 		serviceContext.setAddGroupPermissions(true);
 		serviceContext.setAddGuestPermissions(true);
 

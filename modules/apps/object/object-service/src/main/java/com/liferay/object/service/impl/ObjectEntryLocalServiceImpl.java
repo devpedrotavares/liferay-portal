@@ -45,6 +45,7 @@ import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.internal.action.util.ObjectActionThreadLocal;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.entry.util.ObjectEntryUtil;
 import com.liferay.object.internal.filter.parser.ObjectFilterParser;
 import com.liferay.object.internal.filter.parser.ObjectFilterParserServiceRegistry;
 import com.liferay.object.internal.petra.sql.dsl.DynamicObjectDefinitionLocalizationTableFactory;
@@ -67,10 +68,12 @@ import com.liferay.object.relationship.util.ObjectRelationshipUtil;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectStateFlowLocalService;
 import com.liferay.object.service.ObjectStateLocalService;
+import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.service.base.ObjectEntryLocalServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
 import com.liferay.object.service.persistence.ObjectFieldPersistence;
@@ -107,6 +110,7 @@ import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.encryptor.Encryptor;
+import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
@@ -213,6 +217,7 @@ import java.util.Set;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import org.apache.commons.io.IOUtils;
 
 import org.osgi.service.component.annotations.Activate;
@@ -284,6 +289,8 @@ public class ObjectEntryLocalServiceImpl
 
 		objectEntry = objectEntryPersistence.update(objectEntry);
 
+		_runObjectValidations(null, objectEntry);
+
 		updateAsset(
 			serviceContext.getUserId(), objectEntry,
 			serviceContext.getAssetCategoryIds(),
@@ -291,7 +298,9 @@ public class ObjectEntryLocalServiceImpl
 			serviceContext.getAssetLinkEntryIds(),
 			serviceContext.getAssetPriority());
 
-		_startWorkflowInstance(userId, objectEntry, serviceContext);
+		if(!GetterUtil.getBoolean(serviceContext.getAttribute("saveEntryAsDraft"))) {
+			_startWorkflowInstance(userId, objectEntry, serviceContext);
+		}
 
 		_reindex(objectEntry);
 
@@ -299,6 +308,47 @@ public class ObjectEntryLocalServiceImpl
 
 		return objectEntry;
 	}
+
+	private void _runObjectValidations(
+		ObjectEntry originalObjectEntry, ObjectEntry objectEntry)
+		throws ModelListenerException {
+
+		try {
+			long userId = PrincipalThreadLocal.getUserId();
+
+			if (userId == 0) {
+				userId = objectEntry.getUserId();
+			}
+
+			int count =
+				_objectValidationRuleLocalService.getObjectValidationRulesCount(
+					objectEntry.getObjectDefinitionId(), true);
+
+			if (count > 0) {
+				_objectValidationRuleLocalService.validate(
+					objectEntry, objectEntry.getObjectDefinitionId(),
+					ObjectEntryUtil.getPayloadJSONObject(
+						_dtoConverterRegistry, _jsonFactory, null,
+						_objectDefinitionLocalService.getObjectDefinition(
+							objectEntry.getObjectDefinitionId()),
+						objectEntry, originalObjectEntry,
+						_userLocalService.getUser(userId)),
+					userId);
+			}
+		}
+		catch (PortalException portalException) {
+			throw new ModelListenerException(portalException);
+		}
+	}
+
+	@Reference
+	private ObjectValidationRuleLocalService _objectValidationRuleLocalService;
+
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Override
 	public ObjectEntry addObjectEntry(
@@ -1347,34 +1397,34 @@ public class ObjectEntryLocalServiceImpl
 
 		User user = _userLocalService.getUser(userId);
 
-		ObjectEntry objectEntry = objectEntryPersistence.findByPrimaryKey(
+		ObjectEntry originalObjectEntry = objectEntryPersistence.findByPrimaryKey(
 			objectEntryId);
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
+				originalObjectEntry.getObjectDefinitionId());
 
 		_validateValues(
-			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
-			objectEntry, objectDefinition.getPortletId(), serviceContext,
+			user.isGuestUser(), originalObjectEntry.getObjectDefinitionId(),
+			originalObjectEntry, objectDefinition.getPortletId(), serviceContext,
 			userId, values);
 
-		Map<String, Serializable> transientValues = objectEntry.getValues();
+		Map<String, Serializable> transientValues = originalObjectEntry.getValues();
 
 		_deleteFromLocalizationTable(objectDefinition, objectEntryId);
 		_insertIntoLocalizationTable(objectDefinition, objectEntryId, values);
 		_updateTable(
 			_getDynamicObjectDefinitionTable(
-				objectEntry.getObjectDefinitionId()),
+				originalObjectEntry.getObjectDefinitionId()),
 			objectEntryId, user, values);
 		_updateTable(
 			_getExtensionDynamicObjectDefinitionTable(
-				objectEntry.getObjectDefinitionId()),
+				originalObjectEntry.getObjectDefinitionId()),
 			objectEntryId, user, values);
 
 		objectEntryPersistence.clearCache(SetUtil.fromArray(objectEntryId));
 
-		objectEntry = objectEntryPersistence.findByPrimaryKey(objectEntryId);
+		ObjectEntry objectEntry = objectEntryPersistence.findByPrimaryKey(objectEntryId);
 
 		_setExternalReferenceCode(objectEntry, values);
 
@@ -1383,6 +1433,8 @@ public class ObjectEntryLocalServiceImpl
 
 		objectEntry = objectEntryPersistence.update(objectEntry);
 
+		_runObjectValidations(originalObjectEntry, objectEntry);
+
 		updateAsset(
 			serviceContext.getUserId(), objectEntry,
 			serviceContext.getAssetCategoryIds(),
@@ -1390,7 +1442,9 @@ public class ObjectEntryLocalServiceImpl
 			serviceContext.getAssetLinkEntryIds(),
 			serviceContext.getAssetPriority());
 
-		_startWorkflowInstance(userId, objectEntry, serviceContext);
+		if(!GetterUtil.getBoolean(serviceContext.getAttribute("saveEntryAsDraft"))) {
+			_startWorkflowInstance(userId, objectEntry, serviceContext);
+		}
 
 		_deleteFileEntries(
 			objectEntry.getValues(), objectEntry.getObjectDefinitionId(),
@@ -4109,7 +4163,7 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		if (Validator.isNull(values.get(objectField.getName())) &&
-			objectField.isRequired()) {
+			objectField.isRequired() && GetterUtil.getBoolean(serviceContext.getAttribute("saveEntryAsDraft"))) {
 
 			throw new ObjectEntryValuesException.Required(
 				objectField.getName());
