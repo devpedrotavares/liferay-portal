@@ -116,6 +116,7 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -144,6 +145,7 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -155,6 +157,7 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -340,6 +343,7 @@ public class ObjectEntryServiceTest {
 			else {
 				_objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
+					WorkflowConstants.STATUS_APPROVED,
 					HashMapBuilder.<String, Serializable>put(
 						"firstName", RandomStringUtils.randomAlphabetic(5)
 					).build(),

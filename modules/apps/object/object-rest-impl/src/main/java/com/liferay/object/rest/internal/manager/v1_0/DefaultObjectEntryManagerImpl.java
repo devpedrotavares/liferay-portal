@@ -24,6 +24,7 @@ import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
+import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.rest.filter.parser.ObjectDefinitionFilterParser;
 import com.liferay.object.rest.internal.petra.sql.dsl.expression.OrderByExpressionUtil;
@@ -139,6 +140,7 @@ public class DefaultObjectEntryManagerImpl
 			_objectEntryService.addObjectEntry(
 				getGroupId(objectDefinition, scopeKey),
 				objectDefinition.getObjectDefinitionId(),
+				_getStatusCode(objectEntry, WorkflowConstants.STATUS_APPROVED),
 				_toObjectValues(
 					dtoConverterContext.getUserId(), objectDefinition,
 					objectEntry, dtoConverterContext.getLocale()),
@@ -773,7 +775,7 @@ public class DefaultObjectEntryManagerImpl
 			objectDefinition, objectEntry);
 
 		serviceBuilderObjectEntry = _objectEntryService.updateObjectEntry(
-			objectEntryId,
+			objectEntryId, WorkflowConstants.STATUS_APPROVED,
 			_toObjectValues(
 				dtoConverterContext.getUserId(), objectDefinition, objectEntry,
 				dtoConverterContext.getLocale()),
@@ -809,6 +811,7 @@ public class DefaultObjectEntryManagerImpl
 			_objectEntryService.addOrUpdateObjectEntry(
 				externalReferenceCode, groupId,
 				objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				_toObjectValues(
 					dtoConverterContext.getUserId(), objectDefinition,
 					objectEntry, dtoConverterContext.getLocale()),
@@ -1182,6 +1185,16 @@ public class DefaultObjectEntryManagerImpl
 		}
 
 		return QueryUtil.ALL_POS;
+	}
+
+	private int _getStatusCode(ObjectEntry objectEntry, int defaultStatusCode) {
+		Status status = objectEntry.getStatus();
+
+		if (status == null) {
+			return defaultStatusCode;
+		}
+
+		return status.getCode();
 	}
 
 	private Page<ObjectEntry> _getSystemObjectRelatedObjectEntries(
