@@ -373,6 +373,7 @@ public class ObjectActionLocalServiceTest {
 			ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 				TestPropsValues.getUserId(), 0,
 				_objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", "John"
 				).build(),
@@ -419,6 +420,7 @@ public class ObjectActionLocalServiceTest {
 
 			objectEntry = _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", "João"
 				).build(),
@@ -515,6 +517,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "John"
 			).build(),
@@ -529,6 +532,7 @@ public class ObjectActionLocalServiceTest {
 		objectEntry = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "João"
 			).build(),
@@ -569,6 +573,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry1 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "John"
 			).build(),
@@ -581,6 +586,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry2 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "Peter"
 			).build(),
@@ -617,6 +623,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry3 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "John"
 			).build(),
@@ -624,6 +631,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry4 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "Peter"
 			).build(),
@@ -663,6 +671,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry5 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "Peter"
 			).build(),
@@ -670,6 +679,7 @@ public class ObjectActionLocalServiceTest {
 		ObjectEntry objectEntry6 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "Peter"
 			).build(),
@@ -677,6 +687,7 @@ public class ObjectActionLocalServiceTest {
 
 		objectEntry5 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry5.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "John"
 			).build(),
@@ -688,6 +699,7 @@ public class ObjectActionLocalServiceTest {
 
 		objectEntry6 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry6.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "João"
 			).build(),
@@ -1015,6 +1027,7 @@ public class ObjectActionLocalServiceTest {
 			_objectEntryLocalService.addObjectEntry(
 				TestPropsValues.getUserId(), 0,
 				_objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", "John"
 				).build(),
