@@ -253,17 +253,19 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectDefinitionId, null,
-			objectDefinition.getPortletId(), serviceContext, userId, values);
+			objectDefinition.getPortletId(), serviceContext, status, userId,
+			values);
 
 		long objectEntryId = counterLocalService.increment();
 
-		_insertIntoLocalizationTable(objectDefinition, objectEntryId, values);
+		_insertIntoLocalizationTable(
+			objectDefinition, objectEntryId, status, values);
 		_insertIntoTable(
 			_getDynamicObjectDefinitionTable(objectDefinitionId), objectEntryId,
-			user, values);
+			status, user, values);
 		_insertIntoTable(
 			_getExtensionDynamicObjectDefinitionTable(objectDefinitionId),
-			objectEntryId, user, values);
+			objectEntryId, status, user, values);
 
 		ObjectEntry objectEntry = objectEntryPersistence.create(objectEntryId);
 
@@ -339,7 +341,8 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectDefinition.getObjectDefinitionId(), null,
-			objectDefinition.getClassName(), serviceContext, userId, values);
+			objectDefinition.getClassName(), serviceContext,
+			WorkflowConstants.STATUS_APPROVED, userId, values);
 
 		insertIntoOrUpdateExtensionTable(
 			userId, objectDefinition.getObjectDefinitionId(), primaryKey,
@@ -1236,7 +1239,8 @@ public class ObjectEntryLocalServiceImpl
 		}
 		else {
 			_insertIntoTable(
-				dynamicObjectDefinitionTable, primaryKey, user, values);
+				dynamicObjectDefinitionTable, primaryKey,
+				WorkflowConstants.STATUS_APPROVED, user, values);
 		}
 	}
 
@@ -1364,12 +1368,13 @@ public class ObjectEntryLocalServiceImpl
 		_validateValues(
 			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
 			objectEntry, objectDefinition.getPortletId(), serviceContext,
-			userId, values);
+			status, userId, values);
 
 		Map<String, Serializable> transientValues = objectEntry.getValues();
 
 		_deleteFromLocalizationTable(objectDefinition, objectEntryId);
-		_insertIntoLocalizationTable(objectDefinition, objectEntryId, values);
+		_insertIntoLocalizationTable(
+			objectDefinition, objectEntryId, status, values);
 		_updateTable(
 			_getDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId()),
@@ -3017,7 +3022,7 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _insertIntoLocalizationTable(
-			ObjectDefinition objectDefinition, long objectEntryId,
+			ObjectDefinition objectDefinition, long objectEntryId, int status,
 			Map<String, Serializable> values)
 		throws PortalException {
 
@@ -3050,7 +3055,8 @@ public class ObjectEntryLocalServiceImpl
 
 		for (ObjectField objectField : objectFields) {
 			if (objectField.isRequired() &&
-				!values.containsKey(objectField.getI18nObjectFieldName())) {
+				!values.containsKey(objectField.getI18nObjectFieldName()) &&
+				(status == WorkflowConstants.STATUS_APPROVED)) {
 
 				throw new ObjectEntryValuesException.Required(
 					objectField.getName());
@@ -3130,7 +3136,8 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _insertIntoTable(
 			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
-			long objectEntryId, User user, Map<String, Serializable> values)
+			long objectEntryId, int status, User user,
+			Map<String, Serializable> values)
 		throws PortalException {
 
 		StringBundler sb = new StringBundler();
@@ -3160,7 +3167,9 @@ public class ObjectEntryLocalServiceImpl
 					ObjectFieldConstants.BUSINESS_TYPE_FORMULA) ||
 				!values.containsKey(objectField.getName())) {
 
-				if (objectField.isRequired()) {
+				if (objectField.isRequired() &&
+					(status == WorkflowConstants.STATUS_APPROVED)) {
+
 					throw new ObjectEntryValuesException.Required(
 						objectField.getName());
 				}
@@ -4073,8 +4082,8 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _validateValues(
 			boolean guestUser, long objectDefinitionId, ObjectEntry objectEntry,
-			String portletId, ServiceContext serviceContext, long userId,
-			Map<String, Serializable> values)
+			String portletId, ServiceContext serviceContext, int status,
+			long userId, Map<String, Serializable> values)
 		throws PortalException {
 
 		List<ObjectField> objectFields =
@@ -4111,14 +4120,14 @@ public class ObjectEntryLocalServiceImpl
 		for (Map.Entry<String, Serializable> entry : values.entrySet()) {
 			_validateValues(
 				guestUser, entry, objectDefinitionId, objectEntry, portletId,
-				serviceContext, userId, values);
+				serviceContext, status, userId, values);
 		}
 	}
 
 	private void _validateValues(
 			boolean guestUser, Map.Entry<String, Serializable> entry,
 			long objectDefinitionId, ObjectEntry objectEntry, String portletId,
-			ServiceContext serviceContext, long userId,
+			ServiceContext serviceContext, int status, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
 
@@ -4139,8 +4148,12 @@ public class ObjectEntryLocalServiceImpl
 		if (Validator.isNull(values.get(objectField.getName())) &&
 			objectField.isRequired()) {
 
-			throw new ObjectEntryValuesException.Required(
-				objectField.getName());
+			if (status == WorkflowConstants.STATUS_APPROVED) {
+				throw new ObjectEntryValuesException.Required(
+					objectField.getName());
+			}
+
+			return;
 		}
 		else if (StringUtil.equals(
 					objectField.getBusinessType(),
@@ -4164,7 +4177,9 @@ public class ObjectEntryLocalServiceImpl
 				return;
 			}
 
-			if (objectField.isRequired()) {
+			if (objectField.isRequired() &&
+				(status == WorkflowConstants.STATUS_APPROVED)) {
+
 				throw new ObjectEntryValuesException.Required(
 					objectField.getName());
 			}
@@ -4289,7 +4304,9 @@ public class ObjectEntryLocalServiceImpl
 						StringPool.COMMA_AND_SPACE);
 				}
 
-				if (listTypeEntryKeys.isEmpty() && objectField.isRequired()) {
+				if (listTypeEntryKeys.isEmpty() && objectField.isRequired() &&
+					(status == WorkflowConstants.STATUS_APPROVED)) {
+
 					throw new ObjectEntryValuesException.Required(
 						objectField.getName());
 				}
