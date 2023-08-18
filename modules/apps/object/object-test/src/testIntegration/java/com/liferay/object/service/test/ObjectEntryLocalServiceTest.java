@@ -1209,7 +1209,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectDefinition.getTitleObjectFieldId(),
 			_objectDefinition.isAccountEntryRestricted(), false,
 			_objectDefinition.isEnableCategorization(),
-			_objectDefinition.isEnableComments(),
+			_objectDefinition.isEnableComments(), false,
 			_objectDefinition.isEnableLocalization(),
 			_objectDefinition.isEnableObjectEntryHistory(),
 			_objectDefinition.getLabelMap(), _objectDefinition.getName(),

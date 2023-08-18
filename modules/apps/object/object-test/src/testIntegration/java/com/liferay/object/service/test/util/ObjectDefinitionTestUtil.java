@@ -46,7 +46,7 @@ public class ObjectDefinitionTestUtil {
 		throws Exception {
 
 		return objectDefinitionLocalService.addCustomObjectDefinition(
-			TestPropsValues.getUserId(), 0, false, enableLocalization,
+			TestPropsValues.getUserId(), 0, false, false, enableLocalization,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			"A" + RandomTestUtil.randomString(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),

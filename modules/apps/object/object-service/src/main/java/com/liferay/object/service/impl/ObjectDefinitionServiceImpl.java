@@ -58,9 +58,9 @@ public class ObjectDefinitionServiceImpl
 			ObjectActionKeys.ADD_OBJECT_DEFINITION);
 
 		return objectDefinitionLocalService.addCustomObjectDefinition(
-			getUserId(), objectFolderId, enableComments, enableLocalization,
-			labelMap, name, panelAppOrder, panelCategoryKey, pluralLabelMap,
-			portlet, scope, storageType, objectFields);
+			getUserId(), objectFolderId, enableComments, enableEntryAsDraft,
+			enableLocalization, labelMap, name, panelAppOrder, panelCategoryKey,
+			pluralLabelMap, portlet, scope, storageType, objectFields);
 	}
 
 	@Override
@@ -239,9 +239,9 @@ public class ObjectDefinitionServiceImpl
 			externalReferenceCode, objectDefinitionId,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
 			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			enableCategorization, enableComments, enableLocalization,
-			enableObjectEntryHistory, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, pluralLabelMap, scope);
+			enableCategorization, enableComments, enableEntryAsDraft,
+			enableLocalization, enableObjectEntryHistory, labelMap, name,
+			panelAppOrder, panelCategoryKey, portlet, pluralLabelMap, scope);
 	}
 
 	@Override
