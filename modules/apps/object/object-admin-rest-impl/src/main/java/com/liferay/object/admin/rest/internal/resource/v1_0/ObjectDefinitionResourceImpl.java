@@ -295,6 +295,8 @@ public class ObjectDefinitionResourceImpl
 							getObjectFolderExternalReferenceCode()),
 					GetterUtil.getBoolean(objectDefinition.getEnableComments()),
 					GetterUtil.getBoolean(
+						objectDefinition.getEnableEntryAsDraft()),
+					GetterUtil.getBoolean(
 						objectDefinition.getEnableLocalization()),
 					LocalizedMapUtil.getLocalizedMap(
 						objectDefinition.getLabel()),
@@ -515,6 +517,8 @@ public class ObjectDefinitionResourceImpl
 					GetterUtil.getBoolean(
 						objectDefinition.getEnableCategorization(), true),
 					GetterUtil.getBoolean(objectDefinition.getEnableComments()),
+					GetterUtil.getBoolean(
+						objectDefinition.getEnableEntryAsDraft()),
 					GetterUtil.getBoolean(
 						objectDefinition.getEnableLocalization()),
 					GetterUtil.getBoolean(
@@ -964,6 +968,7 @@ public class ObjectDefinitionResourceImpl
 				enableCategorization =
 					objectDefinition.getEnableCategorization();
 				enableComments = objectDefinition.getEnableComments();
+				enableEntryAsDraft = objectDefinition.getEnableEntryAsDraft();
 
 				if (FeatureFlagManagerUtil.isEnabled("LPS-172017")) {
 					enableLocalization =
