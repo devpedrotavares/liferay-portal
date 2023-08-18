@@ -19,6 +19,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -78,6 +79,7 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 
 			_objectEntryService.updateObjectEntry(
 				objectEntry.getObjectEntryId(),
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					() -> {
 						ObjectField objectField =
@@ -109,7 +111,7 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 		throws PortalException {
 
 		_objectEntryService.updateObjectEntry(
-			primaryKey1,
+			primaryKey1, WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				() -> {
 					ObjectRelationship objectRelationship =

@@ -66,6 +66,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -173,7 +174,7 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 		else {
 			_objectEntryLocalService.updateObjectEntry(
-				userId, primaryKey2,
+				userId, primaryKey2, WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					objectField2.getName(), primaryKey1
 				).build(),

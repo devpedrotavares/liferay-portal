@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -86,6 +87,7 @@ public class ObjectEntry1toMObjectRelatedModelsProviderImpl
 			for (ObjectEntry objectEntry : relatedModels) {
 				_objectEntryService.updateObjectEntry(
 					objectEntry.getObjectEntryId(),
+					WorkflowConstants.STATUS_APPROVED,
 					HashMapBuilder.<String, Serializable>put(
 						objectField.getName(), 0
 					).build(),
@@ -111,7 +113,7 @@ public class ObjectEntry1toMObjectRelatedModelsProviderImpl
 		throws PortalException {
 
 		_objectEntryService.updateObjectEntry(
-			primaryKey2,
+			primaryKey2, WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				() -> {
 					ObjectRelationship objectRelationship =
