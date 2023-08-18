@@ -971,6 +971,7 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"emailAddressRequired", "peter@liferay.com"
 			).put(
@@ -1787,6 +1788,7 @@ public class ObjectEntryLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", "João"
 			).put(
@@ -1853,6 +1855,7 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"ageOfDeath", "94"
 			).put(
@@ -1924,6 +1927,7 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"state", "listTypeEntryKey3"
 			).build(),
@@ -1945,6 +1949,7 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"state", "listTypeEntryKey3"
 			).put(
@@ -1996,11 +2001,13 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			new HashMap<String, Serializable>(),
 			ServiceContextTestUtil.getServiceContext());
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				_objectDefinition.getPKObjectFieldName(), ""
 			).put(
@@ -2015,6 +2022,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value exceeds integer field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"numberOfBooksWritten", "2147483648"
 				).build(),
@@ -2025,6 +2033,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value exceeds integer field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"numberOfBooksWritten", "-2147483649"
 				).build(),
@@ -2035,6 +2044,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value exceeds maximum long field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"ageOfDeath", "9007199254740992"
 				).build(),
@@ -2045,6 +2055,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value falls below minimum long field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"ageOfDeath", "-9007199254740992"
 				).build(),
@@ -2055,6 +2066,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value exceeds long field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"ageOfDeath", "9223372036854775808"
 				).build(),
@@ -2065,6 +2077,7 @@ public class ObjectEntryLocalServiceTest {
 			"Object entry value exceeds long field allowed size",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"ageOfDeath", "-9223372036854775809"
 				).build(),
@@ -2076,6 +2089,7 @@ public class ObjectEntryLocalServiceTest {
 				"for object field \"firstName\"",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomTestUtil.randomString(281)
 				).build(),
@@ -2097,6 +2111,7 @@ public class ObjectEntryLocalServiceTest {
 					".emailAddress_ with value james@liferay.com",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"emailAddress", "james@liferay.com"
 				).build(),
@@ -2184,7 +2199,8 @@ public class ObjectEntryLocalServiceTest {
 
 		return _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
-			_objectDefinition.getObjectDefinitionId(), values,
+			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED, values,
 			ServiceContextTestUtil.getServiceContext());
 	}
 
@@ -2219,7 +2235,8 @@ public class ObjectEntryLocalServiceTest {
 
 		return _objectEntryLocalService.addOrUpdateObjectEntry(
 			externalReferenceCode, TestPropsValues.getUserId(), groupId,
-			_objectDefinition.getObjectDefinitionId(), values,
+			_objectDefinition.getObjectDefinitionId(),
+			WorkflowConstants.STATUS_APPROVED, values,
 			ServiceContextTestUtil.getServiceContext());
 	}
 
@@ -2453,6 +2470,7 @@ public class ObjectEntryLocalServiceTest {
 				() -> _objectEntryLocalService.addObjectEntry(
 					TestPropsValues.getUserId(), groupId,
 					objectDefinition.getObjectDefinitionId(),
+					WorkflowConstants.STATUS_APPROVED,
 					Collections.<String, Serializable>emptyMap(),
 					ServiceContextTestUtil.getServiceContext()));
 		}
@@ -2460,6 +2478,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectEntryLocalService.addObjectEntry(
 				TestPropsValues.getUserId(), groupId,
 				objectDefinition.getObjectDefinitionId(),
+				WorkflowConstants.STATUS_APPROVED,
 				Collections.<String, Serializable>emptyMap(),
 				ServiceContextTestUtil.getServiceContext());
 
@@ -2498,6 +2517,7 @@ public class ObjectEntryLocalServiceTest {
 
 		objectEntry1 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntryId1,
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"externalReferenceCode", "newExternalReferenceCode"
 			).build(),
@@ -2523,6 +2543,7 @@ public class ObjectEntryLocalServiceTest {
 			"Duplicate value newExternalReferenceCode",
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId2,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"externalReferenceCode", "newExternalReferenceCode"
 				).build(),
@@ -2530,6 +2551,7 @@ public class ObjectEntryLocalServiceTest {
 
 		objectEntry2 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntryId2,
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"externalReferenceCode", ""
 			).build(),
@@ -2540,6 +2562,7 @@ public class ObjectEntryLocalServiceTest {
 
 		_objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntryId2,
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"externalReferenceCode", objectEntry1.getUuid()
 			).build(),
@@ -2550,6 +2573,7 @@ public class ObjectEntryLocalServiceTest {
 			"Duplicate value " + objectEntry1.getUuid(),
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId1,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"externalReferenceCode", ""
 				).build(),
@@ -2559,6 +2583,7 @@ public class ObjectEntryLocalServiceTest {
 
 		objectEntry1 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntryId1,
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"externalReferenceCode", randomString
 			).build(),
@@ -2624,6 +2649,7 @@ public class ObjectEntryLocalServiceTest {
 				objectStateListTypeEntryKey3.getObjectStateId()),
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"state", "listTypeEntryKey3"
 				).build(),
@@ -2631,6 +2657,7 @@ public class ObjectEntryLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_APPROVED,
 			HashMapBuilder.<String, Serializable>put(
 				"state", "listTypeEntryKey2"
 			).build(),
@@ -2645,6 +2672,7 @@ public class ObjectEntryLocalServiceTest {
 				objectStateListTypeEntryKey3.getObjectStateId()),
 			() -> _objectEntryLocalService.updateObjectEntry(
 				TestPropsValues.getUserId(), objectEntryId,
+				WorkflowConstants.STATUS_APPROVED,
 				HashMapBuilder.<String, Serializable>put(
 					"state", "listTypeEntryKey3"
 				).build(),
