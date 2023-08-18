@@ -32,7 +32,7 @@ public class ObjectDefinitionLocalServiceWrapper
 	@Override
 	public com.liferay.object.model.ObjectDefinition addCustomObjectDefinition(
 			long userId, long objectFolderId, boolean enableComments,
-			boolean enableLocalization,
+			boolean enableEntryAsDraft, boolean enableLocalization,
 			java.util.Map<java.util.Locale, String> labelMap, String name,
 			String panelAppOrder, String panelCategoryKey,
 			java.util.Map<java.util.Locale, String> pluralLabelMap,
@@ -41,9 +41,9 @@ public class ObjectDefinitionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionLocalService.addCustomObjectDefinition(
-			userId, objectFolderId, enableComments, enableLocalization,
-			labelMap, name, panelAppOrder, panelCategoryKey, pluralLabelMap,
-			portlet, scope, storageType, objectFields);
+			userId, objectFolderId, enableComments, enableEntryAsDraft,
+			enableLocalization, labelMap, name, panelAppOrder, panelCategoryKey,
+			pluralLabelMap, portlet, scope, storageType, objectFields);
 	}
 
 	/**
@@ -592,8 +592,8 @@ public class ObjectDefinitionLocalServiceWrapper
 				long descriptionObjectFieldId, long objectFolderId,
 				long titleObjectFieldId, boolean accountEntryRestricted,
 				boolean active, boolean enableCategorization,
-				boolean enableComments, boolean enableLocalization,
-				boolean enableObjectEntryHistory,
+				boolean enableComments, boolean enableEntryAsDraft,
+				boolean enableLocalization, boolean enableObjectEntryHistory,
 				java.util.Map<java.util.Locale, String> labelMap, String name,
 				String panelAppOrder, String panelCategoryKey, boolean portlet,
 				java.util.Map<java.util.Locale, String> pluralLabelMap,
@@ -604,9 +604,9 @@ public class ObjectDefinitionLocalServiceWrapper
 			externalReferenceCode, objectDefinitionId,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
 			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			enableCategorization, enableComments, enableLocalization,
-			enableObjectEntryHistory, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, pluralLabelMap, scope);
+			enableCategorization, enableComments, enableEntryAsDraft,
+			enableLocalization, enableObjectEntryHistory, labelMap, name,
+			panelAppOrder, panelCategoryKey, portlet, pluralLabelMap, scope);
 	}
 
 	@Override
