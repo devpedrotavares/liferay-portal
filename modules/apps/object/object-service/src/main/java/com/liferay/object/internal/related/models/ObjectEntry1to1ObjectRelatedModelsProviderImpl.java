@@ -19,7 +19,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
 
@@ -78,8 +77,7 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 					ObjectRelationshipConstants.DELETION_TYPE_DISASSOCIATE)) {
 
 			_objectEntryService.updateObjectEntry(
-				objectEntry.getObjectEntryId(),
-				WorkflowConstants.STATUS_APPROVED,
+				objectEntry.getObjectEntryId(), objectEntry.getStatus(),
 				HashMapBuilder.<String, Serializable>put(
 					() -> {
 						ObjectField objectField =
@@ -110,8 +108,11 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 			long primaryKey2)
 		throws PortalException {
 
+		ObjectEntry objectEntry = _objectEntryService.getObjectEntry(
+			primaryKey1);
+
 		_objectEntryService.updateObjectEntry(
-			primaryKey1, WorkflowConstants.STATUS_APPROVED,
+			primaryKey1, objectEntry.getStatus(),
 			HashMapBuilder.<String, Serializable>put(
 				() -> {
 					ObjectRelationship objectRelationship =

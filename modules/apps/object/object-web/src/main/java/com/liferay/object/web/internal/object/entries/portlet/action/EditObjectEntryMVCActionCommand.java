@@ -8,6 +8,7 @@ package com.liferay.object.web.internal.object.entries.portlet.action;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
@@ -114,8 +115,11 @@ public class EditObjectEntryMVCActionCommand extends BaseMVCActionCommand {
 						objectDefinition.getClassName(), actionRequest));
 			}
 			else {
+				ObjectEntry objectEntry = _objectEntryService.getObjectEntry(
+					objectEntryId);
+
 				_objectEntryService.updateObjectEntry(
-					objectEntryId, WorkflowConstants.STATUS_APPROVED,
+					objectEntryId, objectEntry.getStatus(),
 					_getValues(actionRequest),
 					ServiceContextFactory.getInstance(
 						objectDefinition.getClassName(), actionRequest));
