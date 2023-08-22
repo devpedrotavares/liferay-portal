@@ -228,6 +228,12 @@ public class ObjectDefinitionResourceImpl
 			ObjectDefinition objectDefinition)
 		throws Exception {
 
+		if (Validator.isNotNull(objectDefinition.getEnableEntryAsDraft()) &&
+			!FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		if (Validator.isNotNull(objectDefinition.getEnableLocalization()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-172017")) {
 
@@ -434,6 +440,12 @@ public class ObjectDefinitionResourceImpl
 		throws Exception {
 
 		// TODO Move logic to service
+
+		if (Validator.isNotNull(objectDefinition.getEnableEntryAsDraft()) &&
+			!FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+
+			throw new UnsupportedOperationException();
+		}
 
 		if (Validator.isNotNull(objectDefinition.getModifiable()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-167253")) {
@@ -968,7 +980,11 @@ public class ObjectDefinitionResourceImpl
 				enableCategorization =
 					objectDefinition.getEnableCategorization();
 				enableComments = objectDefinition.getEnableComments();
-				enableEntryAsDraft = objectDefinition.getEnableEntryAsDraft();
+
+				if (FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+					enableEntryAsDraft =
+						objectDefinition.getEnableEntryAsDraft();
+				}
 
 				if (FeatureFlagManagerUtil.isEnabled("LPS-172017")) {
 					enableLocalization =

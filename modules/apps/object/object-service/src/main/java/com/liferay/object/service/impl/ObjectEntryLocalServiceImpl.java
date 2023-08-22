@@ -3993,6 +3993,12 @@ public class ObjectEntryLocalServiceImpl
 		throws PortalException {
 
 		if ((status == WorkflowConstants.STATUS_DRAFT) &&
+			!FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		if ((status == WorkflowConstants.STATUS_DRAFT) &&
 			(((previousStatus != null) &&
 			  (previousStatus != WorkflowConstants.STATUS_DRAFT)) ||
 			 !objectDefinition.isEnableEntryAsDraft())) {
