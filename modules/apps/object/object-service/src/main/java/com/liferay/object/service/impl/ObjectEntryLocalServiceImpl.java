@@ -258,13 +258,14 @@ public class ObjectEntryLocalServiceImpl
 
 		long objectEntryId = counterLocalService.increment();
 
-		_insertIntoLocalizationTable(objectDefinition, objectEntryId, values);
+		_insertIntoLocalizationTable(
+			objectDefinition, objectEntryId, serviceContext, values);
 		_insertIntoTable(
 			_getDynamicObjectDefinitionTable(objectDefinitionId), objectEntryId,
-			user, values);
+			serviceContext, user, values);
 		_insertIntoTable(
 			_getExtensionDynamicObjectDefinitionTable(objectDefinitionId),
-			objectEntryId, user, values);
+			objectEntryId, serviceContext, user, values);
 
 		ObjectEntry objectEntry = objectEntryPersistence.create(objectEntryId);
 
@@ -1234,7 +1235,8 @@ public class ObjectEntryLocalServiceImpl
 		}
 		else {
 			_insertIntoTable(
-				dynamicObjectDefinitionTable, primaryKey, user, values);
+				dynamicObjectDefinitionTable, primaryKey, new ServiceContext(),
+				user, values);
 		}
 	}
 
@@ -1369,7 +1371,8 @@ public class ObjectEntryLocalServiceImpl
 		Map<String, Serializable> transientValues = objectEntry.getValues();
 
 		_deleteFromLocalizationTable(objectDefinition, objectEntryId);
-		_insertIntoLocalizationTable(objectDefinition, objectEntryId, values);
+		_insertIntoLocalizationTable(
+			objectDefinition, objectEntryId, serviceContext, values);
 		_updateTable(
 			_getDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId()),
@@ -3053,7 +3056,7 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _insertIntoLocalizationTable(
 			ObjectDefinition objectDefinition, long objectEntryId,
-			Map<String, Serializable> values)
+			ServiceContext serviceContext, Map<String, Serializable> values)
 		throws PortalException {
 
 		DynamicObjectDefinitionLocalizationTable
@@ -3085,7 +3088,9 @@ public class ObjectEntryLocalServiceImpl
 
 		for (ObjectField objectField : objectFields) {
 			if (objectField.isRequired() &&
-				!values.containsKey(objectField.getI18nObjectFieldName())) {
+				!values.containsKey(objectField.getI18nObjectFieldName()) &&
+				(serviceContext.getWorkflowAction() !=
+					WorkflowConstants.ACTION_SAVE_DRAFT)) {
 
 				throw new ObjectEntryValuesException.Required(
 					objectField.getName());
@@ -3165,7 +3170,8 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _insertIntoTable(
 			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
-			long objectEntryId, User user, Map<String, Serializable> values)
+			long objectEntryId, ServiceContext serviceContext, User user,
+			Map<String, Serializable> values)
 		throws PortalException {
 
 		StringBundler sb = new StringBundler();
@@ -3195,7 +3201,10 @@ public class ObjectEntryLocalServiceImpl
 					ObjectFieldConstants.BUSINESS_TYPE_FORMULA) ||
 				!values.containsKey(objectField.getName())) {
 
-				if (objectField.isRequired()) {
+				if (objectField.isRequired() &&
+					(serviceContext.getWorkflowAction() !=
+						WorkflowConstants.ACTION_SAVE_DRAFT)) {
+
 					throw new ObjectEntryValuesException.Required(
 						objectField.getName());
 				}
@@ -4158,8 +4167,14 @@ public class ObjectEntryLocalServiceImpl
 		if (Validator.isNull(values.get(objectField.getName())) &&
 			objectField.isRequired()) {
 
-			throw new ObjectEntryValuesException.Required(
-				objectField.getName());
+			if (serviceContext.getWorkflowAction() !=
+					WorkflowConstants.ACTION_SAVE_DRAFT) {
+
+				throw new ObjectEntryValuesException.Required(
+					objectField.getName());
+			}
+
+			return;
 		}
 		else if (StringUtil.equals(
 					objectField.getBusinessType(),
@@ -4187,7 +4202,10 @@ public class ObjectEntryLocalServiceImpl
 				throw new ObjectEntryValuesException.InvalidValue(
 					objectField.getName());
 			}
-			else if (objectField.isRequired()) {
+			else if (objectField.isRequired() &&
+					 (serviceContext.getWorkflowAction() !=
+						 WorkflowConstants.ACTION_SAVE_DRAFT)) {
+
 				throw new ObjectEntryValuesException.Required(
 					objectField.getName());
 			}
@@ -4322,7 +4340,10 @@ public class ObjectEntryLocalServiceImpl
 						StringPool.COMMA_AND_SPACE);
 				}
 
-				if (listTypeEntryKeys.isEmpty() && objectField.isRequired()) {
+				if (listTypeEntryKeys.isEmpty() && objectField.isRequired() &&
+					(serviceContext.getWorkflowAction() !=
+						WorkflowConstants.ACTION_SAVE_DRAFT)) {
+
 					throw new ObjectEntryValuesException.Required(
 						objectField.getName());
 				}

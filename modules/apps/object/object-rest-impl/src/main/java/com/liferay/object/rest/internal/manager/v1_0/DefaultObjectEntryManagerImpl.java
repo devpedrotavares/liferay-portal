@@ -1046,10 +1046,8 @@ public class DefaultObjectEntryManagerImpl
 
 		serviceContext.setUserId(userId);
 
-		Status status = objectEntry.getStatus();
-
-		if ((status != null) &&
-			(status.getCode() == WorkflowConstants.STATUS_DRAFT)) {
+		if (_getStatus(objectEntry.getStatus()) ==
+				WorkflowConstants.STATUS_DRAFT) {
 
 			serviceContext.setWorkflowAction(
 				WorkflowConstants.ACTION_SAVE_DRAFT);
@@ -1233,6 +1231,14 @@ public class DefaultObjectEntryManagerImpl
 		}
 
 		return QueryUtil.ALL_POS;
+	}
+
+	private int _getStatus(Status status) {
+		if (status == null) {
+			return WorkflowConstants.STATUS_APPROVED;
+		}
+
+		return status.getCode();
 	}
 
 	private Page<ObjectEntry> _getSystemObjectRelatedObjectEntries(
@@ -1589,7 +1595,11 @@ public class DefaultObjectEntryManagerImpl
 				continue;
 			}
 
-			if ((value == null) && !objectField.isRequired()) {
+			if ((value == null) &&
+				(!objectField.isRequired() ||
+				 (_getStatus(objectEntry.getStatus()) ==
+					 WorkflowConstants.STATUS_DRAFT))) {
+
 				continue;
 			}
 
