@@ -1233,7 +1233,8 @@ public class ObjectEntryLocalServiceImpl
 
 		if (count > 0) {
 			_updateTable(
-				dynamicObjectDefinitionTable, primaryKey, user, values);
+				dynamicObjectDefinitionTable, primaryKey, user, values,
+				WorkflowConstants.ACTION_PUBLISH);
 		}
 		else {
 			_insertIntoTable(
@@ -1372,18 +1373,19 @@ public class ObjectEntryLocalServiceImpl
 
 		Map<String, Serializable> transientValues = objectEntry.getValues();
 
+		int workflowAction = serviceContext.getWorkflowAction();
+
 		_deleteFromLocalizationTable(objectDefinition, objectEntryId);
 		_insertIntoLocalizationTable(
-			objectDefinition, objectEntryId, values,
-			serviceContext.getWorkflowAction());
+			objectDefinition, objectEntryId, values, workflowAction);
 		_updateTable(
 			_getDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId()),
-			objectEntryId, user, values);
+			objectEntryId, user, values, workflowAction);
 		_updateTable(
 			_getExtensionDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId()),
-			objectEntryId, user, values);
+			objectEntryId, user, values, workflowAction);
 
 		objectEntryPersistence.clearCache(SetUtil.fromArray(objectEntryId));
 
@@ -3666,7 +3668,8 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _updateTable(
 			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
-			long objectEntryId, User user, Map<String, Serializable> values)
+			long objectEntryId, User user, Map<String, Serializable> values,
+			int workflowAction)
 		throws PortalException {
 
 		StringBundler sb = new StringBundler();
@@ -3691,6 +3694,22 @@ public class ObjectEntryLocalServiceImpl
 			}
 
 			if (!values.containsKey(objectField.getName())) {
+				if (objectField.isRequired() &&
+					(workflowAction != WorkflowConstants.ACTION_SAVE_DRAFT)) {
+
+					ObjectEntry objectEntry = fetchObjectEntry(objectEntryId);
+
+					if ((objectEntry != null) &&
+						Validator.isNull(
+							MapUtil.getString(
+								objectEntry.getValues(),
+								objectField.getName()))) {
+
+						throw new ObjectEntryValuesException.Required(
+							objectField.getName());
+					}
+				}
+
 				if (_log.isDebugEnabled()) {
 					_log.debug(
 						"No value was provided for object field \"" +
