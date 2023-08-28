@@ -38,6 +38,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.object.exception.NoSuchObjectFieldException;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
+import com.liferay.object.exception.ObjectEntryStatusException;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
@@ -242,6 +243,8 @@ public class ObjectEntryLocalServiceImpl
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
 
 		_validateGroupId(groupId, objectDefinition.getScope());
+		_validateWorkflowAction(
+			null, objectDefinition, serviceContext.getWorkflowAction());
 
 		User user = _userLocalService.getUser(userId);
 
@@ -1353,6 +1356,10 @@ public class ObjectEntryLocalServiceImpl
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(
 				objectEntry.getObjectDefinitionId());
+
+		_validateWorkflowAction(
+			objectEntry.getStatus(), objectDefinition,
+			serviceContext.getWorkflowAction());
 
 		_validateValues(
 			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
@@ -4333,6 +4340,20 @@ public class ObjectEntryLocalServiceImpl
 						objectEntry, objectField.getObjectFieldId(), userId);
 				}
 			}
+		}
+	}
+
+	private void _validateWorkflowAction(
+			Integer currentStatus, ObjectDefinition objectDefinition,
+			Integer workflowAction)
+		throws PortalException {
+
+		if ((workflowAction == WorkflowConstants.ACTION_SAVE_DRAFT) &&
+			(((currentStatus != null) &&
+			  (currentStatus != WorkflowConstants.STATUS_DRAFT)) ||
+			 !objectDefinition.isEnableObjectEntryDraft())) {
+
+			throw new ObjectEntryStatusException("Status Not Allowed");
 		}
 	}
 
