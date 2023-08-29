@@ -24,6 +24,7 @@ import com.liferay.object.constants.ObjectValidationRuleConstants;
 import com.liferay.object.constants.ObjectValidationRuleSettingConstants;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
+import com.liferay.object.exception.ObjectEntryStatusException;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.exception.ObjectValidationRuleEngineException;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
@@ -78,6 +79,7 @@ import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -934,23 +936,25 @@ public class ObjectEntryLocalServiceTest {
 
 		_assertCount(4);
 
+		HashMap<String, Serializable> invalidValues =
+			HashMapBuilder.<String, Serializable>put(
+				"birthday", "2010-12-25"
+			).put(
+				"emailAddress", RandomTestUtil.randomString()
+			).put(
+				"emailAddressRequired", RandomTestUtil.randomString()
+			).put(
+				"lastName", RandomTestUtil.randomString()
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).put(
+				"middleName", RandomTestUtil.randomString()
+			).put(
+				"time", "2000-12-25 08:50"
+			).build();
+
 		try {
-			_addObjectEntry(
-				HashMapBuilder.<String, Serializable>put(
-					"birthday", "2010-12-25"
-				).put(
-					"emailAddress", RandomTestUtil.randomString()
-				).put(
-					"emailAddressRequired", RandomTestUtil.randomString()
-				).put(
-					"lastName", RandomTestUtil.randomString()
-				).put(
-					"listTypeEntryKeyRequired", "listTypeEntryKey1"
-				).put(
-					"middleName", RandomTestUtil.randomString()
-				).put(
-					"time", "2000-12-25 08:50"
-				).build());
+			_addObjectEntry(invalidValues);
 
 			Assert.fail();
 		}
@@ -982,6 +986,24 @@ public class ObjectEntryLocalServiceTest {
 				null, objectValidationRuleResults.get(3));
 		}
 
+		// Validation rules should not run when adding as draft
+
+		_objectDefinition.setEnableObjectEntryDraft(true);
+
+		_objectDefinitionLocalService.updateObjectDefinition(_objectDefinition);
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+
+		_objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), 0,
+			_objectDefinition.getObjectDefinitionId(), invalidValues,
+			serviceContext);
+
+		_assertCount(5);
+
 		// Deactivate object validation rule
 
 		objectValidationRule4.setActive(false);
@@ -1004,7 +1026,7 @@ public class ObjectEntryLocalServiceTest {
 				"time", dateTimeFormatter.format(LocalDateTime.now())
 			).build());
 
-		_assertCount(5);
+		_assertCount(6);
 	}
 
 	@Test
@@ -1741,6 +1763,104 @@ public class ObjectEntryLocalServiceTest {
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		Assert.assertEquals(valuesList.toString(), 0, valuesList.size());
+	}
+
+	@Test
+	public void testSaveObjectEntryAsDraft() throws Exception {
+		_objectDefinition.setEnableObjectEntryDraft(true);
+
+		_objectDefinition =
+			_objectDefinitionLocalService.updateObjectDefinition(
+				_objectDefinition);
+
+		Map<String, Serializable> valuesMissingRequiredField =
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddressRequired", "peter@liferay.com"
+			).put(
+				"firstName", "Pedro"
+			).build();
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), 0,
+			_objectDefinition.getObjectDefinitionId(),
+			valuesMissingRequiredField, serviceContext);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_DRAFT, objectEntry.getStatus());
+
+		long objectEntryId1 = objectEntry.getObjectEntryId();
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
+
+		AssertUtils.assertFailure(
+			ObjectEntryValuesException.Required.class,
+			"No value was provided for required object field " +
+				"\"listTypeEntryKeyRequired\"",
+			() -> _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntryId1,
+				valuesMissingRequiredField, serviceContext));
+
+		Map<String, Serializable> values =
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddressRequired", "peter@liferay.com"
+			).put(
+				"firstName", "Pedro"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey2"
+			).build();
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntryId1, values,
+			serviceContext);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED, objectEntry.getStatus());
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+
+		AssertUtils.assertFailure(
+			ObjectEntryStatusException.class, "Status Not Allowed",
+			() -> _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntryId1, values,
+				serviceContext));
+
+		objectEntry = _objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), 0,
+			_objectDefinition.getObjectDefinitionId(), values, serviceContext);
+
+		_objectDefinition.setEnableObjectEntryDraft(false);
+
+		_objectDefinition =
+			_objectDefinitionLocalService.updateObjectDefinition(
+				_objectDefinition);
+
+		objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_DRAFT, objectEntry.getStatus());
+
+		long objectEntryId2 = objectEntry.getObjectEntryId();
+
+		AssertUtils.assertFailure(
+			ObjectEntryStatusException.class, "Status Not Allowed",
+			() -> _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntryId2, values,
+				serviceContext));
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntryId1, values,
+			serviceContext);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED, objectEntry.getStatus());
 	}
 
 	@Test
