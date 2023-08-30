@@ -229,6 +229,12 @@ public class ObjectDefinitionResourceImpl
 			ObjectDefinition objectDefinition)
 		throws Exception {
 
+		if (Validator.isNotNull(objectDefinition.getEnableObjectEntryDraft()) &&
+			!FeatureFlagManagerUtil.isEnabled("LPS-181663")) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		if (Validator.isNotNull(objectDefinition.getEnableLocalization()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-172017")) {
 
@@ -297,6 +303,8 @@ public class ObjectDefinitionResourceImpl
 					GetterUtil.getBoolean(objectDefinition.getEnableComments()),
 					GetterUtil.getBoolean(
 						objectDefinition.getEnableLocalization()),
+					GetterUtil.getBoolean(
+						objectDefinition.getEnableObjectEntryDraft()),
 					LocalizedMapUtil.getLocalizedMap(
 						objectDefinition.getLabel()),
 					objectDefinition.getName(),
@@ -434,6 +442,12 @@ public class ObjectDefinitionResourceImpl
 
 		// TODO Move logic to service
 
+		if (Validator.isNotNull(objectDefinition.getEnableObjectEntryDraft()) &&
+			!FeatureFlagManagerUtil.isEnabled("LPS-181663")) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		if (Validator.isNotNull(objectDefinition.getModifiable()) &&
 			!FeatureFlagManagerUtil.isEnabled("LPS-167253")) {
 
@@ -518,6 +532,8 @@ public class ObjectDefinitionResourceImpl
 					GetterUtil.getBoolean(objectDefinition.getEnableComments()),
 					GetterUtil.getBoolean(
 						objectDefinition.getEnableLocalization()),
+					GetterUtil.getBoolean(
+						objectDefinition.getEnableObjectEntryDraft()),
 					GetterUtil.getBoolean(
 						objectDefinition.getEnableObjectEntryHistory()),
 					LocalizedMapUtil.getLocalizedMap(
@@ -969,6 +985,11 @@ public class ObjectDefinitionResourceImpl
 				if (FeatureFlagManagerUtil.isEnabled("LPS-172017")) {
 					enableLocalization =
 						objectDefinition.getEnableLocalization();
+				}
+
+				if (FeatureFlagManagerUtil.isEnabled("LPS-181663")) {
+					enableObjectEntryDraft =
+						objectDefinition.getEnableObjectEntryDraft();
 				}
 
 				enableObjectEntryHistory =

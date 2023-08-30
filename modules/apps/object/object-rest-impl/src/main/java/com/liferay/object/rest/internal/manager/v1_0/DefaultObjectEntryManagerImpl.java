@@ -24,6 +24,7 @@ import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
+import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.rest.filter.parser.ObjectDefinitionFilterParser;
 import com.liferay.object.rest.internal.petra.sql.dsl.expression.OrderByExpressionUtil;
@@ -1045,6 +1046,13 @@ public class DefaultObjectEntryManagerImpl
 
 		serviceContext.setUserId(userId);
 
+		if (_getStatus(objectEntry.getStatus()) ==
+				WorkflowConstants.STATUS_DRAFT) {
+
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
 		return serviceContext;
 	}
 
@@ -1223,6 +1231,14 @@ public class DefaultObjectEntryManagerImpl
 		}
 
 		return QueryUtil.ALL_POS;
+	}
+
+	private int _getStatus(Status status) {
+		if (status == null) {
+			return WorkflowConstants.STATUS_APPROVED;
+		}
+
+		return status.getCode();
 	}
 
 	private Page<ObjectEntry> _getSystemObjectRelatedObjectEntries(
@@ -1579,7 +1595,11 @@ public class DefaultObjectEntryManagerImpl
 				continue;
 			}
 
-			if ((value == null) && !objectField.isRequired()) {
+			if ((value == null) &&
+				(!objectField.isRequired() ||
+				 (_getStatus(objectEntry.getStatus()) ==
+					 WorkflowConstants.STATUS_DRAFT))) {
+
 				continue;
 			}
 
