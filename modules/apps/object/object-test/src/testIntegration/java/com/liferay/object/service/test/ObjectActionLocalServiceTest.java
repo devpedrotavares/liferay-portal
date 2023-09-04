@@ -23,10 +23,12 @@ import com.liferay.object.constants.ObjectActionConstants;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.definition.tree.TreeFactory;
 import com.liferay.object.exception.ObjectActionErrorMessageException;
 import com.liferay.object.exception.ObjectActionLabelException;
 import com.liferay.object.exception.ObjectActionNameException;
 import com.liferay.object.exception.ObjectActionParametersException;
+import com.liferay.object.exception.ObjectActionTriggerKeyException;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.setting.builder.ObjectFieldSettingBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
@@ -34,13 +36,17 @@ import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.rest.resource.v1_0.ObjectEntryResource;
 import com.liferay.object.scripting.executor.ObjectScriptingExecutor;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
+import com.liferay.object.service.test.util.ObjectRelationshipTestUtil;
+import com.liferay.object.service.test.util.TreeTestUtil;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringBundler;
@@ -263,6 +269,23 @@ public class ObjectActionLocalServiceTest {
 				objectActionNameException.getMessage());
 		}
 
+		try {
+			_addObjectAction(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE);
+
+			Assert.fail();
+		}
+		catch (ObjectActionTriggerKeyException
+					objectActionTriggerKeyException) {
+
+			Assert.assertEquals(
+				"The object action trigger key onAfterRootUpdate can only be " +
+					"used by a root object definition",
+				objectActionTriggerKeyException.getMessage());
+		}
+
 		String name = RandomTestUtil.randomString();
 
 		ObjectAction objectAction1 = _addObjectAction(
@@ -386,7 +409,7 @@ public class ObjectActionLocalServiceTest {
 
 			_assertWebhookObjectAction(
 				"John", ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, null,
-				WorkflowConstants.STATUS_DRAFT);
+				WorkflowConstants.STATUS_DRAFT, _objectDefinition);
 
 			// Execute standalone action to run a Groovy script
 
@@ -432,7 +455,7 @@ public class ObjectActionLocalServiceTest {
 
 			_assertWebhookObjectAction(
 				"João", ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
-				"John", WorkflowConstants.STATUS_APPROVED);
+				"John", WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
 			// Execute standalone action to update the current object entry
 
@@ -481,7 +504,89 @@ public class ObjectActionLocalServiceTest {
 
 			_assertWebhookObjectAction(
 				"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
-				"Peter", WorkflowConstants.STATUS_APPROVED);
+				"Peter", WorkflowConstants.STATUS_APPROVED, _objectDefinition);
+
+			// Create and update root context
+
+			ObjectDefinition rootObjectDefinition =
+				ObjectDefinitionTestUtil.addObjectDefinition(
+					false, _objectDefinitionLocalService,
+					Collections.singletonList(
+						ObjectFieldUtil.createObjectField(
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING, true, true,
+							null, "First Name", "firstName", true)));
+
+			ObjectDefinition childObjectDefinition =
+				ObjectDefinitionTestUtil.addObjectDefinition(
+					false, _objectDefinitionLocalService,
+					Collections.singletonList(
+						ObjectFieldUtil.createObjectField(
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING, true, true,
+							null, "First Name", "firstName", true)));
+
+			ObjectRelationship objectRelationshipA_AA =
+				ObjectRelationshipTestUtil.addObjectRelationship(
+					_objectRelationshipLocalService, rootObjectDefinition,
+					childObjectDefinition);
+
+			TreeTestUtil.bind(
+				_objectDefinitionLocalService,
+				Collections.singletonList(objectRelationshipA_AA));
+
+			_objectActionLocalService.addObjectAction(
+				RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+				rootObjectDefinition.getObjectDefinitionId(), true,
+				StringPool.BLANK, RandomTestUtil.randomString(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString(),
+				ObjectActionExecutorConstants.KEY_WEBHOOK,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
+				UnicodePropertiesBuilder.put(
+					"secret", "onafterrootupdate"
+				).put(
+					"url", "https://onafterrootupdate.com"
+				).build());
+
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				rootObjectDefinition.getObjectDefinitionId());
+
+			ObjectEntry objectEntryInRoot =
+				_objectEntryLocalService.addObjectEntry(
+					TestPropsValues.getUserId(), 0,
+					rootObjectDefinition.getObjectDefinitionId(),
+					HashMapBuilder.<String, Serializable>put(
+						"firstName", "John"
+					).build(),
+					ServiceContextTestUtil.getServiceContext());
+
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				childObjectDefinition.getObjectDefinitionId());
+
+			ObjectField relationshipObjectField =
+				_objectFieldLocalService.getObjectField(
+					objectRelationshipA_AA.getObjectFieldId2());
+
+			_objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), 0,
+				childObjectDefinition.getObjectDefinitionId(),
+				HashMapBuilder.<String, Serializable>put(
+					"firstName", RandomTestUtil.randomString()
+				).put(
+					relationshipObjectField.getName(),
+					objectEntryInRoot.getObjectEntryId()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			// On after root context update
+
+			_assertWebhookObjectAction(
+				"John", ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
+				null, WorkflowConstants.STATUS_APPROVED, rootObjectDefinition);
 		}
 		finally {
 			PrincipalThreadLocal.setName(originalName);
@@ -580,7 +685,7 @@ public class ObjectActionLocalServiceTest {
 
 		_assertWebhookObjectAction(
 			"John", ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, null,
-			WorkflowConstants.STATUS_DRAFT);
+			WorkflowConstants.STATUS_DRAFT, _objectDefinition);
 
 		ObjectEntry objectEntry2 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
@@ -592,7 +697,7 @@ public class ObjectActionLocalServiceTest {
 
 		_assertWebhookObjectAction(
 			"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, null,
-			WorkflowConstants.STATUS_DRAFT);
+			WorkflowConstants.STATUS_DRAFT, _objectDefinition);
 
 		_objectEntryLocalService.deleteObjectEntry(objectEntry1);
 		_objectEntryLocalService.deleteObjectEntry(objectEntry2);
@@ -637,13 +742,13 @@ public class ObjectActionLocalServiceTest {
 
 		_assertWebhookObjectAction(
 			"John", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, "John",
-			WorkflowConstants.STATUS_APPROVED);
+			WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
 		_objectEntryLocalService.deleteObjectEntry(objectEntry4);
 
 		_assertWebhookObjectAction(
 			"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, "Peter",
-			WorkflowConstants.STATUS_APPROVED);
+			WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
 		_objectActionLocalService.deleteObjectAction(objectAction2);
 
@@ -688,7 +793,7 @@ public class ObjectActionLocalServiceTest {
 
 		_assertWebhookObjectAction(
 			"John", ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE, "Peter",
-			WorkflowConstants.STATUS_APPROVED);
+			WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
 		objectEntry6 = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry6.getObjectEntryId(),
@@ -699,7 +804,7 @@ public class ObjectActionLocalServiceTest {
 
 		_assertWebhookObjectAction(
 			"João", ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE, "Peter",
-			WorkflowConstants.STATUS_APPROVED);
+			WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
 		_objectEntryLocalService.deleteObjectEntry(objectEntry5);
 		_objectEntryLocalService.deleteObjectEntry(objectEntry6);
@@ -1385,7 +1490,8 @@ public class ObjectActionLocalServiceTest {
 
 	private void _assertWebhookObjectAction(
 			String firstName, String objectActionTriggerKey,
-			String originalFirstName, int status)
+			String originalFirstName, int status,
+			ObjectDefinition objectDefinition)
 		throws Exception {
 
 		Assert.assertEquals(1, _argumentsList.size());
@@ -1427,7 +1533,7 @@ public class ObjectActionLocalServiceTest {
 			firstName,
 			JSONUtil.getValue(
 				payloadJSONObject,
-				"JSONObject/objectEntryDTO" + _objectDefinition.getShortName(),
+				"JSONObject/objectEntryDTO" + objectDefinition.getShortName(),
 				"JSONObject/properties", "Object/firstName"));
 
 		if (StringUtil.equals(
@@ -1573,6 +1679,9 @@ public class ObjectActionLocalServiceTest {
 	private ObjectFieldLocalService _objectFieldLocalService;
 
 	@Inject
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
+
+	@Inject
 	private OrganizationLocalService _organizationLocalService;
 
 	private Http _originalHttp;
@@ -1580,6 +1689,9 @@ public class ObjectActionLocalServiceTest {
 
 	@Inject
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private TreeFactory _treeFactory;
 
 	private User _user;
 
