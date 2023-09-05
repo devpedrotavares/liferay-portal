@@ -70,6 +70,7 @@ import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissionsFactory;
+import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -183,108 +184,62 @@ public class ObjectActionLocalServiceTest {
 
 		// Add object actions
 
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionErrorMessageException.class,
+			"Error message is null for locale " +
+				LocaleUtil.US.getDisplayName(),
+			() -> _addObjectAction(
 				StringPool.BLANK, RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-				ObjectActionTriggerConstants.KEY_STANDALONE);
+				ObjectActionTriggerConstants.KEY_STANDALONE));
 
-			Assert.fail();
-		}
-		catch (ObjectActionErrorMessageException
-					objectActionErrorMessageException) {
-
-			Assert.assertEquals(
-				"Error message is null for locale " +
-					LocaleUtil.US.getDisplayName(),
-				objectActionErrorMessageException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionLabelException.class,
+			"Label is null for locale " + LocaleUtil.US.getDisplayName(),
+			() -> _addObjectAction(
 				StringPool.BLANK, RandomTestUtil.randomString(),
 				StringPool.BLANK, RandomTestUtil.randomString(),
-				ObjectActionTriggerConstants.KEY_ON_AFTER_ADD);
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ADD));
 
-			Assert.fail();
-		}
-		catch (ObjectActionLabelException objectActionLabelException) {
-			Assert.assertEquals(
-				"Label is null for locale " + LocaleUtil.US.getDisplayName(),
-				objectActionLabelException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionNameException.class, "Name is null",
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), StringPool.BLANK,
-				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE);
+				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE));
 
-			Assert.fail();
-		}
-		catch (ObjectActionNameException objectActionNameException) {
-			Assert.assertEquals(
-				"Name is null", objectActionNameException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionNameException.class,
+			"Name must be less than 41 characters",
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(42),
-				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE);
+				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE));
 
-			Assert.fail();
-		}
-		catch (ObjectActionNameException objectActionNameException) {
-			Assert.assertEquals(
-				"Name must be less than 41 characters",
-				objectActionNameException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionNameException.class,
+			"Name must only contain letters and digits",
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), "Abl e",
-				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE);
+				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE));
 
-			Assert.fail();
-		}
-		catch (ObjectActionNameException objectActionNameException) {
-			Assert.assertEquals(
-				"Name must only contain letters and digits",
-				objectActionNameException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionNameException.class,
+			"Name must only contain letters and digits",
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), "Abl-e",
-				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE);
+				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE));
 
-			Assert.fail();
-		}
-		catch (ObjectActionNameException objectActionNameException) {
-			Assert.assertEquals(
-				"Name must only contain letters and digits",
-				objectActionNameException.getMessage());
-		}
-
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionTriggerKeyException.class,
+			"The object action trigger key onAfterRootUpdate can only be " +
+				"used by a root object definition",
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE);
-
-			Assert.fail();
-		}
-		catch (ObjectActionTriggerKeyException
-					objectActionTriggerKeyException) {
-
-			Assert.assertEquals(
-				"The object action trigger key onAfterRootUpdate can only be " +
-					"used by a root object definition",
-				objectActionTriggerKeyException.getMessage());
-		}
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE));
 
 		String name = RandomTestUtil.randomString();
 
@@ -297,19 +252,12 @@ public class ObjectActionLocalServiceTest {
 				"url", "https://onafteradd.com"
 			).build());
 
-		try {
-			_addObjectAction(
+		AssertUtils.assertFailure(
+			ObjectActionNameException.class, "Duplicate name " + name,
+			() -> _addObjectAction(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomString(), name,
-				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE);
-
-			Assert.fail();
-		}
-		catch (ObjectActionNameException objectActionNameException) {
-			Assert.assertEquals(
-				"Duplicate name " + name,
-				objectActionNameException.getMessage());
-		}
+				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE));
 
 		ObjectAction objectAction2 = _addObjectAction(
 			RandomTestUtil.randomString(),
