@@ -454,38 +454,53 @@ public class ObjectActionLocalServiceTest {
 				"Peter", ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
 				"Peter", WorkflowConstants.STATUS_APPROVED, _objectDefinition);
 
-			// Create and update root context
+			// Create root context
 
-			ObjectDefinition rootObjectDefinition =
+			ObjectDefinition objectDefinitionA =
 				ObjectDefinitionTestUtil.addObjectDefinition(
 					false, _objectDefinitionLocalService,
 					Collections.singletonList(
 						ObjectFieldUtil.createObjectField(
 							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 							ObjectFieldConstants.DB_TYPE_STRING, true, true,
-							null, "First Name", "firstName", true)));
+							null, "First Name", "firstName", false)));
 
-			ObjectDefinition childObjectDefinition =
+			ObjectDefinition objectDefinitionAA =
 				ObjectDefinitionTestUtil.addObjectDefinition(
 					false, _objectDefinitionLocalService,
 					Collections.singletonList(
 						ObjectFieldUtil.createObjectField(
 							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 							ObjectFieldConstants.DB_TYPE_STRING, true, true,
-							null, "First Name", "firstName", true)));
+							null, "First Name", "firstName", false)));
 
 			ObjectRelationship objectRelationshipA_AA =
 				ObjectRelationshipTestUtil.addObjectRelationship(
-					_objectRelationshipLocalService, rootObjectDefinition,
-					childObjectDefinition);
+					_objectRelationshipLocalService, objectDefinitionA,
+					objectDefinitionAA);
+
+			ObjectDefinition objectDefinitionAAA =
+				ObjectDefinitionTestUtil.addObjectDefinition(
+					false, _objectDefinitionLocalService,
+					Collections.singletonList(
+						ObjectFieldUtil.createObjectField(
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING, true, true,
+							null, "First Name", "firstName", false)));
+
+			ObjectRelationship objectRelationshipAA_AAA =
+				ObjectRelationshipTestUtil.addObjectRelationship(
+					_objectRelationshipLocalService, objectDefinitionAA,
+					objectDefinitionAAA);
 
 			TreeTestUtil.bind(
 				_objectDefinitionLocalService,
-				Collections.singletonList(objectRelationshipA_AA));
+				Arrays.asList(
+					objectRelationshipAA_AAA, objectRelationshipA_AA));
 
 			_objectActionLocalService.addObjectAction(
 				RandomTestUtil.randomString(), TestPropsValues.getUserId(),
-				rootObjectDefinition.getObjectDefinitionId(), true,
+				objectDefinitionA.getObjectDefinitionId(), true,
 				StringPool.BLANK, RandomTestUtil.randomString(),
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -500,20 +515,21 @@ public class ObjectActionLocalServiceTest {
 
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
 				TestPropsValues.getUserId(),
-				rootObjectDefinition.getObjectDefinitionId());
+				objectDefinitionA.getObjectDefinitionId());
 
-			ObjectEntry objectEntryInRoot =
-				_objectEntryLocalService.addObjectEntry(
-					TestPropsValues.getUserId(), 0,
-					rootObjectDefinition.getObjectDefinitionId(),
-					HashMapBuilder.<String, Serializable>put(
-						"firstName", "John"
-					).build(),
-					ServiceContextTestUtil.getServiceContext());
+			objectEntry = _objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), 0,
+				objectDefinitionA.getObjectDefinitionId(),
+				HashMapBuilder.<String, Serializable>put(
+					"firstName", "John"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			// Add object entry in child node
 
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
 				TestPropsValues.getUserId(),
-				childObjectDefinition.getObjectDefinitionId());
+				objectDefinitionAA.getObjectDefinitionId());
 
 			ObjectField relationshipObjectField =
 				_objectFieldLocalService.getObjectField(
@@ -521,12 +537,12 @@ public class ObjectActionLocalServiceTest {
 
 			_objectEntryLocalService.addObjectEntry(
 				TestPropsValues.getUserId(), 0,
-				childObjectDefinition.getObjectDefinitionId(),
+				objectDefinitionAA.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomTestUtil.randomString()
 				).put(
 					relationshipObjectField.getName(),
-					objectEntryInRoot.getObjectEntryId()
+					objectEntry.getObjectEntryId()
 				).build(),
 				ServiceContextTestUtil.getServiceContext());
 
@@ -534,7 +550,33 @@ public class ObjectActionLocalServiceTest {
 
 			_assertWebhookObjectAction(
 				"John", ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
-				null, WorkflowConstants.STATUS_APPROVED, rootObjectDefinition);
+				null, WorkflowConstants.STATUS_APPROVED, objectDefinitionA);
+
+			// Add object entry in grandchild node
+
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				objectDefinitionAAA.getObjectDefinitionId());
+
+			relationshipObjectField = _objectFieldLocalService.getObjectField(
+				objectRelationshipAA_AAA.getObjectFieldId2());
+
+			_objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), 0,
+				objectDefinitionAAA.getObjectDefinitionId(),
+				HashMapBuilder.<String, Serializable>put(
+					"firstName", RandomTestUtil.randomString()
+				).put(
+					relationshipObjectField.getName(),
+					objectEntry.getObjectEntryId()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			// On after root context update
+
+			_assertWebhookObjectAction(
+				"John", ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
+				null, WorkflowConstants.STATUS_APPROVED, objectDefinitionA);
 		}
 		finally {
 			PrincipalThreadLocal.setName(originalName);
