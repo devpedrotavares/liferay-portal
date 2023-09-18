@@ -10,6 +10,7 @@ import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.constants.ObjectActionConstants;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
+import com.liferay.object.internal.action.util.ObjectActionThreadLocal;
 import com.liferay.object.internal.action.util.ObjectEntryVariablesUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -61,16 +62,24 @@ public class UpdateObjectEntryObjectActionExecutorImpl
 
 		TransactionCommitCallbackUtil.registerCallback(
 			() -> {
-				_execute(
-					objectActionId, objectDefinition,
-					GetterUtil.getLong(payloadJSONObject.getLong("classPK")),
-					_userLocalService.getUser(userId),
-					_getValues(
-						objectDefinition, parametersUnicodeProperties,
-						ObjectEntryVariablesUtil.getVariables(
-							_dtoConverterRegistry, objectDefinition,
-							payloadJSONObject,
-							_systemObjectDefinitionManagerRegistry)));
+				try {
+					ObjectActionThreadLocal.setClearObjectEntryIdsMap(false);
+
+					_execute(
+						objectActionId, objectDefinition,
+						GetterUtil.getLong(
+							payloadJSONObject.getLong("classPK")),
+						_userLocalService.getUser(userId),
+						_getValues(
+							objectDefinition, parametersUnicodeProperties,
+							ObjectEntryVariablesUtil.getVariables(
+								_dtoConverterRegistry, objectDefinition,
+								payloadJSONObject,
+								_systemObjectDefinitionManagerRegistry)));
+				}
+				finally {
+					ObjectActionThreadLocal.setClearObjectEntryIdsMap(true);
+				}
 
 				return null;
 			});

@@ -292,14 +292,27 @@ public class ObjectEntryLocalServiceImpl
 			objectEntry.getUserId(), objectDefinition.getClassName(),
 			objectEntry.getPrimaryKey(), false, false, false);
 
+		boolean isClearObjectEntryIdsMap =
+			ObjectActionThreadLocal.isClearObjectEntryIdsMap();
+
 		try {
 			if (workflowAction == WorkflowConstants.ACTION_SAVE_DRAFT) {
 				ObjectEntryThreadLocal.setSkipObjectValidationRules(true);
 			}
 
+			if (isClearObjectEntryIdsMap) {
+				ObjectActionThreadLocal.setClearObjectEntryIdsMap(false);
+			}
+
 			objectEntry = objectEntryPersistence.update(objectEntry);
 		}
 		finally {
+			if (isClearObjectEntryIdsMap) {
+				ObjectActionThreadLocal.setClearObjectEntryIdsMap(true);
+
+				ObjectActionThreadLocal.clearObjectEntryIdsMap();
+			}
+
 			ObjectEntryThreadLocal.setSkipObjectValidationRules(false);
 		}
 
@@ -313,8 +326,6 @@ public class ObjectEntryLocalServiceImpl
 		_startWorkflowInstance(userId, objectEntry, serviceContext);
 
 		_reindex(objectEntry);
-
-		ObjectActionThreadLocal.clearObjectEntryIdsMap();
 
 		return objectEntry;
 	}
