@@ -5,6 +5,7 @@
 
 package com.liferay.object.internal.action.util;
 
+import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 
 import java.util.HashMap;
@@ -43,6 +44,20 @@ public class ObjectActionThreadLocal {
 		return _objectEntryIdsMapThreadLocal.get();
 	}
 
+	public static boolean isClearObjectEntryIdsMap() {
+		return _clearObjectEntryIdsMap.get();
+	}
+
+	public static void setClearObjectEntryIdsMap(
+		boolean clearObjectEntryIdsMap) {
+
+		_clearObjectEntryIdsMap.set(clearObjectEntryIdsMap);
+	}
+
+	private static final ThreadLocal<Boolean> _clearObjectEntryIdsMap =
+		new CentralizedThreadLocal<>(
+			ObjectEntryThreadLocal.class + "._clearObjectEntryIdsMap",
+			() -> true);
 	private static final ThreadLocal<Map<Long, Set<Long>>>
 		_objectEntryIdsMapThreadLocal = new CentralizedThreadLocal<>(
 			ObjectActionThreadLocal.class.getName() +
