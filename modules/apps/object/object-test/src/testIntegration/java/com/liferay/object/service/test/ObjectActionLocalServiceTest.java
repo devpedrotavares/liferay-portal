@@ -40,7 +40,10 @@ import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
+import com.liferay.object.service.test.util.ObjectRelationshipTestUtil;
+import com.liferay.object.service.test.util.TreeTestUtil;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringBundler;
@@ -93,6 +96,8 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import java.io.Serializable;
 
 import java.lang.reflect.Method;
+
+import java.time.LocalDateTime;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -543,6 +548,116 @@ public class ObjectActionLocalServiceTest {
 		_assertGroovyObjectActionExecutorArguments("João", objectEntry);
 
 		_objectActionLocalService.deleteObjectAction(objectAction);
+	}
+
+	@Test
+	public void testAddObjectActionWithCycle() throws Exception {
+		ObjectDefinition childObjectDefinition =
+			ObjectDefinitionTestUtil.addObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Collections.singletonList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, true, true, null,
+						"First Name", "firstName", true)));
+
+		String originalName = PrincipalThreadLocal.getName();
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PrincipalThreadLocal.setName(_user.getUserId());
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(_user));
+
+			TreeTestUtil.bind(
+				_objectDefinitionLocalService,
+				Collections.singletonList(
+					ObjectRelationshipTestUtil.addObjectRelationship(
+						_objectRelationshipLocalService, _objectDefinition,
+						childObjectDefinition)));
+
+			_publishCustomObjectDefinition();
+
+			ObjectAction objectAction1 = _addObjectAction(
+				RandomTestUtil.randomString(),
+				ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
+				UnicodePropertiesBuilder.put(
+					"objectDefinitionId",
+					_objectDefinition.getObjectDefinitionId()
+				).put(
+					"predefinedValues",
+					JSONUtil.putAll(
+						JSONUtil.put(
+							"inputAsValue", true
+						).put(
+							"name", "firstName"
+						).put(
+							"value", RandomTestUtil.randomString()
+						),
+						JSONUtil.put(
+							"inputAsValue", true
+						).put(
+							"name", "time"
+						).put(
+							"value", LocalDateTime.now()
+						)
+					).toString()
+				).build());
+
+			ObjectAction objectAction2 = _addObjectAction(
+				RandomTestUtil.randomString(),
+				ObjectActionExecutorConstants.KEY_ADD_OBJECT_ENTRY,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE,
+				UnicodePropertiesBuilder.put(
+					"objectDefinitionId",
+					childObjectDefinition.getObjectDefinitionId()
+				).put(
+					"predefinedValues",
+					JSONUtil.putAll(
+						JSONUtil.put(
+							"inputAsValue", true
+						).put(
+							"name", "firstName"
+						).put(
+							"value", RandomTestUtil.randomString()
+						)
+					).toString()
+				).build());
+
+			_objectEntryLocalService.updateObjectEntry(
+				_objectEntryLocalService.addObjectEntry(
+					TestPropsValues.getUserId(), 0,
+					_objectDefinition.getObjectDefinitionId(),
+					HashMapBuilder.<String, Serializable>put(
+						"firstName", RandomTestUtil.randomString()
+					).build(),
+					ServiceContextTestUtil.getServiceContext()));
+
+			objectAction1 = _objectActionLocalService.getObjectAction(
+				objectAction1.getObjectActionId());
+			objectAction2 = _objectActionLocalService.getObjectAction(
+				objectAction2.getObjectActionId());
+
+			Assert.assertEquals(
+				ObjectActionConstants.STATUS_SUCCESS,
+				objectAction1.getStatus());
+			Assert.assertEquals(
+				ObjectActionConstants.STATUS_SUCCESS,
+				objectAction2.getStatus());
+		}
+		finally {
+			PrincipalThreadLocal.setName(originalName);
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+
+			_objectDefinitionLocalService.unbindObjectDefinition(
+				_objectDefinition.getObjectDefinitionId());
+
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				childObjectDefinition);
+		}
 	}
 
 	@Test
@@ -1571,6 +1686,9 @@ public class ObjectActionLocalServiceTest {
 
 	@Inject
 	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Inject
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
 	@Inject
 	private OrganizationLocalService _organizationLocalService;
