@@ -12,6 +12,7 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.DuplicateObjectRelationshipException;
 import com.liferay.object.exception.ObjectRelationshipEdgeException;
+import com.liferay.object.exception.ObjectRelationshipNameException;
 import com.liferay.object.exception.ObjectRelationshipParameterObjectFieldIdException;
 import com.liferay.object.exception.ObjectRelationshipReverseException;
 import com.liferay.object.exception.ObjectRelationshipTypeException;
@@ -158,6 +159,22 @@ public class ObjectRelationshipLocalServiceTest {
 
 		_objectRelationshipLocalService.deleteObjectRelationship(
 			objectRelationship);
+
+		List<ObjectField> objectFields =
+			_objectFieldLocalService.getObjectFields(
+				_objectDefinition2.getObjectDefinitionId());
+
+		ObjectField objectField = objectFields.get(0);
+
+		String objectFieldName = objectField.getName();
+
+		AssertUtils.assertFailure(
+			ObjectRelationshipNameException.class,
+			"Name must not be equal to field name in Object Definition " +
+				_objectDefinition2.getName(),
+			() -> ObjectRelationshipTestUtil.addObjectRelationship(
+				_objectRelationshipLocalService, _objectDefinition1,
+				_objectDefinition2, objectFieldName));
 
 		AssertUtils.assertFailure(
 			ObjectRelationshipParameterObjectFieldIdException.class,
