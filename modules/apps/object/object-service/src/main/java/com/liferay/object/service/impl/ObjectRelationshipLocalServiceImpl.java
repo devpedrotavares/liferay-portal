@@ -885,13 +885,12 @@ public class ObjectRelationshipLocalServiceImpl
 			String type)
 		throws PortalException {
 
-		_validateName(objectDefinitionId1, name);
-
 		ObjectDefinition objectDefinition1 =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId1);
 		ObjectDefinition objectDefinition2 =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId2);
 
+		_validateName(objectDefinition1, objectDefinition2, name);
 		_validateType(
 			objectDefinition1, objectDefinition2, name, parameterObjectFieldId,
 			type);
@@ -1114,7 +1113,9 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 	}
 
-	private void _validateName(long objectDefinitionId1, String name)
+	private void _validateName(
+			ObjectDefinition objectDefinition1,
+			ObjectDefinition objectDefinition2, String name)
 		throws PortalException {
 
 		if (Validator.isNull(name)) {
@@ -1140,8 +1141,26 @@ public class ObjectRelationshipLocalServiceImpl
 				"Name must be less than 41 characters");
 		}
 
-		int count = objectRelationshipPersistence.countByODI1_N(
-			objectDefinitionId1, name);
+		int count = _objectFieldPersistence.countByODI_N(
+			objectDefinition1.getObjectDefinitionId(), name);
+
+		if (count > 0) {
+			throw new ObjectRelationshipNameException(
+				"Name must not be equal to a field name in Object Definition " +
+					objectDefinition1.getShortName());
+		}
+
+		count = _objectFieldPersistence.countByODI_N(
+			objectDefinition2.getObjectDefinitionId(), name);
+
+		if (count > 0) {
+			throw new ObjectRelationshipNameException(
+				"Name must not be equal to a field name in Object Definition " +
+					objectDefinition2.getShortName());
+		}
+
+		count = objectRelationshipPersistence.countByODI1_N(
+			objectDefinition1.getObjectDefinitionId(), name);
 
 		if (count > 0) {
 			throw new DuplicateObjectRelationshipException(
