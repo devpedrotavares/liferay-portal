@@ -885,7 +885,7 @@ public class ObjectRelationshipLocalServiceImpl
 			String type)
 		throws PortalException {
 
-		_validateName(objectDefinitionId1, name);
+		_validateName(objectDefinitionId1, objectDefinitionId2, name);
 
 		ObjectDefinition objectDefinition1 =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId1);
@@ -1114,7 +1114,8 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 	}
 
-	private void _validateName(long objectDefinitionId1, String name)
+	private void _validateName(
+			long objectDefinitionId1, long objectDefinitionId2, String name)
 		throws PortalException {
 
 		if (Validator.isNull(name)) {
@@ -1142,6 +1143,15 @@ public class ObjectRelationshipLocalServiceImpl
 
 		int count = objectRelationshipPersistence.countByODI1_N(
 			objectDefinitionId1, name);
+
+		if (count > 0) {
+			throw new DuplicateObjectRelationshipException(
+				"Duplicate name " + name);
+		}
+
+		count = Math.max(
+			_objectFieldPersistence.countByODI_N(objectDefinitionId1, name),
+			_objectFieldPersistence.countByODI_N(objectDefinitionId2, name));
 
 		if (count > 0) {
 			throw new DuplicateObjectRelationshipException(
