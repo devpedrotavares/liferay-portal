@@ -159,6 +159,26 @@ public class ObjectRelationshipLocalServiceTest {
 		_objectRelationshipLocalService.deleteObjectRelationship(
 			objectRelationship);
 
+		List<ObjectField> objectFields =
+			_objectFieldLocalService.getObjectFields(
+				_objectDefinition2.getObjectDefinitionId());
+
+		ObjectField objectField = objectFields.get(0);
+
+		String objectFieldName = objectField.getName();
+
+		AssertUtils.assertFailure(
+			DuplicateObjectRelationshipException.class,
+			"Duplicate name " + objectFieldName,
+			() -> _objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_objectDefinition1.getObjectDefinitionId(),
+				_objectDefinition2.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				objectFieldName,
+				ObjectRelationshipConstants.TYPE_MANY_TO_MANY));
+
 		AssertUtils.assertFailure(
 			ObjectRelationshipParameterObjectFieldIdException.class,
 			"Object definition " + _objectDefinition1.getName() +
