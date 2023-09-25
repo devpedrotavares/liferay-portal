@@ -43,6 +43,7 @@ import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableUtil;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalServiceUtil;
 import com.liferay.object.service.ObjectStateFlowLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
@@ -1453,9 +1454,14 @@ public class ObjectFieldLocalServiceImpl
 
 		ObjectField objectField = objectFieldPersistence.fetchByODI_N(
 			objectDefinition.getObjectDefinitionId(), name);
+		ObjectRelationship objectRelationship =
+			ObjectRelationshipLocalServiceUtil.
+				fetchObjectRelationshipByObjectDefinitionId(
+					objectDefinition.getObjectDefinitionId(), name);
 
-		if ((objectField != null) &&
-			(objectField.getObjectFieldId() != objectFieldId)) {
+		if (((objectField != null) &&
+			 (objectField.getObjectFieldId() != objectFieldId)) ||
+			(objectRelationship != null)) {
 
 			throw new ObjectFieldNameException.MustNotBeDuplicate(name);
 		}
