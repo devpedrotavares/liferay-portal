@@ -12,9 +12,11 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.DuplicateObjectRelationshipException;
 import com.liferay.object.exception.ObjectRelationshipEdgeException;
+import com.liferay.object.exception.ObjectRelationshipNameException;
 import com.liferay.object.exception.ObjectRelationshipParameterObjectFieldIdException;
 import com.liferay.object.exception.ObjectRelationshipReverseException;
 import com.liferay.object.exception.ObjectRelationshipTypeException;
+import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -158,6 +160,26 @@ public class ObjectRelationshipLocalServiceTest {
 
 		_objectRelationshipLocalService.deleteObjectRelationship(
 			objectRelationship);
+
+		String objectFieldName = "a" + RandomTestUtil.randomString();
+
+		_objectFieldLocalService.addObjectField(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				objectFieldName
+			).objectDefinitionId(
+				_objectDefinition2.getObjectDefinitionId()
+			).build());
+
+		AssertUtils.assertFailure(
+			ObjectRelationshipNameException.class,
+			"Name must not be equal to a field name in Object Definition " +
+				_objectDefinition2.getShortName(),
+			() -> ObjectRelationshipTestUtil.addObjectRelationship(
+				_objectRelationshipLocalService, _objectDefinition1,
+				_objectDefinition2, objectFieldName));
 
 		AssertUtils.assertFailure(
 			ObjectRelationshipParameterObjectFieldIdException.class,
