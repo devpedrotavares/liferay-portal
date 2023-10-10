@@ -307,6 +307,8 @@ public class ObjectValidationRuleLocalServiceImpl
 		_objectValidationRuleSettingPersistence.removeByObjectValidationRuleId(
 			objectValidationRuleId);
 
+		_objectValidationRuleSettingPersistence.flush();
+
 		objectValidationRule.setObjectValidationRuleSettings(
 			_addObjectValidationRuleSettings(
 				objectValidationRule, objectValidationRuleSettings));
