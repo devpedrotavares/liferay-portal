@@ -55,7 +55,7 @@ public class DynamicObjectDefinitionTableUtil {
 		if (dbType.equals("BigDecimal") || dbType.equals("Double") ||
 			dbType.equals("Integer") || dbType.equals("Long")) {
 
-			return " default 0";
+			return " null";
 		}
 		else if (dbType.equals("Boolean")) {
 			return " default FALSE";
