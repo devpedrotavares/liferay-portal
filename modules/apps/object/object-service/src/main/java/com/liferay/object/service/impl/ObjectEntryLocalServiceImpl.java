@@ -3020,6 +3020,10 @@ public class ObjectEntryLocalServiceImpl
 	 */
 	private Object _getValue(Object object, int sqlType) throws SQLException {
 		if (sqlType == Types.BIGINT) {
+			if (object == null) {
+				return null;
+			}
+
 			return GetterUtil.getLong(object);
 		}
 		else if (sqlType == Types.BOOLEAN) {
@@ -3041,9 +3045,17 @@ public class ObjectEntryLocalServiceImpl
 			return object;
 		}
 		else if (sqlType == Types.DOUBLE) {
+			if (object == null) {
+				return null;
+			}
+
 			return GetterUtil.getDouble(object);
 		}
 		else if (sqlType == Types.INTEGER) {
+			if (object == null) {
+				return null;
+			}
+
 			return GetterUtil.getInteger(object);
 		}
 		else if (sqlType == Types.VARCHAR) {
@@ -3534,10 +3546,7 @@ public class ObjectEntryLocalServiceImpl
 		else if (javaTypeClass == Double.class) {
 			Number number = (Number)object;
 
-			if (number == null) {
-				number = Double.valueOf(0D);
-			}
-			else if (!(number instanceof Double)) {
+			if ((number != null) && !(number instanceof Double)) {
 				number = number.doubleValue();
 			}
 
@@ -3546,10 +3555,7 @@ public class ObjectEntryLocalServiceImpl
 		else if (javaTypeClass == Integer.class) {
 			Number number = (Number)object;
 
-			if (number == null) {
-				number = Integer.valueOf(0);
-			}
-			else if (!(number instanceof Integer)) {
+			if ((number != null) && !(number instanceof Integer)) {
 				number = number.intValue();
 			}
 
@@ -3558,10 +3564,7 @@ public class ObjectEntryLocalServiceImpl
 		else if (javaTypeClass == Long.class) {
 			Number number = (Number)object;
 
-			if (number == null) {
-				number = Long.valueOf(0L);
-			}
-			else if (!(number instanceof Long)) {
+			if ((number != null) && !(number instanceof Long)) {
 				number = number.longValue();
 			}
 
@@ -3642,7 +3645,12 @@ public class ObjectEntryLocalServiceImpl
 		throws Exception {
 
 		if (sqlType == Types.BIGINT) {
-			preparedStatement.setLong(index, GetterUtil.getLong(value));
+			if (Validator.isNull(value)) {
+				preparedStatement.setNull(index, Types.BIGINT);
+			}
+			else {
+				preparedStatement.setLong(index, GetterUtil.getLong(value));
+			}
 		}
 		else if (sqlType == Types.BLOB) {
 			if (PostgreSQLJDBCUtil.isPGStatement(preparedStatement)) {
@@ -3693,21 +3701,32 @@ public class ObjectEntryLocalServiceImpl
 		}
 		else if (sqlType == Types.DECIMAL) {
 			if (Validator.isNull(String.valueOf(value))) {
-				value = BigDecimal.ZERO;
+				preparedStatement.setNull(index, Types.DECIMAL);
 			}
-
-			preparedStatement.setBigDecimal(
-				index,
-				new BigDecimal(_toPeriodSeparator(String.valueOf(value))));
+			else {
+				preparedStatement.setBigDecimal(
+					index,
+					new BigDecimal(_toPeriodSeparator(String.valueOf(value))));
+			}
 		}
 		else if (sqlType == Types.DOUBLE) {
-			preparedStatement.setDouble(
-				index,
-				GetterUtil.getDouble(
-					_toPeriodSeparator(String.valueOf(value))));
+			if (Validator.isNull(value)) {
+				preparedStatement.setNull(index, Types.DOUBLE);
+			}
+			else {
+				preparedStatement.setDouble(
+					index,
+					GetterUtil.getDouble(
+						_toPeriodSeparator(String.valueOf(value))));
+			}
 		}
 		else if (sqlType == Types.INTEGER) {
-			preparedStatement.setInt(index, GetterUtil.getInteger(value));
+			if (Validator.isNull(value)) {
+				preparedStatement.setNull(index, Types.INTEGER);
+			}
+			else {
+				preparedStatement.setInt(index, GetterUtil.getInteger(value));
+			}
 		}
 		else if (sqlType == Types.VARCHAR) {
 			preparedStatement.setString(index, String.valueOf(value));
