@@ -36,10 +36,10 @@ public class ServiceContextUtil {
 
 		serviceContext.setUserId(userId);
 
-		if (_isObjectEntryDraft(objectEntry.getStatus())) {
-			serviceContext.setWorkflowAction(
-				WorkflowConstants.ACTION_SAVE_DRAFT);
-		}
+//		if (_isObjectEntryDraft(objectEntry.getStatus())) {
+//			serviceContext.setWorkflowAction(
+//				WorkflowConstants.ACTION_SAVE_DRAFT);
+//		}
 
 		return serviceContext;
 	}
