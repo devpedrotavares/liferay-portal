@@ -59,21 +59,21 @@ public class UpdateObjectEntryObjectActionExecutorImpl
 			_objectDefinitionLocalService.fetchObjectDefinition(
 				payloadJSONObject.getLong("objectDefinitionId"));
 
-		TransactionCommitCallbackUtil.registerCallback(
-			() -> {
-				_execute(
-					objectActionId, objectDefinition,
-					GetterUtil.getLong(payloadJSONObject.getLong("classPK")),
-					_userLocalService.getUser(userId),
-					_getValues(
-						objectDefinition, parametersUnicodeProperties,
-						ObjectEntryVariablesUtil.getVariables(
-							_dtoConverterRegistry, objectDefinition,
-							payloadJSONObject,
-							_systemObjectDefinitionManagerRegistry)));
+//		TransactionCommitCallbackUtil.registerCallback(
+//			() -> {
+		_execute(
+			objectActionId, objectDefinition,
+			GetterUtil.getLong(payloadJSONObject.getLong("classPK")),
+			_userLocalService.getUser(userId),
+			_getValues(
+				objectDefinition, parametersUnicodeProperties,
+				ObjectEntryVariablesUtil.getVariables(
+					_dtoConverterRegistry, objectDefinition,
+					payloadJSONObject,
+					_systemObjectDefinitionManagerRegistry)));
 
-				return null;
-			});
+//				return null;
+//			});
 	}
 
 	@Override
