@@ -113,7 +113,7 @@ public class ObjectRelationshipLocalServiceImpl
 		return _addObjectRelationship(
 			userId, objectDefinitionId1, objectDefinitionId2,
 			parameterObjectFieldId, deletionType, labelMap, name, false, system,
-			type);
+			type, objectField);
 	}
 
 	@Override
@@ -787,9 +787,10 @@ public class ObjectRelationshipLocalServiceImpl
 		_validateDeletionType(deletionType, edge);
 		_validateEdge(edge, objectRelationship);
 
+		String type = objectRelationship.getType();
+
 		if (Objects.equals(
-				objectRelationship.getType(),
-				ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
+				type, ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
 
 			ObjectRelationship reverseObjectRelationship =
 				fetchReverseObjectRelationship(objectRelationship, true);
@@ -803,6 +804,36 @@ public class ObjectRelationshipLocalServiceImpl
 					ObjectRelationship.class);
 
 			indexer.reindex(reverseObjectRelationship);
+		}
+		else if ((objectField != null) &&
+				 (Objects.equals(
+					 type, ObjectRelationshipConstants.TYPE_ONE_TO_ONE) ||
+				  Objects.equals(
+					  type, ObjectRelationshipConstants.TYPE_ONE_TO_MANY))) {
+
+			ObjectField existingObjectField =
+				_objectFieldLocalService.getObjectField(
+					objectRelationship.getObjectFieldId2());
+
+			_objectFieldLocalService.updateObjectField(
+				objectField.getExternalReferenceCode(),
+				existingObjectField.getObjectFieldId(),
+				existingObjectField.getUserId(),
+				existingObjectField.getListTypeDefinitionId(),
+				existingObjectField.getObjectDefinitionId(),
+				existingObjectField.getBusinessType(),
+				existingObjectField.getDBColumnName(),
+				existingObjectField.getDBTableName(),
+				existingObjectField.getDBType(),
+				existingObjectField.isIndexed(),
+				existingObjectField.isIndexedAsKeyword(),
+				existingObjectField.getIndexedLanguageId(),
+				objectField.getLabelMap(), existingObjectField.isLocalized(),
+				existingObjectField.getName(), objectField.getReadOnly(),
+				objectField.getReadOnlyConditionExpression(),
+				objectField.isRequired(), existingObjectField.isState(),
+				existingObjectField.isSystem(),
+				existingObjectField.getObjectFieldSettings());
 		}
 
 		objectRelationship = _updateObjectRelationship(
@@ -827,9 +858,12 @@ public class ObjectRelationshipLocalServiceImpl
 	}
 
 	private ObjectField _addObjectField(
-			User user, Map<Locale, String> labelMap, String name,
+			User user, String externalReferenceCode,
+			Map<Locale, String> labelMap, String name,
 			ObjectDefinition objectDefinition1,
-			ObjectDefinition objectDefinition2, boolean system, String type)
+			ObjectDefinition objectDefinition2, String readOnly,
+			String readOnlyConditionExpression, boolean required,
+			boolean system, String type)
 		throws PortalException {
 
 		ObjectField objectField = _objectFieldPersistence.create(
@@ -858,16 +892,17 @@ public class ObjectRelationshipLocalServiceImpl
 
 		objectField.setDBTableName(dbTableName);
 
+		objectField.setExternalReferenceCode(externalReferenceCode);
 		objectField.setDBType(ObjectFieldConstants.DB_TYPE_LONG);
 		objectField.setIndexed(true);
 		objectField.setIndexedAsKeyword(false);
 		objectField.setIndexedLanguageId(null);
 		objectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 		objectField.setName(dbColumnName);
-		objectField.setReadOnly(ObjectFieldConstants.READ_ONLY_FALSE);
-		objectField.setReadOnlyConditionExpression(StringPool.BLANK);
+		objectField.setReadOnly(readOnly);
+		objectField.setReadOnlyConditionExpression(readOnlyConditionExpression);
 		objectField.setRelationshipType(type);
-		objectField.setRequired(false);
+		objectField.setRequired(required);
 
 		objectField = _objectFieldLocalService.updateObjectField(objectField);
 
@@ -926,7 +961,7 @@ public class ObjectRelationshipLocalServiceImpl
 			long userId, long objectDefinitionId1, long objectDefinitionId2,
 			long parameterObjectFieldId, String deletionType,
 			Map<Locale, String> labelMap, String name, boolean reverse,
-			boolean system, String type)
+			boolean system, String type, ObjectField objectField)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition1 =
@@ -977,9 +1012,21 @@ public class ObjectRelationshipLocalServiceImpl
 			Objects.equals(
 				type, ObjectRelationshipConstants.TYPE_ONE_TO_MANY)) {
 
-			ObjectField objectField = _addObjectField(
-				user, objectRelationship.getLabelMap(), name, objectDefinition1,
-				objectDefinition2, system, type);
+			if (objectField != null) {
+				objectField = _addObjectField(
+					user, objectField.getExternalReferenceCode(),
+					objectField.getLabelMap(), name, objectDefinition1,
+					objectDefinition2, objectField.getReadOnly(),
+					objectField.getReadOnlyConditionExpression(),
+					objectField.isRequired(), system, type);
+			}
+			else {
+				objectField = _addObjectField(
+					user, null, objectRelationship.getLabelMap(), name,
+					objectDefinition1, objectDefinition2,
+					ObjectFieldConstants.READ_ONLY_FALSE, StringPool.BLANK,
+					false, system, type);
+			}
 
 			objectRelationship.setObjectFieldId2(
 				objectField.getObjectFieldId());
@@ -994,7 +1041,7 @@ public class ObjectRelationshipLocalServiceImpl
 			_addObjectRelationship(
 				userId, objectDefinitionId2, objectDefinitionId1,
 				parameterObjectFieldId, deletionType, labelMap, name, true,
-				system, type);
+				system, type, objectField);
 
 			return objectRelationshipLocalService.
 				createManyToManyObjectRelationshipTable(
