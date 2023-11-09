@@ -7,6 +7,7 @@ package com.liferay.object.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
@@ -65,7 +66,7 @@ public interface ObjectRelationshipLocalService
 			long userId, long objectDefinitionId1, long objectDefinitionId2,
 			long parameterObjectFieldId, String deletionType,
 			Map<Locale, String> labelMap, String name, boolean system,
-			String type)
+			String type, ObjectField objectField)
 		throws PortalException;
 
 	/**
@@ -386,7 +387,8 @@ public interface ObjectRelationshipLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectRelationship updateObjectRelationship(
 			long objectRelationshipId, long parameterObjectFieldId,
-			String deletionType, boolean edge, Map<Locale, String> labelMap)
+			String deletionType, boolean edge, Map<Locale, String> labelMap,
+			ObjectField objectField)
 		throws PortalException;
 
 	/**
