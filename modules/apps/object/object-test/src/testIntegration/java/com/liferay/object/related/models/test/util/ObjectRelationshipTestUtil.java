@@ -70,7 +70,7 @@ public class ObjectRelationshipTestUtil {
 		throws Exception {
 
 		return ObjectRelationshipLocalServiceUtil.updateObjectRelationship(
-			objectRelationshipId, 0, deletionType, false, labelMap);
+			objectRelationshipId, 0, deletionType, false, labelMap, null);
 	}
 
 }

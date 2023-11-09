@@ -386,7 +386,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"oneToManyRelationshipName", false,
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 
 		_addAggregationObjectField(
 			"precisionDecimalObjectFieldName", "AVERAGE",
@@ -457,7 +457,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"oneToManyRelationshipName", false,
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 
 		_objectDefinition3.setAccountEntryRestrictedObjectFieldId(
 			objectRelationship2.getObjectFieldId2());
@@ -771,7 +771,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				StringUtil.randomId(), false,
-				ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+				ObjectRelationshipConstants.TYPE_MANY_TO_MANY, null);
 
 		_addAggregationObjectField(
 			null, "COUNT", _objectDefinition1.getObjectDefinitionId(),
@@ -1119,7 +1119,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"oneToManyRelationship", false,
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 
 		_addRelatedObjectEntries(
 			objectDefinition1, objectDefinition2, "externalReferenceCode1",
@@ -1159,7 +1159,7 @@ public class DefaultObjectEntryManagerImplTest
 			_objectRelationshipLocalService.updateObjectRelationship(
 				objectRelationship.getObjectRelationshipId(), 0,
 				ObjectRelationshipConstants.DELETION_TYPE_DISASSOCIATE, false,
-				objectRelationship.getLabelMap());
+				objectRelationship.getLabelMap(), null);
 
 		_defaultObjectEntryManager.deleteObjectEntry(
 			companyId, _simpleDTOConverterContext, "externalReferenceCode1",
@@ -1199,7 +1199,7 @@ public class DefaultObjectEntryManagerImplTest
 			_objectRelationshipLocalService.updateObjectRelationship(
 				objectRelationship.getObjectRelationshipId(), 0,
 				ObjectRelationshipConstants.DELETION_TYPE_PREVENT, false,
-				objectRelationship.getLabelMap());
+				objectRelationship.getLabelMap(), null);
 
 		try {
 			_defaultObjectEntryManager.deleteObjectEntry(
@@ -2079,7 +2079,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				StringUtil.randomId(), false,
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 
 		ObjectDefinition accountEntryObjectDefinition =
 			objectDefinitionLocalService.fetchObjectDefinition(
@@ -2093,7 +2093,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				StringUtil.randomId(), false,
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 
 		childObjectDefinition.setAccountEntryRestrictedObjectFieldId(
 			objectRelationship2.getObjectFieldId2());
@@ -2245,7 +2245,7 @@ public class DefaultObjectEntryManagerImplTest
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				StringUtil.randomId(), false,
-				ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+				ObjectRelationshipConstants.TYPE_MANY_TO_MANY, null);
 
 		ObjectEntry objectEntry3 = _defaultObjectEntryManager.addObjectEntry(
 			_simpleDTOConverterContext, _objectDefinition3,

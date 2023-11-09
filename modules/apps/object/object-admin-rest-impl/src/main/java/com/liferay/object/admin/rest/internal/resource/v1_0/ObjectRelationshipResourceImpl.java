@@ -177,7 +177,7 @@ public class ObjectRelationshipResourceImpl
 				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
 				objectRelationship.getName(),
 				GetterUtil.getBoolean(objectRelationship.getSystem()),
-				objectRelationship.getTypeAsString()));
+				objectRelationship.getTypeAsString(), null));
 	}
 
 	@Override
@@ -212,7 +212,7 @@ public class ObjectRelationshipResourceImpl
 				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
 				objectRelationship.getName(),
 				GetterUtil.getBoolean(objectRelationship.getSystem()),
-				objectRelationship.getTypeAsString()));
+				objectRelationship.getTypeAsString(), null));
 	}
 
 	@Override
@@ -254,8 +254,8 @@ public class ObjectRelationshipResourceImpl
 					objectRelationship.getParameterObjectFieldId()),
 				objectRelationship.getDeletionTypeAsString(),
 				GetterUtil.getBoolean(objectRelationship.getEdge()),
-				LocalizedMapUtil.getLocalizedMap(
-					objectRelationship.getLabel())));
+				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
+				null));
 	}
 
 	private com.liferay.object.model.ObjectDefinition _getObjectDefinition2(
