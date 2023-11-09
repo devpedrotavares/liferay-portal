@@ -206,6 +206,16 @@ public class ObjectRelationshipSerDes {
 			sb.append(objectRelationship.getObjectDefinitionSystem2());
 		}
 
+		if (objectRelationship.getObjectField() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"objectField\": ");
+
+			sb.append(String.valueOf(objectRelationship.getObjectField()));
+		}
+
 		if (objectRelationship.getParameterObjectFieldId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -403,6 +413,15 @@ public class ObjectRelationshipSerDes {
 					objectRelationship.getObjectDefinitionSystem2()));
 		}
 
+		if (objectRelationship.getObjectField() == null) {
+			map.put("objectField", null);
+		}
+		else {
+			map.put(
+				"objectField",
+				String.valueOf(objectRelationship.getObjectField()));
+		}
+
 		if (objectRelationship.getParameterObjectFieldId() == null) {
 			map.put("parameterObjectFieldId", null);
 		}
@@ -559,6 +578,12 @@ public class ObjectRelationshipSerDes {
 				if (jsonParserFieldValue != null) {
 					objectRelationship.setObjectDefinitionSystem2(
 						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "objectField")) {
+				if (jsonParserFieldValue != null) {
+					objectRelationship.setObjectField(
+						ObjectFieldSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(
