@@ -17,6 +17,7 @@ import com.liferay.object.exception.ObjectRelationshipParameterObjectFieldIdExce
 import com.liferay.object.exception.ObjectRelationshipReverseException;
 import com.liferay.object.exception.ObjectRelationshipSystemException;
 import com.liferay.object.exception.ObjectRelationshipTypeException;
+import com.liferay.object.field.builder.ObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -177,6 +178,43 @@ public class ObjectRelationshipLocalServiceTest {
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"able", false, ObjectRelationshipConstants.TYPE_MANY_TO_MANY,
 				null));
+
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			objectRelationship);
+
+		ObjectField expectedObjectField = new ObjectFieldBuilder(
+		).externalReferenceCode(
+			RandomTestUtil.randomString()
+		).labelMap(
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+		).readOnly(
+			ObjectFieldConstants.READ_ONLY_FALSE
+		).required(
+			RandomTestUtil.randomBoolean()
+		).build();
+
+		objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				_objectDefinition1.getObjectDefinitionId(),
+				_objectDefinition2.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"able", false, ObjectRelationshipConstants.TYPE_ONE_TO_MANY,
+				expectedObjectField);
+
+		ObjectField actualObjectField = _objectFieldLocalService.getObjectField(
+			objectRelationship.getObjectFieldId2());
+
+		Assert.assertEquals(
+			expectedObjectField.getExternalReferenceCode(),
+			actualObjectField.getExternalReferenceCode());
+		Assert.assertEquals(
+			expectedObjectField.getLabel(), actualObjectField.getLabel());
+		Assert.assertEquals(
+			expectedObjectField.getReadOnly(), actualObjectField.getReadOnly());
+		Assert.assertEquals(
+			expectedObjectField.isRequired(), actualObjectField.isRequired());
 
 		_objectRelationshipLocalService.deleteObjectRelationship(
 			objectRelationship);
