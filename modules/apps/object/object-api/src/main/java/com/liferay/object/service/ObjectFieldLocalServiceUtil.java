@@ -69,6 +69,22 @@ public class ObjectFieldLocalServiceUtil {
 		return getService().addObjectField(objectField);
 	}
 
+	public static ObjectField addObjectRelationshipObjectField(
+			String externalReferenceCode,
+			com.liferay.portal.kernel.model.User user,
+			Map<java.util.Locale, String> labelMap, String name,
+			com.liferay.object.model.ObjectDefinition objectDefinition1,
+			com.liferay.object.model.ObjectDefinition objectDefinition2,
+			String readOnly, String readOnlyConditionExpression,
+			String relationshipType, boolean required, boolean system)
+		throws PortalException {
+
+		return getService().addObjectRelationshipObjectField(
+			externalReferenceCode, user, labelMap, name, objectDefinition1,
+			objectDefinition2, readOnly, readOnlyConditionExpression,
+			relationshipType, required, system);
+	}
+
 	public static ObjectField addOrUpdateCustomObjectField(
 			String externalReferenceCode, long objectFieldId, long userId,
 			long listTypeDefinitionId, long objectDefinitionId,

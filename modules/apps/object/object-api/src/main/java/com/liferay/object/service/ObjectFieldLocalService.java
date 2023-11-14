@@ -6,6 +6,7 @@
 package com.liferay.object.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.petra.sql.dsl.Column;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.BaseLocalService;
@@ -85,6 +87,15 @@ public interface ObjectFieldLocalService
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectField addObjectField(ObjectField objectField);
+
+	public ObjectField addObjectRelationshipObjectField(
+			String externalReferenceCode, User user,
+			Map<Locale, String> labelMap, String name,
+			ObjectDefinition objectDefinition1,
+			ObjectDefinition objectDefinition2, String readOnly,
+			String readOnlyConditionExpression, String relationshipType,
+			boolean required, boolean system)
+		throws PortalException;
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectField addOrUpdateCustomObjectField(

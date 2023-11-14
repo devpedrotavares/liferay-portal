@@ -67,6 +67,24 @@ public class ObjectFieldLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectField
+			addObjectRelationshipObjectField(
+				String externalReferenceCode,
+				com.liferay.portal.kernel.model.User user,
+				java.util.Map<java.util.Locale, String> labelMap, String name,
+				com.liferay.object.model.ObjectDefinition objectDefinition1,
+				com.liferay.object.model.ObjectDefinition objectDefinition2,
+				String readOnly, String readOnlyConditionExpression,
+				String relationshipType, boolean required, boolean system)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectFieldLocalService.addObjectRelationshipObjectField(
+			externalReferenceCode, user, labelMap, name, objectDefinition1,
+			objectDefinition2, readOnly, readOnlyConditionExpression,
+			relationshipType, required, system);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectField addOrUpdateCustomObjectField(
 			String externalReferenceCode, long objectFieldId, long userId,
 			long listTypeDefinitionId, long objectDefinitionId,
