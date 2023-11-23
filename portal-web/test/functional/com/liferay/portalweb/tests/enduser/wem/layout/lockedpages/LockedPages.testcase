@@ -2,6 +2,7 @@
 definition {
 
 	property ci.retries.disabled = "true";
+	property custom.properties = "feature.flag.LPS-180328=true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Content Pages";
@@ -17,6 +18,240 @@ definition {
 
 		task ("Add a site") {
 			HeadlessSite.addSite(siteName = "Test Site Name");
+		}
+	}
+
+	@description = "This is a test for LPS-182060. Time without autosave is a number between 1 and 99999."
+	@priority = 3
+	test ConfigureTimeWithoutAutosaveUnderInstanceSettings {
+		task ("Given the configuration of locked pages in instance settings") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "Instance Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Pages",
+				configurationName = "Locked Pages",
+				configurationScope = "Virtual Instance Scope");
+		}
+
+		task ("When trying to leave the field blank") {
+			Type(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = "");
+
+			Click(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "FormFields#LABEL");
+		}
+
+		task ("Then an error message is displayed") {
+			AssertVisible(
+				key_alertMessage = "The Time Without Autosave field is required.",
+				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE");
+		}
+
+		task ("When type letters and special characters") {
+			Type.sendKeys(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = "WbContntTitl@!&#n_USs_Sxlf");
+
+			Click(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "FormFields#LABEL");
+		}
+
+		task ("Then the Time Without Autosave field should be empty") {
+			AssertTextEquals(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = "");
+
+			AssertVisible(
+				key_alertMessage = "The Time Without Autosave field is required.",
+				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE");
+		}
+
+		task ("When trying to fill the Time Without Autosave field with 0") {
+			Type(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = 0);
+
+			Click(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "FormFields#LABEL");
+		}
+
+		task ("Then an error message is displayed") {
+			AssertVisible(
+				key_alertMessage = "Please enter a value greater than or equal to 1.",
+				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE");
+		}
+
+		task ("When trying to fill in the Time Without Autosave field with a number greater than 99999") {
+			Type(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = 200000);
+
+			Click(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "FormFields#LABEL");
+		}
+
+		task ("Then an error message is displayed") {
+			AssertVisible(
+				key_alertMessage = "Please enter a value less than or equal to 99999.",
+				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE");
+		}
+	}
+
+	@description = "This is a test for LPS-194499. In the list of locked pages, the name of the content page and collection page are clickable and the link opens the pages in a new tab."
+	@priority = 5
+	test NavigateToLockedPagesInList {
+		var siteName = selenium.getText("Home#SITE_NAME");
+		var baseURL = PropsUtil.get("portal.url");
+
+		task ("Given a locked content page and locked collection page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Test Page Name",
+				type = "content");
+
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Button");
+
+			Open.openInTheNewTab(value1 = "${baseURL}/web/test-site-name");
+
+			PagesAdmin.openPagesAdmin(siteURLKey = "test-site-name");
+
+			ContentPages.addCollectionPage(
+				collectionName = "Recent Content",
+				pageName = "Collection Page Name",
+				tabName = "Collection Providers");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				dropTarget = "Header",
+				fragmentName = "Button",
+				targetFragmentName = "Container");
+		}
+
+		task ("When navigating to the Locked Pages admin page") {
+			Open.openInTheNewTab(value1 = "${baseURL}/web/test-site-name");
+
+			ProductMenu.gotoPortlet(
+				category = "Configuration",
+				portlet = "Locked Pages");
+		}
+
+		task ("Then in the list of locked page names are clickable and the link opens the pages in a new tab") {
+			for (var pageName : list "Test Page Name,Collection Page Name") {
+				LexiconTable.clickTableEntryColumnLink(
+					columnName = "name",
+					tableEntry = ${pageName});
+
+				SelectWindow(value1 = "title=${pageName} - Test Site Name - ${siteName}");
+
+				ControlMenu.viewHeaderDraftTitle(headerTitle = ${pageName});
+
+				Close.closeAndSelectWindow(value1 = "title=Locked Pages - Test Site Name - ${siteName}");
+			}
+		}
+	}
+
+	@description = "This is a test for LPS-194499. In the list of locked pages, the name of the Master page, Content page template, Display page template are clickable and the link opens the pages in a new tab."
+	@priority = 5
+	test NavigateToLockedPageTemplatesInList {
+		var siteName = selenium.getText("Home#SITE_NAME");
+		var baseURL = PropsUtil.get("portal.url");
+
+		task ("Given locked pages of various types") {
+			JSONLayoutpagetemplate.addMasterPageTemplateEntry(
+				groupName = "Test Site Name",
+				masterPageTemplateEntryName = "Master Page Name");
+
+			MastersPageTemplatesAdmin.openMastersAdmin(siteURLKey = "test-site-name");
+
+			MastersPageTemplatesAdmin.gotoMasters(masterLayoutName = "Master Page Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				dropTarget = "Header",
+				fragmentName = "Button",
+				scope = "Master");
+
+			JSONLayoutpagetemplate.addLayoutPageTemplateCollection(
+				groupName = "Test Site Name",
+				layoutPageTemplateCollectionName = "Page Template Collection");
+
+			JSONLayoutpagetemplate.addLayoutPageTemplateEntry(
+				groupName = "Test Site Name",
+				layoutPageTemplateCollectionName = "Page Template Collection",
+				layoutPageTemplateEntryName = "Page Template Name",
+				layoutPageTemplateStatus = "Draft",
+				layoutPageTemplateType = "Content Page Template");
+
+			Open.openInTheNewTab(value1 = "${baseURL}/group/test-site-name/~/control_panel/manage/-/style_books/style_books");
+
+			PageTemplatesAdmin.openPageTemplatesAdmin(siteURLKey = "test-site-name");
+
+			Navigator.gotoNavNested(navNested = "Page Template Collection");
+
+			PageTemplatesAdmin.gotoPageTemplateEllipsisItem(
+				item = "Edit",
+				pageTemplateName = "Page Template Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Button");
+
+			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
+				contentType = "Web Content Article",
+				displayPageTemplateEntryName = "DPT Name",
+				groupName = "Test Site Name",
+				subType = "Basic Web Content");
+
+			Open.openInTheNewTab(value1 = "${baseURL}/group/test-site-name/~/control_panel/manage/-/style_books/style_books");
+
+			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
+
+			DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "DPT Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Button");
+		}
+
+		task ("When navigating to the locked pages admin page") {
+			Open.openInTheNewTab(value1 = "${baseURL}/group/test-site-name/~/control_panel/manage/-/style_books/style_books");
+
+			ProductMenu.gotoPortlet(
+				category = "Configuration",
+				portlet = "Locked Pages");
+		}
+
+		task ("Then in the list of locked page template names are clickable and the link opens the pages in a new tab") {
+			for (var pageTemplateName : list "Master Page Name,Page Template Name,DPT Name") {
+				LexiconTable.clickTableEntryColumnLink(
+					columnName = "name",
+					tableEntry = ${pageTemplateName});
+
+				SelectWindow(value1 = "title=${pageTemplateName} - Test Site Name - ${siteName}");
+
+				ControlMenu.viewHeaderDraftTitle(headerTitle = ${pageTemplateName});
+
+				Close.closeAndSelectWindow(value1 = "title=Locked Pages - Test Site Name - ${siteName}");
+			}
 		}
 	}
 
@@ -83,6 +318,8 @@ definition {
 	@description = "This is a test for LPS-194238. Filter is added to Locked pages with the scope pages in alphabetical order"
 	@priority = 5
 	test ViewOrderOfFilterByTypeOptions {
+		property portal.acceptance = "true";
+
 		var baseURL = PropsUtil.get("portal.url");
 
 		task ("Given a locked content pages") {
@@ -128,6 +365,8 @@ definition {
 	@description = "This is a test for LPS-194238. Sort is added to Locked Pages in alphabetical order."
 	@priority = 5
 	test ViewOrderOfOrderByOptions {
+		property portal.acceptance = "true";
+
 		var baseURL = PropsUtil.get("portal.url");
 
 		task ("Given a locked content page") {

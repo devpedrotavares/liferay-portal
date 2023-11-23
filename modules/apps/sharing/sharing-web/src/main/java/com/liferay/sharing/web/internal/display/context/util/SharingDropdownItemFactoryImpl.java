@@ -72,6 +72,7 @@ public class SharingDropdownItemFactoryImpl
 		DropdownItem shareDropdownItem = createShareDropdownItem(
 			className, classPK, httpServletRequest);
 
+		shareDropdownItem.setIcon("users");
 		shareDropdownItem.setLabel(
 			SharingItemFactoryUtil.getInviteToCollaborateLabel(
 				httpServletRequest));

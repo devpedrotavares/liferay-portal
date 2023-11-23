@@ -207,6 +207,10 @@ definition {
 			publishTemplateName = "My Template Title",
 			scheduleProcess = "true");
 
+		// Pausing 300 seconds due to LRQA-83187
+
+		Pause(value1 = 300000);
+
 		Staging.openStagingAdmin(siteURLKey = "site-name");
 
 		Staging.viewPublishTask(publicationTitle = "My Publish Title");
@@ -1397,7 +1401,7 @@ definition {
 
 		task ("Then: The warning message should still display") {
 			AssertVisible(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1407,7 +1411,7 @@ definition {
 
 		task ("Then: The warning message should not display") {
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1419,7 +1423,7 @@ definition {
 
 		task ("Then: The warning message should not display") {
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 	}
@@ -1447,7 +1451,7 @@ definition {
 
 		task ("Then: The warning message should still display") {
 			AssertVisible(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1457,7 +1461,7 @@ definition {
 
 		task ("Then: The warning message should not display") {
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1469,7 +1473,7 @@ definition {
 
 		task ("Then: The warning message should not display") {
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 	}
@@ -1486,7 +1490,7 @@ definition {
 			Staging.addCustomPublication();
 
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1496,7 +1500,7 @@ definition {
 
 		task ("Then: The warning message should still display") {
 			AssertVisible(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1508,7 +1512,7 @@ definition {
 
 		task ("Then: The warning message should still display") {
 			AssertVisible(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 
@@ -1518,7 +1522,7 @@ definition {
 
 		task ("Then: The warning message should not display") {
 			AssertElementNotPresent(
-				key_warningMessage = "Please consider publishing all content or using a wide date range.",
+				key_warningMessage = "Publishing all content or using a wide date range will take some time.",
 				locator1 = "StagingPublishToLive#WARNING_SPECIFIC");
 		}
 	}

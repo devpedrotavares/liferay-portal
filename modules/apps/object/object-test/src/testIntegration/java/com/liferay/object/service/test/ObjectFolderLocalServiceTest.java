@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Collections;
@@ -143,11 +144,13 @@ public class ObjectFolderLocalServiceTest {
 
 	@Test
 	public void testDeleteCompanyObjectFolders() throws Exception {
-		String originalName = PrincipalThreadLocal.getName();
 		PermissionChecker originalPermissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
+		String originalName = PrincipalThreadLocal.getName();
 
 		Company company = CompanyTestUtil.addCompany();
+
+		PortalInstances.initCompany(company);
 
 		ObjectFolder objectFolder = null;
 
@@ -161,7 +164,6 @@ public class ObjectFolderLocalServiceTest {
 
 			PermissionThreadLocal.setPermissionChecker(
 				PermissionCheckerFactoryUtil.create(user));
-
 			PrincipalThreadLocal.setName(user.getUserId());
 
 			objectFolder = _addObjectFolder(user);

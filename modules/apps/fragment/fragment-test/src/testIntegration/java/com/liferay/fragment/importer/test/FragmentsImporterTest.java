@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
@@ -48,6 +49,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.io.File;
+import java.io.InputStream;
 
 import java.net.URL;
 
@@ -558,7 +560,9 @@ public class FragmentsImporterTest {
 
 		URL url = _bundle.getEntry(entryPath);
 
-		zipWriter.addEntry(zipPath, url.openStream());
+		try (InputStream inputStream = url.openStream()) {
+			zipWriter.addEntry(zipPath, inputStream);
+		}
 	}
 
 	private File _generateResourcesZipFile() throws Exception {
@@ -581,9 +585,11 @@ public class FragmentsImporterTest {
 			_PATH_FRAGMENTS +
 				FragmentExportImportConstants.FILE_NAME_COLLECTION);
 
-		zipWriter.addEntry(
-			FragmentExportImportConstants.FILE_NAME_COLLECTION,
-			collectionURL.openStream());
+		try (InputStream inputStream = collectionURL.openStream()) {
+			zipWriter.addEntry(
+				FragmentExportImportConstants.FILE_NAME_COLLECTION,
+				inputStream);
+		}
 
 		_populateZipWriter(_PATH_FRAGMENTS, zipWriter, true);
 
@@ -597,9 +603,11 @@ public class FragmentsImporterTest {
 			_PATH_FRAGMENTS_WITH_FOLDER_RESOURCES +
 				FragmentExportImportConstants.FILE_NAME_COLLECTION);
 
-		zipWriter.addEntry(
-			FragmentExportImportConstants.FILE_NAME_COLLECTION,
-			collectionURL.openStream());
+		try (InputStream inputStream = collectionURL.openStream()) {
+			zipWriter.addEntry(
+				FragmentExportImportConstants.FILE_NAME_COLLECTION,
+				inputStream);
+		}
 
 		_addZipWriterEntry(
 			zipWriter, _PATH_FRAGMENTS_WITH_FOLDER_RESOURCES + "resources",
@@ -657,9 +665,8 @@ public class FragmentsImporterTest {
 		while (enumeration.hasMoreElements()) {
 			URL url = enumeration.nextElement();
 
-			String content = StringUtil.read(url.openStream());
-
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(content);
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				URLUtil.toString(url));
 
 			if (calculateFragmentEntryType) {
 				_addFragmentEntryType(jsonObject);
@@ -692,9 +699,8 @@ public class FragmentsImporterTest {
 		while (enumeration.hasMoreElements()) {
 			URL url = enumeration.nextElement();
 
-			String content = StringUtil.read(url.openStream());
-
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(content);
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				URLUtil.toString(url));
 
 			String path = FileUtil.getPath(url.getPath());
 

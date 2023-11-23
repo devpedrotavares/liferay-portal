@@ -566,7 +566,9 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object 163066");
 
-			CreateObject.selectPanelCategoryKey(panelCategoryKey = "Control Panel > Users");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Panel Link",
+				optionName = "Users");
 
 			Button.clickSave();
 		}
@@ -663,9 +665,7 @@ definition {
 
 			ObjectPortlet.selectSystemObject(label = "Account");
 
-			CreateObject.selectTitleField(
-				currentOption = "Name",
-				fieldLabel = "Type");
+			CreateObject.selectTitleField(fieldLabel = "Type");
 
 			CreateObject.saveObject();
 

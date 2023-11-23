@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.exception.LayoutFriendlyURLException;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.lock.LockManagerUtil;
@@ -465,10 +466,10 @@ public class LayoutImpl extends LayoutBaseImpl {
 
 	@Override
 	public List<Portlet> getEmbeddedPortlets(long groupId) {
-		List<PortletPreferences> portletPreferences = _getPortletPreferences(
-			groupId);
+		List<PortletPreferences> portletPreferencesList =
+			_getPortletPreferences(groupId);
 
-		if (portletPreferences.isEmpty()) {
+		if (portletPreferencesList.isEmpty()) {
 			return Collections.emptyList();
 		}
 
@@ -476,8 +477,8 @@ public class LayoutImpl extends LayoutBaseImpl {
 
 		Set<String> layoutPortletIds = _getLayoutPortletIds();
 
-		for (PortletPreferences portletPreference : portletPreferences) {
-			String portletId = portletPreference.getPortletId();
+		for (PortletPreferences portletPreferences : portletPreferencesList) {
+			String portletId = portletPreferences.getPortletId();
 
 			Portlet portlet = PortletLocalServiceUtil.getPortletById(
 				getCompanyId(), portletId);
@@ -1517,7 +1518,9 @@ public class LayoutImpl extends LayoutBaseImpl {
 
 	@Override
 	public boolean isUnlocked(String mode, long userId) {
-		if (!Objects.equals(mode, Constants.EDIT) || !isDraftLayout()) {
+		if (!FeatureFlagManagerUtil.isEnabled(getCompanyId(), "LPS-180328") ||
+			!Objects.equals(mode, Constants.EDIT) || !isDraftLayout()) {
+
 			return true;
 		}
 
@@ -1648,13 +1651,13 @@ public class LayoutImpl extends LayoutBaseImpl {
 	private Set<String> _getLayoutPortletIds() {
 		Set<String> layoutPortletIds = new HashSet<>();
 
-		List<PortletPreferences> portletPreferences =
+		List<PortletPreferences> portletPreferencesList =
 			PortletPreferencesLocalServiceUtil.getPortletPreferences(
 				PortletKeys.PREFS_OWNER_ID_DEFAULT,
 				PortletKeys.PREFS_OWNER_TYPE_LAYOUT, getPlid());
 
-		for (PortletPreferences portletPreference : portletPreferences) {
-			layoutPortletIds.add(portletPreference.getPortletId());
+		for (PortletPreferences portletPreferences : portletPreferencesList) {
+			layoutPortletIds.add(portletPreferences.getPortletId());
 		}
 
 		return layoutPortletIds;

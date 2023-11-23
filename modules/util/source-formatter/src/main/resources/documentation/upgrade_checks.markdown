@@ -19,11 +19,9 @@ UpgradeJavaBasePanelAppExtendedClassesCheck | .bnd, .ftl, .gradle, .java, .json,
 UpgradeJavaCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Performs upgrade checks for `java` files |
 UpgradeJavaCommerceOrderValidatorCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replace the parameter Int for BigDecimal of method validate of 'CommerceOrderValidator' interface |
 UpgradeJavaCookieKeysCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | CookieKeys class was replaced by CookiesManagerUtil and CookieConstants |
-UpgradeJavaCookieUtilCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replace CookieUtilCheck.get by CookiesManagerUtil.getCookieValue and reorder parameters |
 UpgradeJavaFDSActionProviderCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Reorder parameters in the getDropdownItems method of the FDSDataProvider interface |
 UpgradeJavaFDSDataProviderCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Reorder parameters in the getItems and getItemsCount methods of the FDSDataProvider interface |
 UpgradeJavaFacetedSearcherCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replaces the references of the `Indexer indexer = FacetedSearcher.getInstance();` declaration and `indexer.search` method call. |
-UpgradeJavaFetchAssetCategoryByExternalReferenceCodeCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Adds a message about the breaking change made on method `fetchAssetCategoryByExternalReferenceCode` of `AssetCategoryLocalService` and `AssetCategoryLocalServiceUtil` classes. |
 UpgradeJavaGetFDSTableSchemaParameterCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Fill the new parameter of the method 'getFDSTableSchema' of 'FDSTableSchema' |
 UpgradeJavaGetFileMethodCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of method from 'getFile' to 'getFileAsStream', and include a method 'FileUtil.createTempFile' |
 UpgradeJavaGetLayoutDisplayPageObjectProviderCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replace parameter type long by ItemInfoReference in the getLayoutDisplayPageObjectProvider method |
@@ -41,7 +39,7 @@ UpgradeRejectedExecutionHandlerCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, 
 UpgradeRemovedAPICheck | .java | Finds cases where calls are made to removed API after an upgrade. |
 UpgradeSCSSMixinsCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replace outdated mixins (e.g. media-query, respond-to, etc.) |
 UpgradeSCSSNodeSassPatternsCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of Dart Sass deprecated patterns (e.g., the division operation using the '/' character, the interpolation syntax, etc.) |
-UpgradeSetResultsSetTotalMethodCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of method searchContainer.setResults to the searchContainer.setResultsAndTotal and delete searchContainer.setTotal |
+UpgradeSetResultsSetTotalMethodCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Replaces methods setResults and setTotal from SearchContainer with the method setResultsAndTotal only |
 UpgradeVelocityCommentMigrationCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of comments from a Velocity file to a Freemarker file with the syntax replacements |
 UpgradeVelocityFileImportMigrationCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of file import from a Velocity file to a Freemarker file with the syntax replacements |
 UpgradeVelocityForeachMigrationCheck | .bnd, .ftl, .gradle, .java, .json, .jsp, .jspf, .scss or .vm | Run code migration of references to Foreach statement from a Velocity file to a Freemarker file with the syntax replacements |

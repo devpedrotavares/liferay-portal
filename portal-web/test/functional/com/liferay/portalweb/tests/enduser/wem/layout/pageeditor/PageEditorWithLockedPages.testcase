@@ -2,6 +2,7 @@
 definition {
 
 	property ci.retries.disabled = "true";
+	property custom.properties = "feature.flag.LPS-180328=true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Page Editor";
@@ -577,6 +578,8 @@ definition {
 	@description = "This is a test for LPS-182022. The user should be redirected to the Page In Use when access to edit mode of a locked content page."
 	@priority = 5
 	test RedirectToPageInUseWhenEditLockedContentPage {
+		property portal.acceptance = "true";
+
 		task ("Given a page designer has a locked content page") {
 			var siteName = selenium.getText("Home#SITE_NAME");
 

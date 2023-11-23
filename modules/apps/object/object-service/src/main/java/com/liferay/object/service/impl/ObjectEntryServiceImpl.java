@@ -129,12 +129,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			long objectDefinitionId, long objectEntryId, String actionId)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
-
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
-				objectDefinition.getClassName());
+			getModelResourcePermission(objectDefinitionId);
 
 		modelResourcePermission.check(
 			getPermissionChecker(), objectEntryId, actionId);
@@ -235,12 +231,16 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 	@Override
 	public ModelResourcePermission<ObjectEntry> getModelResourcePermission(
-			ObjectEntry objectEntry)
+			long objectDefinitionId)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
+			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		if (objectDefinition.isRootDescendantNode()) {
+			objectDefinition = _objectDefinitionPersistence.findByPrimaryKey(
+				objectDefinition.getRootObjectDefinitionId());
+		}
 
 		return ModelResourcePermissionRegistryUtil.getModelResourcePermission(
 			objectDefinition.getClassName());
@@ -312,12 +312,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			long objectDefinitionId, long objectEntryId, String actionId)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
-
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
-				objectDefinition.getClassName());
+			getModelResourcePermission(objectDefinitionId);
 
 		return modelResourcePermission.contains(
 			getPermissionChecker(), objectEntryId, actionId);
@@ -328,13 +324,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			ObjectEntry objectEntry, String actionId)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
-
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
-				objectDefinition.getClassName());
+			getModelResourcePermission(objectEntry.getObjectDefinitionId());
 
 		return modelResourcePermission.contains(
 			getPermissionChecker(), objectEntry, actionId);
@@ -348,19 +339,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 		ObjectEntry objectEntry = objectEntryLocalService.getObjectEntry(
 			objectEntryId);
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
-
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
-				objectDefinition.getClassName());
-
-		PermissionChecker permissionChecker = _permissionCheckerFactory.create(
-			user);
+			getModelResourcePermission(objectEntry.getObjectDefinitionId());
 
 		return modelResourcePermission.contains(
-			permissionChecker, objectEntryId, actionId);
+			_permissionCheckerFactory.create(user), objectEntryId, actionId);
 	}
 
 	@Override
@@ -444,10 +427,7 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			_accountEntryLocalService.getUserAccountEntries(
 				getUserId(), AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT,
 				null,
-				new String[] {
-					AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS,
-					AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON
-				},
+				AccountConstants.ACCOUNT_ENTRY_TYPES_DEFAULT_ALLOWED_TYPES,
 				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS),
 			AccountEntry::getAccountEntryId);
@@ -532,13 +512,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 	private void _checkPermission(String actionId, ObjectEntry objectEntry)
 		throws PortalException {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectEntry.getObjectDefinitionId());
-
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
-				objectDefinition.getClassName());
+			getModelResourcePermission(objectEntry.getObjectDefinitionId());
 
 		modelResourcePermission.check(
 			getPermissionChecker(), objectEntry, actionId);

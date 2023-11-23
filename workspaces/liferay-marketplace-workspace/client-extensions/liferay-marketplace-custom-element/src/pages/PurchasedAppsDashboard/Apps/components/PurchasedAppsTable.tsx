@@ -13,6 +13,7 @@ import appsIcon from '../../../../assets/icons/apps_fill_icon.svg';
 import {DashboardEmptyTable} from '../../../../components/DashboardTable/DashboardEmptyTable';
 import OrderStatus, {OrderStatuses} from '../../../../components/OrderStatus';
 import Table from '../../../../components/Table/Table';
+import {useMarketplaceContext} from '../../../../context/MarketplaceContext';
 import {OrderType} from '../../../../enums/OrderType';
 import i18n from '../../../../i18n';
 import {showAppImage} from '../../../../utils/util';
@@ -23,6 +24,7 @@ type AppsTableProps = {
 
 const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 	const navigate = useNavigate();
+	const {properties} = useMarketplaceContext();
 
 	if (!items.length) {
 		return (
@@ -40,7 +42,7 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 			columns={[
 				{
 					key: 'name',
-					render: (name, {thumbnail, version}) => (
+					render: (name, {thumbnail}) => (
 						<div className="dashboard-table-row-name-container">
 							<img
 								alt="App Image"
@@ -51,12 +53,6 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							<span className="dashboard-table-row-name-text">
 								{name}
 							</span>
-
-							{version && (
-								<span className="dashboard-table-row-name-version ml-2 mt-2">
-									{version}
-								</span>
-							)}
 						</div>
 					),
 					title: 'Name',
@@ -126,13 +122,13 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 						_,
 						{
 							id,
+							orderStatusInfo,
 							orderTypeExternalReferenceCode,
-							provisioningLabel,
 							virtualURL,
 						}
 					) => {
 						const orderStatusIsNotCompleted =
-							provisioningLabel !== OrderStatuses.COMPLETED;
+							orderStatusInfo?.label !== OrderStatuses.COMPLETED;
 
 						return (
 							<div onClick={(event) => event.stopPropagation()}>
@@ -147,49 +143,58 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 									<DropDown.ItemList>
 										{orderTypeExternalReferenceCode ===
 											OrderType.DXP && (
-											<ClayTooltipProvider>
-												<DropDown.Item
-													data-tooltip-align="left"
-													disabled={
-														orderStatusIsNotCompleted
-													}
-													onClick={() =>
-														navigate(
-															`order/${id}/create-license`
-														)
-													}
-													title={
-														orderStatusIsNotCompleted
-															? i18n.translate(
-																	'the-order-must-be-completed-before-licensing-this-app.'
-															  )
-															: undefined
-													}
-												>
-													{i18n.translate(
-														'create-license-key'
-													)}
-												</DropDown.Item>
-											</ClayTooltipProvider>
-										)}
-										<DropDown.Item
-											onClick={() => {
-												navigate(
-													`order/${id}/licenses`
-												);
-											}}
-										>
-											Manage License Key(s)
-										</DropDown.Item>
+											<>
+												<ClayTooltipProvider>
+													<DropDown.Item
+														data-tooltip-align="left"
+														disabled={
+															orderStatusIsNotCompleted
+														}
+														onClick={() =>
+															navigate(
+																`order/${id}/create-license`
+															)
+														}
+														title={
+															orderStatusIsNotCompleted
+																? i18n.translate(
+																		'the-order-must-be-completed-before-licensing-this-app.'
+																  )
+																: undefined
+														}
+													>
+														{i18n.translate(
+															'create-license-key'
+														)}
+													</DropDown.Item>
+												</ClayTooltipProvider>
 
-										<DropDown.Item
-											onClick={() => {
-												window.location.href =
-													'https://console.marketplacedemo.liferay.sh/projects';
-											}}
-										>
-											{i18n.translate('access-console')}
-										</DropDown.Item>
+												<DropDown.Item
+													onClick={() => {
+														navigate(
+															`order/${id}/licenses`
+														);
+													}}
+												>
+													Manage License Key(s)
+												</DropDown.Item>
+											</>
+										)}
+
+										{orderTypeExternalReferenceCode ===
+											OrderType.CLOUD && (
+											<DropDown.Item
+												onClick={() => {
+													window.open(
+														properties.cloudBaseURL
+													);
+												}}
+											>
+												{i18n.translate(
+													'access-console'
+												)}
+											</DropDown.Item>
+										)}
 
 										{orderTypeExternalReferenceCode ===
 											OrderType.DXP && (

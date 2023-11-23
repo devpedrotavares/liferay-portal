@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -124,8 +125,6 @@ public class APIEndpointRelevantObjectEntryModelListener
 		try {
 			Map<String, Serializable> values = objectEntry.getValues();
 
-			String pathString = (String)values.get("path");
-
 			long apiApplicationId = (long)values.get(
 				"r_apiApplicationToAPIEndpoints_c_apiApplicationId");
 
@@ -150,64 +149,35 @@ public class APIEndpointRelevantObjectEntryModelListener
 					apiApplicationId, responseAPISchemaId, scope);
 			}
 
-			if (Objects.equals(
-					APIApplication.Endpoint.RetrieveType.parse(
-						(String)values.get("retrieveType")),
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT)) {
+			long requestAPISchemaId = (long)values.get(
+				"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId");
 
-				String pathParameter = (String)values.get("pathParameter");
-
-				_validateSingleElementPath(
-					objectEntry, pathParameter, pathString,
-					responseAPISchemaId);
-
-				if (Validator.isNull(pathParameter) &&
-					Validator.isNotNull(
-						(String)values.get("pathParameterDescription"))) {
-
-					throw new ObjectEntryValuesException.InvalidObjectField(
-						null,
-						"Path parameter description cannot be set with empty " +
-							"path parameter property",
-						"path-parameter-description-cannot-be-set-with-empty-" +
-							"path-parameter-property");
-				}
+			if (requestAPISchemaId != 0) {
+				_validateAPISchema(apiApplicationId, requestAPISchemaId, scope);
 			}
-			else {
-				Matcher matcher = _pathPattern.matcher(pathString);
 
-				if (!matcher.matches()) {
-					User user = _userLocalService.getUser(
-						objectEntry.getUserId());
+			Http.Method method = Http.Method.valueOf(
+				StringUtil.toUpperCase((String)values.get("httpMethod")));
 
-					ObjectField objectField =
-						_objectFieldLocalService.getObjectField(
-							objectEntry.getObjectDefinitionId(), "path");
+			if (Objects.equals(method, Http.Method.GET)) {
+				_validateGetAPIEndpoint(objectEntry, responseAPISchemaId);
+			}
+			else if (Objects.equals(method, Http.Method.POST)) {
+				_validatePostAPIEndpoint(objectEntry);
+			}
 
-					String message =
-						"%s can have a maximum of 255 alphanumeric characters";
-					String messageKey =
-						"x-can-have-a-maximum-of-255-alphanumeric-characters";
+			String pathParameter = (String)values.get("pathParameter");
 
-					if (!pathString.startsWith(StringPool.FORWARD_SLASH)) {
-						message = "%s must start with the \"/\" character";
-						messageKey = "x-must-start-with-the-x-character";
-					}
+			if (Validator.isNull(pathParameter) &&
+				Validator.isNotNull(
+					(String)values.get("pathParameterDescription"))) {
 
-					// Order matters in checking pathString
-
-					if (!StringUtil.isLowerCase(pathString)) {
-						message = "%s must contain only lower case characters";
-						messageKey =
-							"x-must-contain-only-lower-case-characters";
-					}
-
-					String label = objectField.getLabel(user.getLocale());
-
-					throw new ObjectEntryValuesException.InvalidObjectField(
-						Arrays.asList(label, "\"/\""),
-						String.format(message, label), messageKey);
-				}
+				throw new ObjectEntryValuesException.InvalidObjectField(
+					null,
+					"Path parameter description cannot be set with empty " +
+						"path parameter property",
+					"path-parameter-description-cannot-be-set-with-empty-" +
+						"path-parameter-property");
 			}
 
 			String filterString = StringBundler.concat(
@@ -238,13 +208,6 @@ public class APIEndpointRelevantObjectEntryModelListener
 						"path",
 					"there-is-an-api-endpoint-with-the-same-http-method-and-" +
 						"path");
-			}
-
-			long requestAPISchemaId = (long)values.get(
-				"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId");
-
-			if (requestAPISchemaId != 0) {
-				_validateAPISchema(apiApplicationId, requestAPISchemaId, scope);
 			}
 		}
 		catch (Exception exception) {
@@ -309,6 +272,98 @@ public class APIEndpointRelevantObjectEntryModelListener
 				"The API endpoint and the API schema must have the same scope",
 				"the-api-endpoint-and-the-api-schema-must-have-the-same-scope");
 		}
+	}
+
+	private void _validateGetAPIEndpoint(
+			ObjectEntry objectEntry, long responseAPISchemaId)
+		throws Exception {
+
+		Map<String, Serializable> values = objectEntry.getValues();
+
+		String pathString = (String)values.get("path");
+
+		if (Objects.equals(
+				APIApplication.Endpoint.RetrieveType.parse(
+					(String)values.get("retrieveType")),
+				APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT)) {
+
+			String pathParameter = (String)values.get("pathParameter");
+
+			_validateSingleElementPath(
+				objectEntry, pathParameter, pathString, responseAPISchemaId);
+		}
+		else {
+			_validatePath(objectEntry, pathString);
+		}
+	}
+
+	private void _validatePath(ObjectEntry objectEntry, String pathString)
+		throws Exception {
+
+		Matcher matcher = _pathPattern.matcher(pathString);
+
+		if (!matcher.matches()) {
+			User user = _userLocalService.getUser(objectEntry.getUserId());
+
+			ObjectField objectField = _objectFieldLocalService.getObjectField(
+				objectEntry.getObjectDefinitionId(), "path");
+
+			String message =
+				"%s can have a maximum of 255 alphanumeric characters";
+			String messageKey =
+				"x-can-have-a-maximum-of-255-alphanumeric-characters";
+
+			if (!pathString.startsWith(StringPool.FORWARD_SLASH)) {
+				message = "%s must start with the \"/\" character";
+				messageKey = "x-must-start-with-the-x-character";
+			}
+
+			if (!StringUtil.isLowerCase(pathString)) {
+				message = "%s must contain only lower case characters";
+				messageKey = "x-must-contain-only-lower-case-characters";
+			}
+
+			String label = objectField.getLabel(user.getLocale());
+
+			throw new ObjectEntryValuesException.InvalidObjectField(
+				Arrays.asList(label, "\"/\""), String.format(message, label),
+				messageKey);
+		}
+	}
+
+	private void _validatePostAPIEndpoint(ObjectEntry objectEntry)
+		throws Exception {
+
+		Map<String, Serializable> values = objectEntry.getValues();
+
+		if (Objects.equals(
+				APIApplication.Endpoint.RetrieveType.parse(
+					(String)values.get("retrieveType")),
+				APIApplication.Endpoint.RetrieveType.COLLECTION)) {
+
+			throw new ObjectEntryValuesException.InvalidObjectField(
+				Arrays.asList("singleElement"),
+				"POST API endpoints retrieve type must be \"singleElement\"",
+				"post-api-endpoints-retrieve-type-must-be-x");
+		}
+
+		String pathString = (String)values.get("path");
+
+		String pathInParameterString = StringUtil.extractLast(
+			pathString, StringPool.FORWARD_SLASH);
+
+		Matcher curlyBraceMatcher = _curlyBracePattern.matcher(
+			pathInParameterString);
+
+		String pathParameter = (String)values.get("pathParameter");
+
+		if (!Validator.isBlank(pathParameter) || curlyBraceMatcher.matches()) {
+			throw new ObjectEntryValuesException.InvalidObjectField(
+				null, "Path parameters are not supported by POST API endpoints",
+				"path-parameters-are-not-supported-by-post-api-endpoints");
+		}
+
+		_validatePath(objectEntry, pathString);
 	}
 
 	private void _validateSingleElementPath(

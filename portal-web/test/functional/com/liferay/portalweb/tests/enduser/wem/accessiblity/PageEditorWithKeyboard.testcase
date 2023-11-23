@@ -425,6 +425,8 @@ definition {
 	@description = "This is a test for LPS-182022. The user could go back on the Page In Use by keyboard."
 	@priority = 4
 	test GoBackOnPageInUseViaKeyboard {
+		property custom.properties = "feature.flag.LPS-180328=true";
+
 		task ("Given a page designer has a locked content page") {
 			var siteName = selenium.getText("Home#SITE_NAME");
 
@@ -489,6 +491,69 @@ definition {
 				value1 = "\ENTER");
 
 			ControlMenu.viewHeaderDraftTitle(headerTitle = "Test Page Name");
+		}
+	}
+
+	@description = "This is a test for LPS-196461. The Section “Page rules“is accessible via Keyboard and also everything inside that tab."
+	@priority = 3
+	test OpenPageRulesPanelViaKeyboard {
+		property custom.properties = "feature.flag.LPS-169837=true";
+
+		task ("Given a page designer has a content page") {
+			JSONLayout.addPublicLayout(
+				groupName = ${randomSiteName},
+				layoutName = "Test Page Name",
+				type = "content");
+		}
+
+		task ("When the page designer navigates to the page editor") {
+			ContentPagesNavigator.openEditContentPage(
+				pageName = "Test Page Name",
+				siteName = ${randomSiteName});
+		}
+
+		task ("Then the page designer could open the Page Rules panel via keyboard") {
+			KeyPress(
+				key_text = "format",
+				locator1 = "Icon#ANY",
+				value1 = "\DOWN");
+
+			AssertVisible(
+				key_content = "Page Rules",
+				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
+
+			KeyPress(
+				key_text = "rules",
+				locator1 = "Icon#ANY",
+				value1 = "\ENTER");
+
+			AssertTextEquals(
+				locator1 = "Message#EMPTY_STATE_INFO",
+				value1 = "No Rules Yet");
+
+			AssertTextEquals(
+				locator1 = "Message#EMPTY_STATE_TEXT",
+				value1 = "Fortunately, it is very easy to add new ones.");
+
+			AssertVisible(
+				key_text = "New Rule",
+				locator1 = "Button#ANY");
+
+			KeyPress(
+				key_text = "rules",
+				locator1 = "Icon#ANY",
+				value1 = "\TAB");
+
+			AssertElementFocused(
+				key_text = "times",
+				locator1 = "Icon#ANY");
+
+			KeyPress(
+				key_text = "times",
+				locator1 = "Icon#ANY",
+				value1 = "\ENTER");
+
+			AssertElementNotPresent(locator1 = "Sidebar#PANEL_OPEN");
 		}
 	}
 

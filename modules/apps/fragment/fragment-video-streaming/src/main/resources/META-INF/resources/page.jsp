@@ -10,55 +10,37 @@
 <liferay-util:html-top
 	outputKey="vide_sctreaming_css"
 >
+	<link href="https://unpkg.com/videojs-quality-selector-hls@1.1.1/dist/videojs-quality-selector-hls.css" rel="stylesheet" type="text/css" />
 	<link href="https://vjs.zencdn.net/8.6.1/video-js.min.css" rel="stylesheet" type="text/css" />
 </liferay-util:html-top>
 
-<div style="display: flex; justify-content: left;">
+<div style="display: flex; justify-content: flex-start; overflow: hidden;">
 	<div class="videojs-container">
 		<video class="video-js" controls id="fragmentVideoJsURL" preload="auto">
-			<source src="<%= (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_SOURCE_URL) %>" type="video/mp4" />
 		</video>
 
+		<script src="https://unpkg.com/videojs-quality-selector-hls@1.1.1/dist/videojs-quality-selector-hls.js" type="text/javascript"></script>
 		<script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 	</div>
 </div>
 
-<script>
-	const content = document.querySelector('.videojs-container');
-
-	const configuration = {
-		autoplay: <%= (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_AUTOPLAY) %>,
-		loop: <%= (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_LOOP) %>,
-		muted: <%= (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_MUTED) %>,
-		videoHeight:
-			'<%= (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_VIDEO_HEIGHT) %>',
-		videoWidth:
-			'<%= (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_VIDEO_WIDTH) %>',
-	};
-
-	const height = configuration.videoHeight
-		? configuration.videoHeight.replace('px', '')
-		: configuration.videoHeight;
-	const width = configuration.videoWidth
-		? configuration.videoWidth.replace('px', '')
-		: configuration.videoWidth;
-
-	function resizeVideoJs() {
-		const boundingClientRect = content.parentElement.getBoundingClientRect();
-
-		const contentWidth = width || boundingClientRect.width;
-
-		const contentHeight = height || contentWidth * 0.5625;
-
-		content.firstElementChild.style.height = contentHeight + 'px';
-		content.firstElementChild.style.width = contentWidth + 'px';
-	}
-
-	const player = videojs('fragmentVideoJsURL', configuration);
-
-	player.ready(() => {
-		window.addEventListener('resize', resizeVideoJs);
-
-		resizeVideoJs();
-	});
-</script>
+<liferay-frontend:component
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"autoplay", (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_AUTOPLAY)
+		).put(
+			"loop", (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_LOOP)
+		).put(
+			"muted", (Boolean)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_MUTED)
+		).put(
+			"src", (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_SOURCE_URL)
+		).put(
+			"subtitles", (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_SUBTITLES)
+		).put(
+			"videoHeight", (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_VIDEO_HEIGHT)
+		).put(
+			"videoWidth", (String)request.getAttribute(VideoStreamingWebKeys.VIDEO_STREAMING_VIDEO_WIDTH)
+		).build()
+	%>'
+	module="js/VideoStreaming"
+/>

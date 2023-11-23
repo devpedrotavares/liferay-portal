@@ -22,8 +22,8 @@ type LicenseTypePayload = {
 		ipAddresses: string;
 		macAddresses: string;
 		orderId: string;
+		productPurchaseKey: string;
 	};
-	productPurchaseKey: string;
 	skuId: number;
 	type: string;
 };

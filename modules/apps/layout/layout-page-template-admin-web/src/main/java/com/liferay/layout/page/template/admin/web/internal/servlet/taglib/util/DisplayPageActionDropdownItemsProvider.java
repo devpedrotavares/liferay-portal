@@ -60,10 +60,11 @@ import javax.servlet.http.HttpServletRequest;
 public class DisplayPageActionDropdownItemsProvider {
 
 	public DisplayPageActionDropdownItemsProvider(
-		boolean existsMappedContentType,
+		boolean allowedMappedContentType, boolean existsMappedContentType,
 		LayoutPageTemplateEntry layoutPageTemplateEntry,
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
+		_allowedMappedContentType = allowedMappedContentType;
 		_existsMappedContentType = existsMappedContentType;
 		_layoutPageTemplateEntry = layoutPageTemplateEntry;
 		_renderResponse = renderResponse;
@@ -113,6 +114,8 @@ public class DisplayPageActionDropdownItemsProvider {
 					DropdownItemListBuilder.add(
 						() ->
 							FeatureFlagManagerUtil.isEnabled("LPS-195263") &&
+							(_allowedMappedContentType ||
+							 !_existsMappedContentType) &&
 							hasUpdatePermission,
 						_getChangeContentTypeActionUnsafeConsumer(count)
 					).add(
@@ -193,9 +196,9 @@ public class DisplayPageActionDropdownItemsProvider {
 
 		return dropdownItem -> {
 			dropdownItem.putData("action", "changeContentType");
+			dropdownItem.putData("assetType", _getTypeLabel());
 
 			if (count > 0) {
-				dropdownItem.putData("assetType", _getTypeLabel());
 				dropdownItem.putData("viewUsagesURL", _getViewUsagesURL());
 			}
 			else {
@@ -715,6 +718,7 @@ public class DisplayPageActionDropdownItemsProvider {
 		return false;
 	}
 
+	private final boolean _allowedMappedContentType;
 	private final Layout _draftLayout;
 	private final boolean _existsMappedContentType;
 	private final HttpServletRequest _httpServletRequest;

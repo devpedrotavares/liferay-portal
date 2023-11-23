@@ -5,6 +5,10 @@
 
 package com.liferay.commerce.product.service.impl;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.link.constants.AssetLinkConstants;
+import com.liferay.asset.link.service.AssetLinkLocalService;
 import com.liferay.commerce.product.constants.CPConstants;
 import com.liferay.commerce.product.constants.CPField;
 import com.liferay.commerce.product.exception.CPAttachmentFileEntryCDNURLException;
@@ -41,6 +45,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
@@ -61,11 +66,13 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -207,6 +214,15 @@ public class CPAttachmentFileEntryLocalServiceImpl
 			cpAttachmentFileEntry);
 
 		_reindex(classNameId, classPK);
+
+		// Asset
+
+		updateAsset(
+			user.getUserId(), cpAttachmentFileEntry,
+			serviceContext.getAssetCategoryIds(),
+			serviceContext.getAssetTagNames(),
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
 
 		// Workflow
 
@@ -651,6 +667,32 @@ public class CPAttachmentFileEntryLocalServiceImpl
 				CPAttachmentFileEntryTable.INSTANCE.title));
 	}
 
+	@Override
+	public void updateAsset(
+			long userId, CPAttachmentFileEntry cpAttachmentFileEntry,
+			long[] assetCategoryIds, String[] assetTagNames,
+			long[] assetLinkEntryIds, Double priority)
+		throws PortalException {
+
+		Group companyGroup = _groupLocalService.getCompanyGroup(
+			cpAttachmentFileEntry.getCompanyId());
+
+		AssetEntry assetEntry = _assetEntryLocalService.updateEntry(
+			userId, companyGroup.getGroupId(),
+			cpAttachmentFileEntry.getCreateDate(),
+			cpAttachmentFileEntry.getModifiedDate(),
+			CPAttachmentFileEntry.class.getName(),
+			cpAttachmentFileEntry.getCPAttachmentFileEntryId(),
+			cpAttachmentFileEntry.getUuid(), 0, assetCategoryIds, assetTagNames,
+			true, true, null, null, cpAttachmentFileEntry.getCreateDate(), null,
+			ContentTypes.TEXT_PLAIN, cpAttachmentFileEntry.getTitle(),
+			StringPool.BLANK, null, null, null, 0, 0, priority);
+
+		_assetLinkLocalService.updateLinks(
+			userId, assetEntry.getEntryId(), assetLinkEntryIds,
+			AssetLinkConstants.TYPE_RELATED);
+	}
+
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public CPAttachmentFileEntry updateCPAttachmentFileEntry(
@@ -763,6 +805,15 @@ public class CPAttachmentFileEntryLocalServiceImpl
 
 		cpAttachmentFileEntry = cpAttachmentFileEntryPersistence.update(
 			cpAttachmentFileEntry);
+
+		// Asset
+
+		updateAsset(
+			user.getUserId(), cpAttachmentFileEntry,
+			serviceContext.getAssetCategoryIds(),
+			serviceContext.getAssetTagNames(),
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
 
 		// Workflow
 
@@ -1053,6 +1104,12 @@ public class CPAttachmentFileEntryLocalServiceImpl
 		CPAttachmentFileEntryLocalServiceImpl.class);
 
 	@Reference
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
+	private AssetLinkLocalService _assetLinkLocalService;
+
+	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
@@ -1066,6 +1123,9 @@ public class CPAttachmentFileEntryLocalServiceImpl
 
 	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private JSONFactory _jsonFactory;

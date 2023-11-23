@@ -12,10 +12,14 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
+import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.scim.rest.dto.v1_0.User;
 import com.liferay.scim.rest.internal.manager.UserManagerImpl;
+import com.liferay.scim.rest.internal.manager.UserResourceManagerImpl;
 import com.liferay.scim.rest.resource.v1_0.UserResource;
 
+import java.util.Collections;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -28,7 +32,9 @@ import org.osgi.service.component.annotations.ServiceScope;
 
 import org.wso2.charon3.core.extensions.UserManager;
 import org.wso2.charon3.core.protocol.SCIMResponse;
+import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon3.core.protocol.endpoints.UserResourceManager;
+import org.wso2.charon3.core.schema.SCIMConstants;
 
 /**
  * @author Olivér Kecskeméty
@@ -79,7 +85,8 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 		_userManager = new UserManagerImpl(
 			_classNameLocalService, _companyLocalService, _configurationAdmin,
 			_expandoColumnLocalService, _expandoTableLocalService,
-			_expandoValueLocalService, _userLocalService);
+			_expandoValueLocalService, _searcher, _searchRequestBuilderFactory,
+			_userLocalService);
 	}
 
 	private Response _buildResponse(SCIMResponse scimResponse) {
@@ -102,7 +109,13 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 	}
 
 	private static final UserResourceManager _userResourceManager =
-		new UserResourceManager();
+		new UserResourceManagerImpl();
+
+	static {
+		AbstractResourceManager.setEndpointURLMap(
+			Collections.singletonMap(
+				SCIMConstants.USER_ENDPOINT, "/o/scim/Users"));
+	}
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
@@ -121,6 +134,12 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 
 	@Reference
 	private ExpandoValueLocalService _expandoValueLocalService;
+
+	@Reference
+	private Searcher _searcher;
+
+	@Reference
+	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
 
 	@Reference
 	private UserLocalService _userLocalService;

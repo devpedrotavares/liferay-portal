@@ -75,6 +75,7 @@ public class ScimUserUtil {
 
 		scimUser.setFirstName(scimName.getGivenName());
 
+		scimUser.setId(user.getId());
 		scimUser.setJobTitle(user.getTitle());
 		scimUser.setLastName(scimName.getFamilyName());
 		scimUser.setLocale(locale);
@@ -138,10 +139,6 @@ public class ScimUserUtil {
 	}
 
 	private static AttributeSchema _createAttributeSchema() {
-		AbstractResourceManager.setEndpointURLMap(
-			Collections.singletonMap(
-				SCIMConstants.USER_ENDPOINT, "/o/scim/Users"));
-
 		SCIMUserSchemaExtensionBuilder scimUserSchemaExtensionBuilder =
 			SCIMUserSchemaExtensionBuilder.getInstance();
 

@@ -74,6 +74,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -86,6 +87,7 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 
 import java.net.URL;
@@ -1204,6 +1206,23 @@ public class ImportExportLayoutPageTemplateEntriesTest {
 	}
 
 	@Test
+	public void testImportExportLayoutPageTemplateEntryRules()
+		throws Exception {
+
+		_addTextFragmentEntry();
+
+		File expectedFile = _generateZipFile(
+			"fragment/rules/expected", null,
+			HashMapBuilder.put(
+				"SITE_KEY", _group1.getGroupKey()
+			).build());
+
+		File inputFile = _generateZipFile("fragment/rules/input", null, null);
+
+		_validateImportExport(expectedFile, inputFile);
+	}
+
+	@Test
 	public void testImportExportLayoutPageTemplateEntryWidgetCssClasses()
 		throws Exception {
 
@@ -1420,7 +1439,7 @@ public class ImportExportLayoutPageTemplateEntriesTest {
 		String zipPath = StringUtil.removeSubstring(
 			entryPath, _LAYOUT_PATE_TEMPLATES_PATH);
 
-		String content = StringUtil.read(url.openStream());
+		String content = URLUtil.toString(url);
 
 		content = StringUtil.replace(content, "\"${", "}\"", numberValuesMap);
 		content = StringUtil.replace(content, "£{", "}", stringValuesMap);
@@ -1572,7 +1591,9 @@ public class ImportExportLayoutPageTemplateEntriesTest {
 		String zipPath = StringUtil.removeSubstring(
 			url.getFile(), _LAYOUT_PATE_TEMPLATES_PATH);
 
-		zipWriter.addEntry(zipPath, url.openStream());
+		try (InputStream inputStream = url.openStream()) {
+			zipWriter.addEntry(zipPath, inputStream);
+		}
 
 		String path = FileUtil.getPath(url.getPath());
 

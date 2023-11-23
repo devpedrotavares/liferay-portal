@@ -6,6 +6,7 @@
 package com.liferay.object.service.impl;
 
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.base.ObjectRelationshipServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
@@ -41,7 +42,7 @@ public class ObjectRelationshipServiceImpl
 			String externalReferenceCode, long objectDefinitionId1,
 			long objectDefinitionId2, long parameterObjectFieldId,
 			String deletionType, Map<Locale, String> labelMap, String name,
-			boolean system, String type)
+			boolean system, String type, ObjectField objectField)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
@@ -54,7 +55,7 @@ public class ObjectRelationshipServiceImpl
 		return objectRelationshipLocalService.addObjectRelationship(
 			externalReferenceCode, getUserId(), objectDefinitionId1,
 			objectDefinitionId2, parameterObjectFieldId, deletionType, labelMap,
-			name, system, type);
+			name, system, type, objectField);
 	}
 
 	@Override
@@ -160,7 +161,7 @@ public class ObjectRelationshipServiceImpl
 	public ObjectRelationship updateObjectRelationship(
 			String externalReferenceCode, long objectRelationshipId,
 			long parameterObjectFieldId, String deletionType, boolean edge,
-			Map<Locale, String> labelMap)
+			Map<Locale, String> labelMap, ObjectField objectField)
 		throws PortalException {
 
 		ObjectRelationship objectRelationship =
@@ -173,7 +174,7 @@ public class ObjectRelationshipServiceImpl
 
 		return objectRelationshipLocalService.updateObjectRelationship(
 			externalReferenceCode, objectRelationshipId, parameterObjectFieldId,
-			deletionType, edge, labelMap);
+			deletionType, edge, labelMap, objectField);
 	}
 
 	@Reference(

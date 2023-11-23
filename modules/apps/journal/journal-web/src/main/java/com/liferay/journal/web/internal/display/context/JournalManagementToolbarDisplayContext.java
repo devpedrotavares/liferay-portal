@@ -476,6 +476,20 @@ public class JournalManagementToolbarDisplayContext
 		).setParameter(
 			"folderId", _journalDisplayContext.getFolderId()
 		).setParameter(
+			"highlightedDDMStructureId",
+			() -> {
+				long highlightedDDMStructureId =
+					_journalDisplayContext.getHighlightedDDMStructureId();
+
+				if (FeatureFlagManagerUtil.isEnabled("LPS-194763") &&
+					(highlightedDDMStructureId > 0)) {
+
+					return highlightedDDMStructureId;
+				}
+
+				return null;
+			}
+		).setParameter(
 			"status", _journalDisplayContext.getStatus()
 		).buildString();
 	}
@@ -570,51 +584,53 @@ public class JournalManagementToolbarDisplayContext
 			).buildPortletURL(),
 			getNavigationParam(), getNavigation());
 
-		filterNavigationDropdownItems.add(
-			DropdownItemBuilder.putData(
-				"action", "openDDMStructuresSelector"
-			).setActive(
-				_journalDisplayContext.isNavigationStructure()
-			).setLabel(
-				LanguageUtil.get(httpServletRequest, "structures") +
-					StringPool.TRIPLE_PERIOD
-			).build());
-
-		if (FeatureFlagManagerUtil.isEnabled("LPS-196766")) {
-			filterNavigationDropdownItems.add(
-				DropdownItemBuilder.putData(
-					"action", "openCategoriesSelector"
-				).putData(
-					"redirectURL",
-					PortletURLBuilder.create(
-						getPortletURL()
-					).setParameter(
-						"assetCategoryId", (String)null
-					).buildString()
-				).setActive(
-					ArrayUtil.isNotEmpty(_getAssetCategoryIds())
-				).setLabel(
-					LanguageUtil.get(httpServletRequest, "categories") +
-						StringPool.TRIPLE_PERIOD
-				).build());
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-194763") ||
+			(FeatureFlagManagerUtil.isEnabled("LPS-194763") &&
+			 (_journalDisplayContext.getHighlightedDDMStructureId() <= 0))) {
 
 			filterNavigationDropdownItems.add(
 				DropdownItemBuilder.putData(
-					"action", "openTagsSelector"
-				).putData(
-					"redirectURL",
-					PortletURLBuilder.create(
-						getPortletURL()
-					).setParameter(
-						"assetTagId", (String)null
-					).buildString()
+					"action", "openDDMStructuresSelector"
 				).setActive(
-					ArrayUtil.isNotEmpty(_getAssetTagIds())
+					_journalDisplayContext.isNavigationStructure()
 				).setLabel(
-					LanguageUtil.get(httpServletRequest, "tags") +
+					LanguageUtil.get(httpServletRequest, "structures") +
 						StringPool.TRIPLE_PERIOD
 				).build());
 		}
+
+		filterNavigationDropdownItems.add(
+			DropdownItemBuilder.putData(
+				"action", "openCategoriesSelector"
+			).putData(
+				"redirectURL",
+				PortletURLBuilder.create(
+					getPortletURL()
+				).setParameter(
+					"assetCategoryId", (String)null
+				).buildString()
+			).setActive(
+				ArrayUtil.isNotEmpty(_getAssetCategoryIds())
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "categories") +
+					StringPool.TRIPLE_PERIOD
+			).build());
+		filterNavigationDropdownItems.add(
+			DropdownItemBuilder.putData(
+				"action", "openTagsSelector"
+			).putData(
+				"redirectURL",
+				PortletURLBuilder.create(
+					getPortletURL()
+				).setParameter(
+					"assetTagId", (String)null
+				).buildString()
+			).setActive(
+				ArrayUtil.isNotEmpty(_getAssetTagIds())
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "tags") +
+					StringPool.TRIPLE_PERIOD
+			).build());
 
 		return filterNavigationDropdownItems;
 	}

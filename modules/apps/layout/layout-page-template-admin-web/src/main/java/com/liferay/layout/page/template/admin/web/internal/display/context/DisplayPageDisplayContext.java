@@ -35,8 +35,10 @@ import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.servlet.taglib.ui.BreadcrumbEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Accessor;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -85,34 +87,8 @@ public class DisplayPageDisplayContext {
 			return true;
 		}
 
-		if (layoutPageTemplateEntry.getClassNameId() == 0) {
-			return false;
-		}
-
-		Map<Long, Long[]> classNameIdsMap = _getClassNameIdsMap();
-
-		if (!classNameIdsMap.containsKey(
-				layoutPageTemplateEntry.getClassNameId())) {
-
-			return false;
-		}
-
-		Long[] classTypeIds = classNameIdsMap.get(
-			layoutPageTemplateEntry.getClassNameId());
-
-		if ((layoutPageTemplateEntry.getClassTypeId() == 0) &&
-			ArrayUtil.isEmpty(classTypeIds)) {
-
-			return true;
-		}
-
-		if (!ArrayUtil.contains(
-				classTypeIds, layoutPageTemplateEntry.getClassTypeId())) {
-
-			return false;
-		}
-
-		return true;
+		return _isContentTypeInMap(
+			_getClassNameIdsMap(), layoutPageTemplateEntry);
 	}
 
 	public SearchContainer<?> getDisplayPagesSearchContainer() {
@@ -422,6 +398,17 @@ public class DisplayPageDisplayContext {
 		).buildPortletURL();
 	}
 
+	public boolean isAllowedMappedContentType(
+		LayoutPageTemplateEntry layoutPageTemplateEntry) {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-195263")) {
+			return true;
+		}
+
+		return _isContentTypeInMap(
+			_getAllowedClassNameIdsMap(), layoutPageTemplateEntry);
+	}
+
 	public boolean isSearch() {
 		if (Validator.isNotNull(getKeywords())) {
 			return true;
@@ -430,9 +417,9 @@ public class DisplayPageDisplayContext {
 		return false;
 	}
 
-	private Map<Long, Long[]> _getClassNameIdsMap() {
-		if (_classNameIdsMap != null) {
-			return _classNameIdsMap;
+	private Map<Long, Long[]> _getAllowedClassNameIdsMap() {
+		if (_allowedClassNameIdsMap != null) {
+			return _allowedClassNameIdsMap;
 		}
 
 		Map<Long, Long[]> classNameIdsMap = new HashMap<>();
@@ -460,9 +447,66 @@ public class DisplayPageDisplayContext {
 				classTypeIds);
 		}
 
+		_allowedClassNameIdsMap = classNameIdsMap;
+
+		return _allowedClassNameIdsMap;
+	}
+
+	private Map<Long, Long[]> _getClassNameIdsMap() {
+		if (_classNameIdsMap != null) {
+			return _classNameIdsMap;
+		}
+
+		Map<Long, Long[]> classNameIdsMap = new HashMap<>();
+
+		for (InfoItemClassDetails infoItemClassDetails :
+				_infoItemServiceRegistry.getInfoItemClassDetails(
+					DisplayPageInfoItemCapability.KEY)) {
+
+			classNameIdsMap.put(
+				PortalUtil.getClassNameId(infoItemClassDetails.getClassName()),
+				_getInfoFormVariationIds(infoItemClassDetails));
+		}
+
 		_classNameIdsMap = classNameIdsMap;
 
 		return _classNameIdsMap;
+	}
+
+	private Long[] _getInfoFormVariationIds(
+		InfoItemClassDetails infoItemClassDetails) {
+
+		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFormVariationsProvider.class,
+				infoItemClassDetails.getClassName());
+
+		if (infoItemFormVariationsProvider == null) {
+			return new Long[0];
+		}
+
+		return ListUtil.toArray(
+			ListUtil.fromCollection(
+				infoItemFormVariationsProvider.getInfoItemFormVariations(
+					_themeDisplay.getScopeGroupId())),
+			new Accessor<InfoItemFormVariation, Long>() {
+
+				@Override
+				public Long get(InfoItemFormVariation infoItemFormVariation) {
+					return Long.valueOf(infoItemFormVariation.getKey());
+				}
+
+				@Override
+				public Class<Long> getAttributeClass() {
+					return Long.class;
+				}
+
+				@Override
+				public Class<InfoItemFormVariation> getTypeClass() {
+					return InfoItemFormVariation.class;
+				}
+
+			});
 	}
 
 	private long _getLayoutPageTemplateCollectionId() {
@@ -540,6 +584,32 @@ public class DisplayPageDisplayContext {
 		return null;
 	}
 
+	private boolean _isContentTypeInMap(
+		Map<Long, Long[]> classNameIdsMap,
+		LayoutPageTemplateEntry layoutPageTemplateEntry) {
+
+		if ((layoutPageTemplateEntry.getClassNameId() == 0) ||
+			!classNameIdsMap.containsKey(
+				layoutPageTemplateEntry.getClassNameId())) {
+
+			return false;
+		}
+
+		Long[] classTypeIds = classNameIdsMap.get(
+			layoutPageTemplateEntry.getClassNameId());
+
+		if (((layoutPageTemplateEntry.getClassTypeId() == 0) &&
+			 ArrayUtil.isEmpty(classTypeIds)) ||
+			ArrayUtil.contains(
+				classTypeIds, layoutPageTemplateEntry.getClassTypeId())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private Map<Long, Long[]> _allowedClassNameIdsMap;
 	private Map<Long, Long[]> _classNameIdsMap;
 	private SearchContainer<?> _displayPagesSearchContainer;
 	private final HttpServletRequest _httpServletRequest;

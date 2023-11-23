@@ -61,7 +61,7 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void testCreateGetAPIEndpoint() throws Exception {
 		JSONAssert.assertEquals(
 			JSONUtil.put(
 				"status", "BAD_REQUEST"
@@ -288,19 +288,6 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
 			JSONCompareMode.STRICT);
-
-		JSONObject apiSchemaJSONObject1 = HTTPTestUtil.invokeToJSONObject(
-			JSONUtil.put(
-				"mainObjectDefinitionERC",
-				_objectDefinition.getExternalReferenceCode()
-			).put(
-				"name", RandomTestUtil.randomString()
-			).put(
-				"r_apiApplicationToAPISchemas_c_apiApplicationId",
-				apiApplicationJSONObject1.getLong("id")
-			).toString(),
-			"headless-builder/schemas", Http.Method.POST);
-
 		JSONAssert.assertEquals(
 			JSONUtil.put(
 				"status", "BAD_REQUEST"
@@ -337,6 +324,49 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
 			JSONCompareMode.STRICT);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title",
+				"Path parameter description cannot be set with empty path " +
+					"parameter property."
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "get"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringPool.FORWARD_SLASH +
+						StringUtil.toLowerCase(RandomTestUtil.randomString())
+				).put(
+					"pathParameterDescription", RandomTestUtil.randomString()
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject1.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		JSONObject apiSchemaJSONObject1 = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				"mainObjectDefinitionERC",
+				_objectDefinition.getExternalReferenceCode()
+			).put(
+				"name", RandomTestUtil.randomString()
+			).put(
+				"r_apiApplicationToAPISchemas_c_apiApplicationId",
+				apiApplicationJSONObject1.getLong("id")
+			).toString(),
+			"headless-builder/schemas", Http.Method.POST);
 
 		JSONAssert.assertEquals(
 			JSONUtil.put(
@@ -694,6 +724,212 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
 			JSONCompareMode.STRICT);
+	}
+
+	@Test
+	public void testCreatePostAPIEndpoint() throws Exception {
+		JSONObject apiApplicationJSONObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				"applicationStatus", "published"
+			).put(
+				"baseURL", StringUtil.toLowerCase(RandomTestUtil.randomString())
+			).put(
+				"title", RandomTestUtil.randomString()
+			).toString(),
+			"headless-builder/applications", Http.Method.POST);
+
+		JSONObject apiSchemaJSONObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				"mainObjectDefinitionERC",
+				_objectDefinition.getExternalReferenceCode()
+			).put(
+				"name", RandomTestUtil.randomString()
+			).put(
+				"r_apiApplicationToAPISchemas_c_apiApplicationId",
+				apiApplicationJSONObject.getLong("id")
+			).toString(),
+			"headless-builder/schemas", Http.Method.POST);
+
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title",
+				"Path can have a maximum of 255 alphanumeric characters."
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "post"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringBundler.concat(
+						StringPool.FORWARD_SLASH,
+						StringUtil.toLowerCase(RandomTestUtil.randomString()),
+						StringPool.FORWARD_SLASH,
+						StringUtil.toLowerCase(RandomTestUtil.randomString()),
+						StringPool.COMMA)
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
+						getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.STRICT);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title",
+				"Path parameters are not supported by POST API endpoints."
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "post"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringBundler.concat(
+						StringPool.FORWARD_SLASH,
+						StringUtil.toLowerCase(RandomTestUtil.randomString()),
+						StringPool.FORWARD_SLASH, StringPool.OPEN_CURLY_BRACE,
+						RandomTestUtil.randomString(),
+						StringPool.CLOSE_CURLY_BRACE)
+				).put(
+					"pathParameter", HeadlessBuilderConstants.PATH_PARAMETER_ID
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject.getLong("id")
+				).put(
+					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
+						getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.LENIENT);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title",
+				"Path parameters are not supported by POST API endpoints."
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "post"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringPool.FORWARD_SLASH +
+						StringUtil.toLowerCase(RandomTestUtil.randomString())
+				).put(
+					"pathParameter", HeadlessBuilderConstants.PATH_PARAMETER_ID
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject.getLong("id")
+				).put(
+					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
+						getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.LENIENT);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title",
+				"POST API endpoints retrieve type must be \"singleElement.\""
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "post"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringPool.FORWARD_SLASH +
+						StringUtil.toLowerCase(RandomTestUtil.randomString())
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject.getLong("id")
+				).put(
+					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.LENIENT);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+				apiApplicationJSONObject.get("id")
+			).put(
+				"status", JSONUtil.put("code", 0)
+			).toString(),
+			HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"httpMethod", "post"
+				).put(
+					"name", RandomTestUtil.randomString()
+				).put(
+					"path",
+					StringPool.FORWARD_SLASH +
+						StringUtil.toLowerCase(RandomTestUtil.randomString())
+				).put(
+					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
+					apiApplicationJSONObject.getLong("id")
+				).put(
+					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
+					apiSchemaJSONObject.getLong("id")
+				).put(
+					"retrieveType",
+					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
+						getValue()
+				).put(
+					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				).toString(),
+				"headless-builder/endpoints", Http.Method.POST
+			).toString(),
+			JSONCompareMode.LENIENT);
 	}
 
 	@DeleteAfterTestRun

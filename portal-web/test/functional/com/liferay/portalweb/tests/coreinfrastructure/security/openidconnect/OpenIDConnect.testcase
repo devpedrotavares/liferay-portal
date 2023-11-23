@@ -635,8 +635,7 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-105151 and LPS-139642 TC-9: Users could login with instance-level configured OpenID Connect provider. Blocked by LPS-200899."
-	@ignore = "true"
+	@description = "This is a use case for LPS-105151 and LPS-139642 TC-9: Users could login with instance-level configured OpenID Connect provider."
 	@priority = 5
 	test OpenIDConnectOnInstanceLevelSmoke {
 		property portal.acceptance = "true";
@@ -701,8 +700,7 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LRQA-40911. Users could login and logout using OpenID Connect provider. Blocked by LPS-200899."
-	@ignore = "true"
+	@description = "This is a use case for LRQA-40911. Users could login and logout using OpenID Connect provider."
 	@priority = 5
 	test OpenIDConnectSmoke {
 		property portal.acceptance = "true";
@@ -955,8 +953,7 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-148619. User could log in and log out using Google as OpenID Connect provider, using custom parameters for the connection. Blocked by LPS-200899."
-	@ignore = "true"
+	@description = "This is a use case for LPS-148619. User could log in and log out using Google as OpenID Connect provider, using custom parameters for the connection."
 	@priority = 5
 	test OpenIDConnectWithGoogleCustomParameters {
 		property dummy.socket.proxy.disabled = "true";
@@ -1362,9 +1359,6 @@ definition {
 	@description = "This is a use case for LPS-124898 TC-5: Verify Token Refresh Offset cannot be saved with a value under 30 second. Blocked by LPS-138193."
 	@priority = 5
 	test VerifyTokenRefreshOffsetMinimum {
-		property osgi.module.configuration.file.names = "com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration~default.config";
-		property portal.release = "quarantine";
-		property portal.upstream = "quarantine";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -1372,7 +1366,9 @@ definition {
 
 		OpenIDConnect.setTokenRefreshOffset(expirationTime = 20);
 
-		WaitForConsoleTextPresent(value1 = "Token refresh offset needs to be at least 30 seconds");
+		AssertVisible(
+			key_alertMessage = "Token refresh offset is less than 30 seconds",
+			locator1 = "Message#ERROR_ENTER_ANY");
 
 		AssertTextEquals(
 			locator1 = "OpenIDConnect#TOKEN_REFRESH_OFFSET",

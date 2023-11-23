@@ -2,6 +2,7 @@
 definition {
 
 	property ci.retries.disabled = "true";
+	property custom.properties = "feature.flag.LPS-180328=true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.component.names = "Echo Accessibility";
@@ -18,6 +19,99 @@ definition {
 
 		task ("Add a site") {
 			HeadlessSite.addSite(siteName = "Test Site Name");
+		}
+	}
+
+	@description = "This is a test for LPS-182060. Allow Automatic Unlocking Process can be enabled and disabled  via keyboard."
+	@priority = 4
+	test EnableAllowAutomaticUnlockingProcessUnderInstanceSettingsViaKeyboard {
+		task ("Given the configuration of locked pages in instance settings") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "Instance Settings");
+
+			SystemSettings.gotoConfiguration(
+				configurationCategory = "Pages",
+				configurationName = "Locked Pages",
+				configurationScope = "Virtual Instance Scope");
+		}
+
+		task ("When focusing on the Allow Automatic Unlocking Process toggle via keyboard") {
+			KeyPress(
+				key_configurationName = "Locked Pages",
+				key_configurationScope = "Virtual Instance Scope",
+				locator1 = "SystemSettings#SCOPED_CONFIGURATION_NAME",
+				value1 = "\TAB");
+
+			AssertElementFocused(
+				key_toggleSwitchLabel = "Allow Automatic Unlocking Process",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+		}
+
+		task ("Then it is possible to switch the toggle via keyboard") {
+			KeyPress(
+				key_toggleSwitchLabel = "Allow Automatic Unlocking Process",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH",
+				value1 = "\SPACE");
+
+			AssertNotChecked.assertNotCheckedNotVisible(
+				key_toggleSwitchLabel = "Allow Automatic Unlocking Process",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+			KeyPress(
+				key_toggleSwitchLabel = "Allow Automatic Unlocking Process",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH",
+				value1 = "\SPACE");
+
+			AssertChecked.assertCheckedNotVisible(
+				key_toggleSwitchLabel = "Allow Automatic Unlocking Process",
+				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+		}
+
+		task ("When filling in the Time Without Autosave field") {
+			Type(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = 7);
+		}
+
+		task ("Then it is possible to save changes via keyboard") {
+			KeyPress(
+				key_fieldLabel = "Time Without Autosave",
+				locator1 = "TextInput#GENERIC_NUMBER_INPUT",
+				value1 = "\TAB");
+
+			AssertElementFocused(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+
+			KeyPress(
+				key_text = "Save",
+				locator1 = "Button#ANY",
+				value1 = "\ENTER");
+
+			Alert.viewSuccessMessage();
+		}
+
+		task ("When focusing on the Cancel button via keyboard") {
+			KeyPress(
+				key_text = "Save",
+				locator1 = "Button#ANY",
+				value1 = "\TAB");
+
+			AssertElementFocused(
+				key_text = "Cancel",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then it is possible to return to the Instance Settings page via keyboard") {
+			KeyPress(
+				key_text = "Cancel",
+				locator1 = "Button#ANY",
+				value1 = "\ENTER");
+
+			ControlMenu.viewHeaderTitle(headerTitle = "Instance Settings");
 		}
 	}
 
@@ -143,6 +237,55 @@ definition {
 				index = 2,
 				key_tableEntry = "Test Page Name",
 				locator1 = "LexiconTable#TABLE_ENTRY_TITLE_INDEXED");
+		}
+	}
+
+	@description = "This is a test for LPS-194499. Using keyboard navigation, the name of the Utility page in the Locked Pages list is clickable and opens the Utility page in a new tab."
+	@priority = 4
+	test NavigateToLockedPageInListViaKeyboard {
+		var siteName = selenium.getText("Home#SITE_NAME");
+		var baseURL = PropsUtil.get("portal.url");
+
+		task ("Given a locked utility page") {
+			PagesAdmin.openPagesAdmin(siteURLKey = "Test Site Name");
+
+			Navigator.gotoNavTab(navTab = "Utility Pages");
+
+			PagesAdmin.addUtilityPage(pageName = "404 Error Utility Page");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Button");
+		}
+
+		task ("When navigating to the locked pages admin page") {
+			Open.openInTheNewTab(value1 = "${baseURL}/group/test-site-name/~/control_panel/manage/-/style_books/style_books");
+
+			ProductMenu.gotoPortlet(
+				category = "Configuration",
+				portlet = "Locked Pages");
+		}
+
+		task ("Then can click on the name link of the blocked page just using the keyboard") {
+			KeyPress(
+				key_tableEntry = "404 Error Utility Page",
+				locator1 = "LexiconTable#TABLE_ENTRY_CHECKBOX",
+				value1 = "\TAB");
+
+			AssertElementFocused(
+				key_columnName = "name",
+				key_tableEntry = "404 Error Utility Page",
+				locator1 = "LexiconTable#TABLE_ENTRY_COLUMN_LINK");
+
+			KeyPress(
+				key_columnName = "name",
+				key_tableEntry = "404 Error Utility Page",
+				locator1 = "LexiconTable#TABLE_ENTRY_COLUMN_LINK",
+				value1 = "\ENTER");
+
+			SelectWindow(value1 = "title=404 Error Utility Page - Test Site Name - ${siteName}");
+
+			ControlMenu.viewHeaderDraftTitle(headerTitle = "404 Error Utility Page");
 		}
 	}
 

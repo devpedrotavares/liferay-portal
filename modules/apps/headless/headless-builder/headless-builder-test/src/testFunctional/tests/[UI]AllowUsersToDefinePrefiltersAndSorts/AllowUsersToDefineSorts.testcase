@@ -32,7 +32,7 @@ definition {
 			}
 		}
 
-		task ("And Given ApiApplication with an endpoint of scope Company created and published") {
+		task ("And Given APIApplication with an endpoint of scope Company created and published") {
 			ApplicationAPI.createAPIApplication(
 				baseURL = "my-app",
 				endpointName = "testendpoint",
@@ -202,6 +202,24 @@ definition {
 				locator1 = "OpenAPI#RESPONSE_BODY",
 				method = "getTestendpointPage",
 				value1 = "\"items\": [     {       \"student_age\": -1     },     {       \"student_age\": 0     },     {       \"student_age\": 25     },     {       \"student_age\": 101     }   ]");
+		}
+	}
+
+	@priority = 3
+	test SortingIsLimitedByODataCharacterLimit {
+		task ("When setting the Sorting with 10001 characters") {
+			APIBuilderUI.addAndPublishEndpointConfiguration(
+				editValue = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Duis auctor orci nec justo ullamcorper, at fermentum risus accumsan. Nullam convallis risus id lectus congue, vitae tincidunt orci tristique. Nam quis elit eu libero dapibus lobortis. Suspendisse potenti. Curabitur placerat velit vitae arcu tempor, non vestibulum lectus auctor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia CuraLorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Duis auctor orci nec justo ullamcorper, at fermentum risus accumsan. Nullam convallis risus id lectus congue, vitae tincidunt orci tristique. Nam quis elit eu libero dapibus lobortis. Suspendisse potenti. Curabitur placerat velit vitae arcu tempor, non vestibulum lectus auctor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia CuraLorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Duis auctor orci nec justo ullamcorper, at fermentumqd",
+				entity = "Endpoints",
+				fieldName = "sort",
+				name = "testendpoint",
+				title = "My-app");
+		}
+
+		task ("Then error message of limitation to 10000 characters is present And Then Sorting setup is not saved") {
+			AssertElementPresent(
+				key_alertMessage = '''Object entry value exceeds the maximum length of 1000 characters for object field "oDataSort"''',
+				locator1 = "Message#ERROR_ENTER_ANY");
 		}
 	}
 

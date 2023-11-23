@@ -454,6 +454,8 @@ definition {
 	@description = "This is a test for LPS-184799. The page creator can map the Link to Page field in a fragment from a content page."
 	@priority = 5
 	test MapLinkToPageFieldToFragment {
+		property portal.acceptance = "true";
+
 		task ("Given a page designer has content pages and a web content with the Link to Page field") {
 			JSONLayout.addPublicLayout(
 				groupName = ${randomSiteName},
@@ -1376,6 +1378,8 @@ definition {
 	@description = "This is a test for LPS-184193. Allow selecting specific display page in the page editor for web content."
 	@priority = 5
 	test MapSpecificDisplayPageForWebContentArticle {
+		property portal.acceptance = "true";
+
 		task ("Given a page designer has a display page template for Web Content Article") {
 			JSONLayoutpagetemplate.addDisplayPageTemplateEntry(
 				contentType = "Web Content Article",
@@ -2779,7 +2783,11 @@ definition {
 		}
 
 		task ("When the page creator hovers on the content page item") {
-			MouseOver(
+			MouseOver.javaScriptFocus(
+				key_nodeName = "Content Page Name",
+				locator1 = "Treeview#NODE_ITEM");
+
+			MouseOver.javaScriptFocus(
 				key_nodeName = "Content Page Name",
 				locator1 = "Treeview#NODE_ITEM");
 		}
@@ -2799,7 +2807,11 @@ definition {
 
 			Portlet.expandTree();
 
-			MouseOver(
+			MouseOver.javaScriptFocus(
+				key_nodeName = "Home",
+				locator1 = "Treeview#NODE_ITEM");
+
+			MouseOver.javaScriptFocus(
 				key_nodeName = "Home",
 				locator1 = "Treeview#NODE_ITEM");
 		}

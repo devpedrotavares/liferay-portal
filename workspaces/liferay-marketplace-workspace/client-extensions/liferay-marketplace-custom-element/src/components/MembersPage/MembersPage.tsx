@@ -6,9 +6,9 @@
 import ClayIcon from '@clayui/icon';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useMemo, useState} from 'react';
-import {useParams} from 'react-router-dom';
 
 import {useMarketplaceContext} from '../../context/MarketplaceContext';
+import {Liferay} from '../../liferay/liferay';
 import {
 	MemberProps,
 	adminRoles,
@@ -68,7 +68,7 @@ export function MembersPage({
 	const [visible, setVisible] = useState<boolean>(false);
 	const [loading] = useState<boolean>(false);
 	const [selectedMember, setSelectedMember] = useState<MemberProps>();
-	const {accountId} = useParams();
+	const {accountId} = Liferay.CommerceContext.account || {};
 
 	const marketplaceContext = useMarketplaceContext();
 

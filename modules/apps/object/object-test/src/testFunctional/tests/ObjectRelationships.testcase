@@ -241,9 +241,7 @@ definition {
 
 		ObjectPortlet.selectCustomObject(label = "Custom Object 290");
 
-		CreateObject.selectTitleField(
-			currentOption = "ID",
-			fieldLabel = "Custom Field");
+		CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 		CreateObject.saveObject();
 
@@ -420,9 +418,7 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object 163661");
 
-			CreateObject.selectTitleField(
-				currentOption = "ID",
-				fieldLabel = "Custom Field");
+			CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 			CreateObject.saveObject();
 
@@ -876,9 +872,7 @@ definition {
 
 		ObjectPortlet.selectCustomObject(label = "Custom Object 149249");
 
-		CreateObject.selectTitleField(
-			currentOption = "ID",
-			fieldLabel = "Custom Field");
+		CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 		CreateObject.saveObject();
 
@@ -1009,9 +1003,7 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object 1");
 
-			CreateObject.selectTitleField(
-				currentOption = "ID",
-				fieldLabel = "Custom Field");
+			CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 			CreateObject.saveObject();
 
@@ -1019,9 +1011,7 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object 2");
 
-			CreateObject.selectTitleField(
-				currentOption = "ID",
-				fieldLabel = "Custom Field");
+			CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 			CreateObject.saveObject();
 		}
@@ -1094,9 +1084,7 @@ definition {
 
 				ObjectPortlet.selectCustomObject(label = "Custom Object 156677");
 
-				CreateObject.selectTitleField(
-					currentOption = "ID",
-					fieldLabel = "Custom Field");
+				CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 				CreateObject.saveObject();
 
@@ -1250,40 +1238,6 @@ definition {
 				key_relationHierarchy = "Child",
 				key_relationType = "manyToMany",
 				locator1 = "ObjectRelationships#OPTIONS_TAB_RELATIONSHIPS_TYPE_AND_HIERARCHY");
-		}
-	}
-
-	@description = "LPS-146754 - Verify that it's not possible for a Custom Object to create a Many-to-Many relationship with itself"
-	@priority = 4
-	test CannotCreateManytoManyRelationshipWithItself {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
-		task ("Create Custom Object") {
-			ObjectAdmin.addObjectViaAPI(
-				labelName = "Custom Object 290",
-				objectName = "CustomObject290",
-				pluralLabelName = "Custom Objects 290");
-
-			ObjectAdmin.openObjectAdmin();
-
-			ObjectPortlet.selectCustomObject(label = "Custom Object 290");
-		}
-
-		task ("Go to Relationships tab and click to create a Many-to-Many relationship") {
-			ObjectAdmin.gotoRelationshipsTab();
-
-			LexiconEntry.gotoAdd();
-
-			ObjectField.selectType(fieldType = "Many to Many");
-		}
-
-		task ("Assert that the Custom Object created is not present") {
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			AssertElementNotPresent(
-				key_columnOption = "Custom Objects 290",
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
 		}
 	}
 
@@ -1520,9 +1474,7 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object LPS163658");
 
-			CreateObject.selectTitleField(
-				currentOption = "ID",
-				fieldLabel = "Custom Field");
+			CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 			CreateObject.saveObject();
 
@@ -1566,64 +1518,6 @@ definition {
 
 		task ("Then: The entry cannot be related to itself") {
 			CreateObject.assertRelationshipNotPresent();
-		}
-	}
-
-	@description = "LPS-155537 - Verify that it's not possible to see the parameter when adding relationships that don't require it"
-	@priority = 3
-	test CannotSeeParameterWhenNotRequiredByRelationship {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
-		task ("Create a custom object, and a relationship non-require by API") {
-			ObjectAdmin.addObjectViaAPI(
-				labelName = "Custom Object",
-				objectName = "CustomObject",
-				pluralLabelName = "Custom Objects");
-
-			ObjectAdmin.addObjectFieldViaAPI(
-				fieldBusinessType = "Text",
-				fieldLabelName = "Custom Field",
-				fieldName = "customField",
-				fieldType = "String",
-				isRequired = "false",
-				objectName = "CustomObject");
-
-			ObjectAdmin.addObjectRelationshipViaAPI(
-				objectName_1 = "CustomObject",
-				objectName_2 = "AccountEntry",
-				relationshipLabel = "Non-require relationship",
-				relationshipName = "Non-requirerelationship",
-				relationshipType = "oneToMany");
-
-			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject");
-		}
-
-		task ("Verify it's not possible to see the parameter when adding relationships that don't require it") {
-			ObjectAdmin.openObjectAdmin();
-
-			ObjectPortlet.selectCustomObject(label = "Postal Address");
-
-			ObjectAdmin.gotoRelationshipsTab();
-
-			LexiconEntry.gotoAdd();
-
-			ObjectAdmin.selectDropdownItem(
-				currentOption = "Select an option",
-				labelName = "Type",
-				optionName = "One to Many");
-
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			Click(
-				key_columnOption = "Custom Object",
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
-
-			Click(locator1 = "ObjectRelationships#SELECT_PARAMETER_FORM");
-
-			AssertElementNotPresent(
-				key_parameterOption = "Non-require relationship",
-				locator1 = "ObjectRelationships#SELECT_PARAMETER_OPTION");
 		}
 	}
 
@@ -1704,8 +1598,10 @@ definition {
 		}
 
 		task ("Then the fields Name, Type and Object can not be updated") {
+			AssertElementPresent(locator1 = "CreateObject#DISABLED_OBJECT_NAME");
+
 			AssertElementPresent(
-				key_relation = "relationship",
+				key_relation = "Relationship",
 				locator1 = "ObjectRelationships#OPTIONS_TAB_RELATIONSHIPS_DISABLED_NAME_OR_TYPE");
 
 			AssertElementPresent(
@@ -2042,17 +1938,19 @@ definition {
 				key_type = "Relationships",
 				locator1 = "ObjectAdmin#TAB_TYPE");
 
-			Click(locator1 = "ObjectAdmin#LAYOUT_ENTRY_CHOOSE_OPTION");
+			Click(
+				key_labelName = "Relationship",
+				locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
 		}
 
 		task ("Assert that a label indicating the Parent and Child relationships are displayed") {
 			AssertElementPresent(
-				key_relationType = "Parent",
-				locator1 = "ObjectRelationships#OPTIONS_TAB_RELATIONSHIPS");
+				key_optionName = "Parent",
+				locator1 = "ObjectAdmin#CLAY_GENERIC_DROPDOWN_ITEM");
 
 			AssertElementPresent(
-				key_relationType = "Child",
-				locator1 = "ObjectRelationships#OPTIONS_TAB_RELATIONSHIPS");
+				key_optionName = "Child",
+				locator1 = "ObjectAdmin#CLAY_GENERIC_DROPDOWN_ITEM");
 		}
 	}
 
@@ -2159,9 +2057,7 @@ definition {
 
 			ObjectPortlet.selectCustomObject(label = "Custom Object 163657");
 
-			CreateObject.selectTitleField(
-				currentOption = "ID",
-				fieldLabel = "Custom Field");
+			CreateObject.selectTitleField(fieldLabel = "Custom Field");
 
 			CreateObject.saveObject();
 
@@ -2228,9 +2124,7 @@ definition {
 
 		ObjectPortlet.selectCustomObject(label = "User");
 
-		CreateObject.selectTitleField(
-			currentOption = "First Name",
-			fieldLabel = "Screen Name");
+		CreateObject.selectTitleField(fieldLabel = "Screen Name");
 
 		CreateObject.saveObject();
 
@@ -2238,10 +2132,10 @@ definition {
 
 		ObjectPortlet.selectCustomObject(label = "User");
 
-		AssertElementPresent(
-			key_currentOption = "Screen Name",
+		AssertTextEquals(
 			key_labelName = "Entry Title Field",
-			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON",
+			value1 = "Screen Name");
 	}
 
 	@description = "LPS-193697 - Verify the user can switch the relationship order between the parent and child object definitions"
@@ -2292,17 +2186,13 @@ definition {
 				locator1 = "ObjectAdmin#LABEL_OBJECT_RELATIONSHIP",
 				value1 = "Relationship");
 
-			Click(locator1 = "ObjectAdmin#RELATIONSHIPS_TYPE_FORM");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Type",
+				optionName = "One to Many");
 
-			Click(
-				key_type = "One to Many",
-				locator1 = "ObjectAdmin#SELECT_RELATIONSHIPS_TYPE_OPTION");
-
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			Click(
-				key_columnOption = "Custom Object 697",
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Many Records Of",
+				optionName = "Custom Object 697");
 		}
 
 		task ("When the user clicks on the switch button") {
@@ -2409,15 +2299,12 @@ definition {
 			LexiconEntry.gotoAdd();
 
 			ObjectAdmin.selectDropdownItem(
-				currentOption = "Select an option",
 				labelName = "Type",
 				optionName = "Many to Many");
 
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			Click(
-				key_columnOption = "Custom Object 195296",
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Many Records Of",
+				optionName = "Custom Object 195296");
 		}
 
 		task ("Then the switch button is no longer present") {

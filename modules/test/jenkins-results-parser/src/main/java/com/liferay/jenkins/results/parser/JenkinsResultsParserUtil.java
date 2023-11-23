@@ -3122,15 +3122,23 @@ public class JenkinsResultsParserUtil {
 			jenkinsMasters.size(), true);
 
 		ParallelExecutor<List<JenkinsSlave>> parallelExecutor =
-			new ParallelExecutor<>(callables, threadPoolExecutor);
+			new ParallelExecutor<>(
+				callables, threadPoolExecutor, "getReachableJenkinsSlaves");
 
-		List<JenkinsSlave> onlineJenkinsSlaves = concatenate(
-			parallelExecutor.execute(), false);
+		List<JenkinsSlave> onlineJenkinsSlaves;
 
-		Collections.sort(onlineJenkinsSlaves);
+		try {
+			onlineJenkinsSlaves = concatenate(
+				parallelExecutor.execute(), false);
 
-		if (targetSlaveCount == null) {
-			targetSlaveCount = onlineJenkinsSlaves.size();
+			Collections.sort(onlineJenkinsSlaves);
+
+			if (targetSlaveCount == null) {
+				targetSlaveCount = onlineJenkinsSlaves.size();
+			}
+		}
+		catch (TimeoutException timeoutException) {
+			throw new RuntimeException(timeoutException);
 		}
 
 		List<JenkinsSlave> reachableJenkinsSlaves = new ArrayList<>(
@@ -6552,7 +6560,7 @@ public class JenkinsResultsParserUtil {
 
 	private static final long _MILLIS_SECOND = 1000L;
 
-	private static final int _MILLIS_TIMEOUT_DEFAULT = 0;
+	private static final int _MILLIS_TIMEOUT_DEFAULT = 1000 * 60 * 5;
 
 	private static final String _PREFIX_TO_STRING_CACHE = "toStringCache-";
 

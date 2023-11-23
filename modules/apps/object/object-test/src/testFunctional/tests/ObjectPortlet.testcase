@@ -333,7 +333,9 @@ definition {
 
 		ObjectAdmin.goToDetailsTab();
 
-		CreateObject.selectPanelCategoryKey(panelCategoryKey = "Control Panel > Object");
+		ObjectAdmin.selectDropdownItem(
+			labelName = "Panel Link",
+			optionName = "Object");
 
 		CreateObject.saveObject();
 
@@ -511,7 +513,9 @@ definition {
 
 		ObjectAdmin.goToDetailsTab();
 
-		CreateObject.selectPanelCategoryKey(panelCategoryKey = "Control Panel > Object");
+		ObjectAdmin.selectDropdownItem(
+			labelName = "Panel Link",
+			optionName = "Object");
 
 		CreateObject.saveObject();
 
@@ -519,7 +523,9 @@ definition {
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject239");
 
-		ObjectAdmin.addObjectPicklistFieldEntryViaUI(picklistOption = "Item Test 1");
+		ObjectAdmin.addObjectPicklistFieldEntryViaUI(
+			labelName = "Field Picklist",
+			picklistOption = "Item Test 1");
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject239");
 
@@ -1138,26 +1144,28 @@ definition {
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject254");
 
-		ObjectAdmin.addObjectPicklistFieldEntryViaUI(picklistOption = "Item Test 1");
+		ObjectAdmin.addObjectPicklistFieldEntryViaUI(
+			labelName = "Field Picklist",
+			picklistOption = "Item Test 1");
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject254");
 
 		ObjectPortlet.viewEntryDetails(entry = "Item Test 1");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Item Test 1",
 			labelName = "Field Picklist",
 			optionName = "Item Test 2");
 
-		AssertElementPresent(
-			key_currentOption = "Item Test 2",
+		AssertTextEquals(
 			key_labelName = "Field Picklist",
-			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON",
+			value1 = "Item Test 2");
 
-		AssertElementNotPresent(
-			key_currentOption = "Item Test 1",
-			key_labelName = "Field Picklist",
-			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+		PortletEntry.save();
+
+		ObjectAdmin.goToCustomObject(objectName = "CustomObject254");
+
+		ObjectPortlet.viewEntry(entry = "Item Test 2");
 	}
 
 	@description = "LPS-135396 - Verify it is possible to edit a String entry on layout"
@@ -1678,9 +1686,7 @@ definition {
 
 		ObjectPortlet.selectCustomObject(label = "Custom Object 264");
 
-		CreateObject.selectTitleField(
-			currentOption = "ID",
-			fieldLabel = "Field");
+		CreateObject.selectTitleField(fieldLabel = "Field");
 
 		CreateObject.saveObject();
 
@@ -2107,16 +2113,18 @@ definition {
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject273");
 
-		ObjectAdmin.addObjectPicklistFieldEntryViaUI(picklistOption = "Item Test 1");
+		ObjectAdmin.addObjectPicklistFieldEntryViaUI(
+			labelName = "Field Picklist",
+			picklistOption = "Item Test 1");
 
 		ObjectAdmin.goToCustomObject(objectName = "CustomObject273");
 
 		ObjectPortlet.viewEntryDetails(entry = "Item Test 1");
 
-		AssertElementPresent(
-			key_currentOption = "Item Test 1",
+		AssertTextEquals(
 			key_labelName = "Field Picklist",
-			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON",
+			value1 = "Item Test 1");
 	}
 
 	@description = "LPS-135396 - Verify it is possible to view a String entry and label on layout"

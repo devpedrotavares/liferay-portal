@@ -20,9 +20,10 @@ import {
 	fdsItem,
 	formatActionURL,
 } from '../../utils/fds';
+import statusDataRenderer from '../FDSPropsTransformer/FDSDataRenderers/StatusDataRenderer';
+import LabelRenderer from '../LabelRenderer';
 import ModalObjectFieldDeletionNotAllowed from '../ModalObjectFieldDeletionNotAllowed';
 import objectDefinitionModifiedDateDataRenderer from './FDSDataRenderers/ObjectDefinitionModifiedDateDataRenderer';
-import objectDefinitionStatusDataRenderer from './FDSDataRenderers/ObjectDefinitionStatusDataRenderer';
 import objectDefinitionSystemDataRenderer from './FDSDataRenderers/ObjectDefinitionSystemDataRenderer';
 import {ModalAddObjectDefinition} from './ModalAddObjectDefinition';
 import {ModalAddObjectFolder} from './ModalAddObjectFolder';
@@ -137,19 +138,16 @@ export default function ViewObjectDefinitions({
 		itemData,
 		value,
 	}: fdsItem<ObjectDefinition>) {
-		const handleEditObjectDefinition = () => {
-			window.location.href = formatActionURL(
-				editObjectDefinitionURL,
-				itemData.id
-			);
-		};
-
 		return (
-			<div className="table-list-title">
-				<a href="#" onClick={handleEditObjectDefinition}>
-					{value}
-				</a>
-			</div>
+			<LabelRenderer
+				onClick={() => {
+					window.location.href = formatActionURL(
+						editObjectDefinitionURL,
+						itemData.id
+					);
+				}}
+				value={value}
+			/>
 		);
 	}
 	const getURL = () => {
@@ -173,8 +171,8 @@ export default function ViewObjectDefinitions({
 		customDataRenderers: {
 			objectDefinitionLabelDataRenderer,
 			objectDefinitionModifiedDateDataRenderer,
-			objectDefinitionStatusDataRenderer,
 			objectDefinitionSystemDataRenderer,
+			statusDataRenderer,
 		},
 		emptyState: {
 			description: Liferay.Language.get(
@@ -283,8 +281,7 @@ export default function ViewObjectDefinitions({
 							sortable: true,
 						},
 						{
-							contentRenderer:
-								'objectDefinitionStatusDataRenderer',
+							contentRenderer: 'statusDataRenderer',
 							expand: false,
 							fieldName: 'status',
 							label: Liferay.Language.get('status'),

@@ -1,5 +1,21 @@
 [
 	{
+		"from": "CookieUtil.get(HttpServletRequest, String)",
+		"issueKey": "LPS-159681",
+		"newImports": [
+			"com.liferay.portal.kernel.cookies.CookiesManagerUtil"
+		],
+		"to": "CookiesManagerUtil.getCookieValue(param#1#, param#0#)"
+	},
+	{
+		"from": "CookieUtil.get(HttpServletRequest, String, boolean)",
+		"issueKey": "LPS-159681",
+		"newImports": [
+			"com.liferay.portal.kernel.cookies.CookiesManagerUtil"
+		],
+		"to": "CookiesManagerUtil.getCookieValue(param#1#, param#0#, param#2#)"
+	},
+	{
 		"classNames": [
 			"JournalFolderLocalService",
 			"JournalFolderLocalServiceUtil"
@@ -203,7 +219,9 @@
 	{
 		"from": "DLUtil.getGroupIds(ThemeDisplay)",
 		"issueKey": "LPS-192396",
-		"newImports": "com.liferay.portal.kernel.util.PortalUtil",
+		"newImports": [
+			"com.liferay.portal.kernel.util.PortalUtil"
+		],
 		"to": "PortalUtil.getCurrentAndAncestorSiteGroupIds(param#0#.getScopeGroupId())",
 		"validExtensions": [
 			"java",
@@ -376,6 +394,14 @@
 			"com.liferay.portal.kernel.util.PortalUtil"
 		],
 		"to": "serveImage(PortalUtil.getHttpServletRequest(param#0#), PortalUtil.getHttpServletResponse(param#1#))"
+	},
+	{
+		"classNames": [
+			"AssetCategoryLocalService",
+			"AssetCategoryLocalServiceUtil"
+		],
+		"from": "fetchAssetCategoryByExternalReferenceCode(long, String)",
+		"issueKey": "LPS-196608"
 	},
 	{
 		"classNames": [

@@ -18,6 +18,11 @@ import {spritemap} from 'shared/util/constants';
 import {useDispatch} from 'react-redux';
 import {useHistory} from 'react-router-dom';
 
+export enum ReportType {
+	CSV = 'CSV',
+	PDF = 'PDF'
+}
+
 interface IDownloadReportModal {
 	alertMessage: string;
 	descriptionMessage: string;
@@ -28,7 +33,7 @@ interface IDownloadReportModal {
 	onSubmit: (dateRange?: MomentDateRange) => void;
 	requiredDateRange?: boolean;
 	showDateRange?: boolean;
-	type?: 'CSV' | 'PDF';
+	type?: ReportType;
 }
 
 export const DownloadReportModal: React.FC<IDownloadReportModal> = ({
@@ -185,8 +190,9 @@ export const DownloadReportModal: React.FC<IDownloadReportModal> = ({
 									className='p-2'
 									date={dateRange}
 									displayLabel={false}
-									maxDate={moment().subtract(0, 'd')}
-									minDate={moment().subtract(1, 'years')}
+									maxDate={moment().subtract(1, 'days')}
+									maxRange={365}
+									minDate={moment().subtract(10, 'years')}
 									onSelect={({
 										end,
 										start
@@ -208,6 +214,7 @@ export const DownloadReportModal: React.FC<IDownloadReportModal> = ({
 					last={
 						<ClayButton.Group spaced>
 							<ClayButton
+								data-testid='cancel'
 								displayType='secondary'
 								onClick={onClose}
 							>
@@ -215,6 +222,7 @@ export const DownloadReportModal: React.FC<IDownloadReportModal> = ({
 							</ClayButton>
 
 							<ClayButton
+								data-testid='submit'
 								disabled={
 									(requiredDateRange &&
 										!dateRange.end &&

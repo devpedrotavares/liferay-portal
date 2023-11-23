@@ -76,6 +76,7 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -88,6 +89,7 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import java.net.URL;
 
@@ -1139,10 +1141,9 @@ public class PageTemplatesImporterTest {
 		String zipPath = StringUtil.removeSubstring(
 			entryPath, _LAYOUT_PATE_TEMPLATES_PATH);
 
-		String content = StringUtil.read(url.openStream());
-
 		zipWriter.addEntry(
-			zipPath, StringUtil.replace(content, "${", "}", valuesMap));
+			zipPath,
+			StringUtil.replace(URLUtil.toString(url), "${", "}", valuesMap));
 	}
 
 	private void
@@ -1428,7 +1429,9 @@ public class PageTemplatesImporterTest {
 		String zipPath = StringUtil.removeSubstring(
 			url.getFile(), _LAYOUT_PATE_TEMPLATES_PATH);
 
-		zipWriter.addEntry(zipPath, url.openStream());
+		try (InputStream inputStream = url.openStream()) {
+			zipWriter.addEntry(zipPath, inputStream);
+		}
 
 		String path = FileUtil.getPath(url.getPath());
 

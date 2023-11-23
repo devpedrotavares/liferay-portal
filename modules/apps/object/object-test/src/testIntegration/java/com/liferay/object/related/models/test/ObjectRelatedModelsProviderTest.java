@@ -501,7 +501,7 @@ public class ObjectRelatedModelsProviderTest {
 				objectDefinition1.getObjectDefinitionId(),
 				objectDefinition2.getObjectDefinitionId(), 0, deletionType,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				StringUtil.randomId(), false, relationshipType);
+				StringUtil.randomId(), false, relationshipType, null);
 
 		if (!StringUtil.equals(
 				relationshipType,
@@ -572,9 +572,9 @@ public class ObjectRelatedModelsProviderTest {
 
 		Assert.assertNotNull(user);
 
-		String originalName = PrincipalThreadLocal.getName();
 		PermissionChecker originalPermissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
+		String originalName = PrincipalThreadLocal.getName();
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setWithSafeCloseable(companyId)) {

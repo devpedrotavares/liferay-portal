@@ -4,7 +4,7 @@
  */
 
 import {useEffect, useMemo, useState} from 'react';
-import {Outlet, useParams} from 'react-router-dom';
+import {Outlet} from 'react-router-dom';
 import useSWR from 'swr';
 
 import {DashboardNavigation} from '../../components/DashboardNavigation/DashboardNavigation';
@@ -12,6 +12,7 @@ import {AppProps} from '../../components/DashboardTable/DashboardTable';
 import HeadlessAdminUserImpl from '../../services/rest/HeadlessAdminUser';
 
 import './PublishedAppsDashboard.scss';
+import {Liferay} from '../../liferay/liferay';
 import {
 	getAccountInfoFromCommerce,
 	getAccounts,
@@ -60,7 +61,7 @@ const PublishedAppsDashboardOutlet = () => {
 	const [showDashboardNavigation, setShowDashboardNavigation] = useState(
 		true
 	);
-	const {accountId} = useParams();
+	const {accountId} = Liferay.CommerceContext.account || {};
 	const [page, setPage] = useState(1);
 
 	const {data: accounts = []} = useSWR('/published/accounts', async () => {
@@ -119,6 +120,13 @@ const PublishedAppsDashboardOutlet = () => {
 			getAppListProductIds(products)
 		);
 
+		const productSpecificationsMap = appListProductSpecifications.map(
+			(productSpecification, index) => ({
+				productId: products[index].id,
+				specification: productSpecification,
+			})
+		);
+
 		const producsFiltered = products
 			.filter((product) => {
 				const marketPlaceChannel = !!product.productChannels.find(
@@ -135,7 +143,7 @@ const PublishedAppsDashboardOutlet = () => {
 					product.catalogId === catalogId
 				);
 			})
-			.map((product, index) => ({
+			.map((product) => ({
 				attachments: product.attachments,
 				catalogId: product.catalogId,
 				externalReferenceCode: product.externalReferenceCode,
@@ -147,11 +155,15 @@ const PublishedAppsDashboardOutlet = () => {
 				),
 				thumbnail: product.thumbnail,
 				type: getProductTypeFromSpecifications(
-					appListProductSpecifications[index]
+					productSpecificationsMap.find(
+						({productId}) => productId === product.id
+					)?.specification ?? []
 				),
 				updatedDate: formatDate(product.modifiedDate),
 				version: getProductVersionFromSpecifications(
-					appListProductSpecifications[index]
+					productSpecificationsMap.find(
+						({productId}) => productId === product.id
+					)?.specification ?? []
 				),
 			}));
 

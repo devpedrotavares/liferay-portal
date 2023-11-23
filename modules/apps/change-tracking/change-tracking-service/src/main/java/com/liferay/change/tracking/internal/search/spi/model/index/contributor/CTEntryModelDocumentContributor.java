@@ -12,15 +12,25 @@ import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.change.tracking.spi.display.CTDisplayRenderer;
 import com.liferay.change.tracking.spi.display.CTDisplayRendererRegistry;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.model.JournalArticleLocalization;
+import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.change.tracking.sql.CTSQLModeThreadLocal;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -98,6 +108,69 @@ public class CTEntryModelDocumentContributor
 		return map;
 	}
 
+	private <T extends BaseModel<T>> Group _getGroup(
+		long ctCollectionId, T model) {
+
+		long groupId = 0;
+
+		if (model instanceof GroupedModel) {
+			GroupedModel groupedModel = (GroupedModel)model;
+
+			groupId = groupedModel.getGroupId();
+		}
+		else if (model instanceof JournalArticleLocalization) {
+			JournalArticleLocalization journalArticleLocalization =
+				(JournalArticleLocalization)model;
+
+			try (SafeCloseable safeCloseable =
+					CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+						ctCollectionId)) {
+
+				JournalArticle journalArticle =
+					_journalArticleLocalService.getJournalArticle(
+						journalArticleLocalization.getArticlePK());
+
+				groupId = journalArticle.getGroupId();
+			}
+			catch (PortalException portalException) {
+				throw new RuntimeException(portalException);
+			}
+		}
+		else {
+			Map<String, Object> modelAttributes = model.getModelAttributes();
+
+			if (modelAttributes.containsKey("groupId")) {
+				groupId = (long)modelAttributes.get("groupId");
+			}
+			else if (modelAttributes.containsKey("plid")) {
+				long plid = (long)modelAttributes.get("plid");
+
+				try (SafeCloseable safeCloseable =
+						CTCollectionThreadLocal.
+							setCTCollectionIdWithSafeCloseable(
+								ctCollectionId)) {
+
+					Layout layout = _layoutLocalService.fetchLayout(plid);
+
+					if (layout != null) {
+						groupId = layout.getGroupId();
+					}
+				}
+			}
+		}
+
+		if (groupId == 0) {
+			return null;
+		}
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					ctCollectionId)) {
+
+			return _groupLocalService.fetchGroup(groupId);
+		}
+	}
+
 	private <T extends BaseModel<T>> Map<Locale, String> _getTitleMap(
 		long ctCollectionId, CTEntry ctEntry, Locale[] locales) {
 
@@ -140,13 +213,16 @@ public class CTEntryModelDocumentContributor
 		CTCollection ctCollection = _ctCollectionLocalService.fetchCTCollection(
 			ctCollectionId);
 
-		if ((ctEntry.getChangeType() == CTConstants.CT_CHANGE_TYPE_DELETION) ||
-			((ctCollection != null) &&
-			 (ctCollection.getStatus() == WorkflowConstants.STATUS_APPROVED) &&
-			 (ctEntry.getChangeType() ==
-				 CTConstants.CT_CHANGE_TYPE_ADDITION))) {
-
-			ctCollectionId = CTConstants.CT_COLLECTION_ID_PRODUCTION;
+		if (ctCollection != null) {
+			try {
+				ctCollectionId = _ctDisplayRendererRegistry.getCtCollectionId(
+					ctCollection, ctEntry);
+			}
+			catch (PortalException portalException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(portalException);
+				}
+			}
 		}
 
 		T model = _ctDisplayRendererRegistry.fetchCTModel(
@@ -175,17 +251,26 @@ public class CTEntryModelDocumentContributor
 			return;
 		}
 
-		if (model instanceof GroupedModel) {
-			GroupedModel groupedModel = (GroupedModel)model;
+		Group group = _getGroup(ctCollectionId, model);
 
-			Group group = _groupLocalService.fetchGroup(
-				groupedModel.getGroupId());
+		if (group != null) {
+			document.addKeyword(Field.GROUP_ID, group.getGroupId());
 
-			if (group != null) {
-				document.addKeyword(Field.GROUP_ID, group.getGroupId());
-				document.addLocalizedKeyword(
-					"groupName", group.getNameMap(), true, true);
+			Map<Locale, String> groupNameMap = null;
+
+			try {
+				groupNameMap = group.getDescriptiveNameMap();
 			}
+			catch (PortalException portalException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(portalException);
+				}
+
+				groupNameMap = group.getNameMap();
+			}
+
+			document.addLocalizedKeyword(
+				"groupName", groupNameMap, false, true);
 		}
 
 		document.addLocalizedText(
@@ -211,6 +296,9 @@ public class CTEntryModelDocumentContributor
 		}
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		CTEntryModelDocumentContributor.class);
+
 	@Reference
 	private CTCollectionLocalService _ctCollectionLocalService;
 
@@ -224,7 +312,13 @@ public class CTEntryModelDocumentContributor
 	private GroupLocalService _groupLocalService;
 
 	@Reference
+	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Reference
 	private Language _language;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private Localization _localization;

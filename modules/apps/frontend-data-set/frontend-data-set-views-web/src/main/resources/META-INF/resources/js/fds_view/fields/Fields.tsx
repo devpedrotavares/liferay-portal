@@ -10,14 +10,13 @@ import ClayLabel from '@clayui/label';
 import ClayLayout from '@clayui/layout';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayModal from '@clayui/modal';
-import {FDS_INTERNAL_CELL_RENDERERS} from '@liferay/frontend-data-set-web';
-import {InputLocalized, ManagementToolbar} from 'frontend-js-components-web';
 import {
+	FDS_INTERNAL_CELL_RENDERERS,
 	IClientExtensionRenderer,
 	IInternalRenderer,
-	fetch,
-	openModal,
-} from 'frontend-js-web';
+} from '@liferay/frontend-data-set-web';
+import {InputLocalized, ManagementToolbar} from 'frontend-js-components-web';
+import {fetch, openModal} from 'frontend-js-web';
 import fuzzy from 'fuzzy';
 import React, {useEffect, useState} from 'react';
 
@@ -37,6 +36,7 @@ const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 type LocalizedValue<T> = Liferay.Language.LocalizedValue<T>;
 
 export interface IFDSField {
+	contextPath: string;
 	externalReferenceCode: string;
 	id: number;
 	label: string;
@@ -53,7 +53,13 @@ interface ISaveFDSFieldsModalContentProps {
 	fdsFields: Array<IFDSField>;
 	fdsView: FDSViewType;
 	namespace: string;
-	onSave: Function;
+	onSave: ({
+		createdFDSFields,
+		deletedFDSFieldsIds,
+	}: {
+		createdFDSFields: Array<IFDSField>;
+		deletedFDSFieldsIds: Array<number>;
+	}) => void;
 	saveFDSFieldsURL: string;
 }
 
@@ -166,7 +172,7 @@ const SaveFDSFieldsModalContent = ({
 			}
 
 			if (!field.selected && field.id) {
-				deletionIds.push(field.id);
+				deletionIds.push(Number(field.id));
 			}
 		});
 
@@ -224,7 +230,7 @@ const SaveFDSFieldsModalContent = ({
 					);
 
 					return {
-						id: fdsField?.id,
+						id: fdsField ? String(fdsField.id) : undefined,
 						name: field.name,
 						selected: Boolean(fdsField),
 						type: field.type,
@@ -768,8 +774,33 @@ const Fields = ({
 				contentComponent: ({closeModal}: {closeModal: Function}) => (
 					<AddFieldsModalContent
 						closeModal={closeModal}
-						fdsFields={fdsFields || []}
 						fdsView={fdsView}
+						namespace={namespace}
+						onSave={({
+							createdFDSFields,
+							deletedFDSFieldsIds,
+						}: {
+							createdFDSFields: Array<IFDSField>;
+							deletedFDSFieldsIds: Array<number>;
+						}) => {
+							const newFDSFields: Array<IFDSField> = [];
+
+							fdsFields?.forEach((fdsField) => {
+								if (
+									!deletedFDSFieldsIds.includes(fdsField.id)
+								) {
+									newFDSFields.push(fdsField);
+								}
+							});
+
+							createdFDSFields.forEach((fdsField) => {
+								newFDSFields.push(fdsField);
+							});
+
+							setFDSFields(newFDSFields);
+						}}
+						saveFDSFieldsURL={saveFDSFieldsURL}
+						savedFDSFields={fdsFields || []}
 					/>
 				),
 				size: 'full-screen',

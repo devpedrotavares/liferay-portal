@@ -128,7 +128,9 @@ public class DBPartitionUtil {
 			return false;
 		}
 
-		return _extractDBPartition(companyId);
+		_extractDBPartition(companyId);
+
+		return true;
 	}
 
 	public static void forEachCompanyId(
@@ -183,6 +185,18 @@ public class DBPartitionUtil {
 		return companyId;
 	}
 
+	public static boolean insertDBPartition(long companyId)
+		throws PortalException {
+
+		if (!DBPartition.isPartitionEnabled()) {
+			return false;
+		}
+
+		_insertDBPartition(companyId);
+
+		return true;
+	}
+
 	public static boolean removeDBPartition(long companyId)
 		throws PortalException {
 
@@ -192,7 +206,9 @@ public class DBPartitionUtil {
 			return false;
 		}
 
-		return _dropDBPartition(companyId);
+		_dropDBPartition(companyId);
+
+		return true;
 	}
 
 	public static void replaceByTable(Connection connection, String viewName)
@@ -286,7 +302,18 @@ public class DBPartitionUtil {
 				whereClause));
 	}
 
-	private static boolean _dropDBPartition(long companyId)
+	private static void _deleteCompanyData(
+			long companyId, String tableName, String schemaName,
+			Statement statement)
+		throws Exception {
+
+		statement.executeUpdate(
+			StringBundler.concat(
+				"delete from ", schemaName, StringPool.PERIOD, tableName,
+				" where companyId = ", companyId));
+	}
+
+	private static void _dropDBPartition(long companyId)
 		throws PortalException {
 
 		Connection connection = CurrentConnectionUtil.getConnection(
@@ -327,11 +354,9 @@ public class DBPartitionUtil {
 		}
 
 		_companyIds.remove(companyId);
-
-		return true;
 	}
 
-	private static boolean _extractDBPartition(long companyId)
+	private static void _extractDBPartition(long companyId)
 		throws PortalException {
 
 		Connection connection = CurrentConnectionUtil.getConnection(
@@ -389,7 +414,7 @@ public class DBPartitionUtil {
 				exception1);
 		}
 
-		return true;
+		_companyIds.remove(companyId);
 	}
 
 	private static void _extractTable(
@@ -678,6 +703,78 @@ public class DBPartitionUtil {
 		}
 	}
 
+	private static void _insertDBPartition(long companyId)
+		throws PortalException {
+
+		List<String> companyIdControlTableNames = new ArrayList<>();
+
+		Connection connection = CurrentConnectionUtil.getConnection(
+			InfrastructureUtil.getDataSource());
+
+		try (Statement statement = connection.createStatement()) {
+			DBInspector dbInspector = new DBInspector(connection);
+
+			DatabaseMetaData databaseMetaData = connection.getMetaData();
+
+			try (ResultSet resultSet = databaseMetaData.getTables(
+					_defaultSchemaName, dbInspector.getSchema(), null,
+					new String[] {"TABLE"})) {
+
+				while (resultSet.next()) {
+					String tableName = resultSet.getString("TABLE_NAME");
+
+					if (dbInspector.isControlTable(
+							_getCompanyIds(), tableName)) {
+
+						if (dbInspector.hasColumn(tableName, "companyId")) {
+							_copyData(
+								tableName, _getSchemaName(companyId),
+								_defaultSchemaName, statement,
+								" where companyId = " + companyId);
+
+							companyIdControlTableNames.add(tableName);
+						}
+
+						statement.executeUpdate(
+							_getDropTableSQL(companyId, tableName));
+
+						statement.executeUpdate(
+							_getCreateViewSQL(companyId, tableName));
+					}
+				}
+			}
+		}
+		catch (Exception exception1) {
+			try (Statement statement = connection.createStatement()) {
+				for (String companyIdControlTable :
+						companyIdControlTableNames) {
+
+					_deleteCompanyData(
+						companyId, companyIdControlTable, _defaultSchemaName,
+						statement);
+				}
+			}
+			catch (Exception exception2) {
+				throw new PortalException(
+					StringBundler.concat(
+						"Unable to roll back the data inserted into the ",
+						"default schema for tables ",
+						companyIdControlTableNames, " and company ID ",
+						companyId),
+					exception2);
+			}
+
+			throw new PortalException(
+				StringBundler.concat(
+					"Unable to roll back the insertion of database partition. ",
+					"Recover a backup of the database schema ",
+					_getSchemaName(companyId), "."),
+				exception1);
+		}
+
+		_companyIds.add(companyId);
+	}
+
 	private static boolean _isSkip(Connection connection, String tableName)
 		throws SQLException {
 
@@ -705,15 +802,11 @@ public class DBPartitionUtil {
 			String toSchemaName, Statement statement)
 		throws Exception {
 
-		String whereClause = " where companyId = " + companyId;
-
 		_copyData(
-			tableName, fromSchemaName, toSchemaName, statement, whereClause);
+			tableName, fromSchemaName, toSchemaName, statement,
+			" where companyId = " + companyId);
 
-		statement.executeUpdate(
-			StringBundler.concat(
-				"delete from ", fromSchemaName, StringPool.PERIOD, tableName,
-				whereClause));
+		_deleteCompanyData(companyId, tableName, fromSchemaName, statement);
 	}
 
 	private static void _restoreTable(

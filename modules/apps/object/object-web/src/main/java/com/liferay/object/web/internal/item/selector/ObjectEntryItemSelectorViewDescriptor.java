@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -139,10 +140,25 @@ public class ObjectEntryItemSelectorViewDescriptor
 							_portletRequest, "objectRelationshipId")));
 			}
 			else {
+				Group scopeGroup = _themeDisplay.getScopeGroup();
+
+				Page<com.liferay.object.rest.dto.v1_0.ObjectEntry> page =
+					_objectEntryManager.getObjectEntries(
+						_themeDisplay.getCompanyId(), _objectDefinition,
+						scopeGroup.getGroupKey(), null,
+						_getDTOConverterContext(), StringPool.BLANK,
+						Pagination.of(
+							searchContainer.getCur(),
+							searchContainer.getDelta()),
+						ParamUtil.getString(_portletRequest, "keywords"), null);
+
 				searchContainer.setResultsAndTotal(
-					_getObjectEntries(
-						searchContainer.getCur(), searchContainer.getDelta(),
-						ParamUtil.getString(_portletRequest, "keywords")));
+					() -> TransformUtil.transform(
+						page.getItems(),
+						objectEntry -> ObjectEntryUtil.toObjectEntry(
+							_objectDefinition.getObjectDefinitionId(),
+							objectEntry)),
+					GetterUtil.getInteger(page.getTotalCount()));
 			}
 		}
 		catch (Exception exception) {
@@ -180,25 +196,6 @@ public class ObjectEntryItemSelectorViewDescriptor
 		return new DefaultDTOConverterContext(
 			false, null, null, _httpServletRequest, null,
 			_themeDisplay.getLocale(), null, _themeDisplay.getUser());
-	}
-
-	private List<ObjectEntry> _getObjectEntries(
-			int curPage, int pageSize, String search)
-		throws Exception {
-
-		Group scopeGroup = _themeDisplay.getScopeGroup();
-
-		Page<com.liferay.object.rest.dto.v1_0.ObjectEntry> page =
-			_objectEntryManager.getObjectEntries(
-				_themeDisplay.getCompanyId(), _objectDefinition,
-				scopeGroup.getGroupKey(), null, _getDTOConverterContext(),
-				StringPool.BLANK, Pagination.of(curPage, pageSize), search,
-				null);
-
-		return TransformUtil.transform(
-			page.getItems(),
-			objectEntry -> ObjectEntryUtil.toObjectEntry(
-				_objectDefinition.getObjectDefinitionId(), objectEntry));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

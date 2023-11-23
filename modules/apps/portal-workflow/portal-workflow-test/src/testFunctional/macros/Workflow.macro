@@ -502,6 +502,8 @@ definition {
 		AssertElementPresent(locator1 = "Button#DONE");
 
 		Click(locator1 = "Button#DONE");
+
+		Alert.viewSuccessMessage();
 	}
 
 	@summary = "Default summary"
@@ -662,6 +664,9 @@ definition {
 
 		if (contains(${portletTitle}, "SINGLE APPROVER")) {
 			AssertElementNotPresent(locator1 = "WorkflowSubmissionsTask#PREVIEW_VIEW");
+		}
+		else if (isSet(pageRevision)) {
+			Close.closeAndSelectWindow(value1 = "title=Page Revision Page - Site Name - Liferay DXP");
 		}
 		else {
 			Close.closeAndSelectWindow(value1 = "title=${viewTitle}");

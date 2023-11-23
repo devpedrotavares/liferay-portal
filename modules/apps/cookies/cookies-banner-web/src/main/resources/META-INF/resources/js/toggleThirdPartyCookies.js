@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {COOKIE_TYPES, checkConsent} from 'frontend-js-web';
+import {COOKIE_TYPES, getCookie} from 'frontend-js-web';
 
 export function flipThirdPartyCookiesOff(element) {
-	if (!Liferay.FeatureFlags['LPS-164563']) {
-		return;
+	if (!Liferay.FeatureFlags['LPS-154290']) {
+		return element;
 	}
 
 	const elements = element.querySelectorAll(
@@ -137,7 +137,7 @@ function flipThirdPartyCookie(type) {
  */
 export default function toggleThirdPartyCookies() {
 	Object.values(COOKIE_TYPES).forEach((type) => {
-		const typeConsent = checkConsent(type);
+		const typeConsent = getCookie(type) === 'true';
 
 		if (typeConsent) {
 			flipThirdPartyCookie(type);
@@ -151,7 +151,7 @@ export default function toggleThirdPartyCookies() {
  * @param {number} startingInterval - The initial interval to start with
  */
 export function runThirdPartyCookiesInterval(startingInterval = 2000) {
-	if (!Liferay.FeatureFlags['LPS-164563']) {
+	if (!Liferay.FeatureFlags['LPS-154290']) {
 		return;
 	}
 

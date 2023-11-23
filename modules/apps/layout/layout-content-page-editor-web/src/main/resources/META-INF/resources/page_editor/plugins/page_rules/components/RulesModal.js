@@ -10,6 +10,7 @@ import ClayIcon from '@clayui/icon';
 import ClayModal, {useModal} from '@clayui/modal';
 import classNames from 'classnames';
 import {useId} from 'frontend-js-components-web';
+import {openToast} from 'frontend-js-web';
 import React, {useMemo, useState} from 'react';
 import {v4 as uuidv4} from 'uuid';
 
@@ -25,7 +26,9 @@ import {
 import ScreenReaderAnnouncerContext from './ScreenReaderContext';
 
 export default function RulesModal({editingRule, onCloseModal}) {
-	const {observer, onClose} = useModal({onClose: () => onCloseModal()});
+	const {observer, onClose} = useModal({
+		onClose: () => onCloseModal(editingRule?.id),
+	});
 
 	const fragmentEntryLinks = useSelector((state) => state.fragmentEntryLinks);
 	const layoutData = useSelector((state) => state.layoutData);
@@ -43,10 +46,10 @@ export default function RulesModal({editingRule, onCloseModal}) {
 	const [ruleError, setRuleError] = useState(false);
 
 	const [actions, setActions] = useState(
-		() => editingRule?.actions || [{id: uuidv4}]
+		() => editingRule?.actions || [{id: uuidv4()}]
 	);
 	const [conditions, setConditions] = useState(
-		() => editingRule?.conditions || [{id: uuidv4}]
+		() => editingRule?.conditions || [{id: uuidv4()}]
 	);
 	const [conditionType, setConditionType] = useState('all');
 
@@ -56,7 +59,8 @@ export default function RulesModal({editingRule, onCloseModal}) {
 		Object.values(layoutData.items).forEach((item) => {
 			if (
 				item.type !== LAYOUT_DATA_ITEM_TYPES.collectionItem &&
-				item.type !== LAYOUT_DATA_ITEM_TYPES.fragmentDropZone &&
+				item.type !== LAYOUT_DATA_ITEM_TYPES.column &&
+				item.type !== LAYOUT_DATA_ITEM_TYPES.dropZone &&
 				item.type !== LAYOUT_DATA_ITEM_TYPES.fragmentDropZone &&
 				item.type !== LAYOUT_DATA_ITEM_TYPES.root
 			) {
@@ -98,19 +102,34 @@ export default function RulesModal({editingRule, onCloseModal}) {
 					name,
 					ruleId: editingRule.id,
 				})
+			).then(() =>
+				openToast({
+					message: Liferay.Language.get(
+						'the-rule-was-updated-successfully'
+					),
+					type: 'success',
+				})
 			);
 		}
 		else {
 			dispatch(
 				addRule({
 					actions,
+					conditionType,
 					conditions,
 					name,
+				})
+			).then(() =>
+				openToast({
+					message: Liferay.Language.get(
+						'the-rule-was-created-successfully'
+					),
+					type: 'success',
 				})
 			);
 		}
 
-		onCloseModal();
+		onClose();
 	};
 
 	const title = editingRule

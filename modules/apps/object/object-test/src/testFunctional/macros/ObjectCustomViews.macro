@@ -26,14 +26,11 @@ definition {
 			Click(locator1 = "ObjectCustomViews#DEFAULT_SORT_ADD_BUTTON");
 		}
 
-		Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-		Click(
-			key_columnOption = ${columnOption},
-			locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
+		ObjectAdmin.selectDropdownItem(
+			labelName = "Columns",
+			optionName = ${columnOption});
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Ascending",
 			labelName = "Sorting",
 			optionName = ${sortOption});
 
@@ -53,7 +50,6 @@ definition {
 			locator1 = "ObjectCustomViews#FIELD_VIEW_FILTER_DROPDOWN_OPTION");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Select an option",
 			labelName = "Filter Type",
 			optionName = ${filterType});
 
@@ -94,7 +90,6 @@ definition {
 
 		if (isSet(filterType)) {
 			ObjectAdmin.selectDropdownItem(
-				currentOption = "Select an option",
 				labelName = "Filter Type",
 				optionName = ${filterType});
 		}
@@ -155,15 +150,6 @@ definition {
 		AssertElementPresent(
 			key_menuItem = ${filterBy},
 			locator1 = "MenuItem#ANY_MENU_ITEM");
-	}
-
-	@summary = "Default summary"
-	macro assertNoColumnPresentInDefaultSort() {
-		ObjectCustomViews.addNewDefaultSort();
-
-		Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-		AssertElementPresent(locator1 = "ObjectCustomViews#DEFAULT_SORT_NO_COLUMN_OPTION");
 	}
 
 	@summary = "Default summary"

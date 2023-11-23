@@ -3654,6 +3654,10 @@ components:
                         - $ref: "#/components/schemas/PageRowDefinition"
                         - $ref: "#/components/schemas/PageSectionDefinition"
                         - $ref: "#/components/schemas/PageWidgetInstanceDefinition"
+                id:
+                    description:
+                        The page element's ID.
+                    type: string
                 pageElements:
                     # @review
                     description:
@@ -3968,16 +3972,87 @@ components:
             description:
                 Represents a definition of a Page Rule.
             properties:
+                conditionType:
+                    # @review
+                    description:
+                        The custom name of a Page rule.
+                    enum: [All, Any]
+                    type: string
                 id:
                     # @review
                     description:
                         The page rule ID.
-                    readOnly: true
                     type: string
                 name:
                     # @review
                     description:
                         The custom name of a Page rule.
+                    type: string
+                pageRuleActions:
+                    # @review
+                    description:
+                        A list of actions of a Page rule.
+                    items:
+                        $ref: "#/components/schemas/PageRuleAction"
+                    type: array
+                pageRuleConditions:
+                    # @review
+                    description:
+                        A list of conditions of a Page rule.
+                    items:
+                        $ref: "#/components/schemas/PageRuleCondition"
+                    type: array
+            type: object
+        PageRuleAction:
+            # @review
+            description:
+                Represents a definition of a Page Rule Action.
+            properties:
+                action:
+                    # @review
+                    description:
+                        The page rule action's action.
+                    type: string
+                id:
+                    # @review
+                    description:
+                        The page rule action's ID.
+                    type: string
+                itemId:
+                    # @review
+                    description:
+                        The page rule condition's item ID.
+                    type: string
+                type:
+                    # @review
+                    description:
+                        The page rule action's type.
+                    type: string
+            type: object
+        PageRuleCondition:
+            # @review
+            description:
+                Represents a definition of a Page Rule Condition.
+            properties:
+                condition:
+                    # @review
+                    description:
+                        The page rule condition's description.
+                    type: string
+                id:
+                    # @review
+                    description:
+                        The page rule condition's ID.
+                    type: string
+                type:
+                    # @review
+                    description:
+                        The page rule condition's type.
+                    type: string
+                value:
+                    # @review
+                    description:
+                        The page rule condition's value.
                     type: string
             type: object
         PageSectionDefinition:
@@ -5687,7 +5762,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.delivery.client', and version '4.0.67'."
+        'com.liferay.headless.delivery.client', and version '4.0.68'."
     license:
         name: "Apache 2.0"
         url: "http://www.apache.org/licenses/LICENSE-2.0.html"

@@ -99,7 +99,7 @@ public class ObjectValidationRuleLocalServiceImpl
 		throws PortalException {
 
 		_validateInvokerBundle(
-			"Only allowed bundles can create system object validation rules",
+			"Only allowed bundles can add system object validation rules",
 			system);
 
 		User user = _userLocalService.getUser(userId);
@@ -540,11 +540,6 @@ public class ObjectValidationRuleLocalServiceImpl
 				oldObjectValidationRuleSetting);
 		}
 
-		ObjectEntryLocalService objectEntryLocalService =
-			_objectEntryLocalServiceSnapshot.get();
-		ObjectFieldLocalService objectFieldLocalService =
-			_objectFieldLocalServiceSnapshot.get();
-
 		for (ObjectValidationRuleSetting newObjectValidationRuleSetting :
 				newObjectValidationRuleSettings) {
 
@@ -556,31 +551,6 @@ public class ObjectValidationRuleLocalServiceImpl
 
 			if (oldObjectValidationRuleSetting != null) {
 				continue;
-			}
-
-			if (objectDefinition.isApproved() &&
-				newObjectValidationRuleSetting.compareName(
-					ObjectValidationRuleSettingConstants.
-						NAME_COMPOSITE_KEY_OBJECT_FIELD_ID)) {
-
-				ObjectField objectField =
-					objectFieldLocalService.getObjectField(
-						GetterUtil.getLong(
-							newObjectValidationRuleSetting.getValue()));
-
-				Column<?, ?> column = objectFieldLocalService.getColumn(
-					objectValidationRule.getObjectDefinitionId(),
-					objectField.getName());
-
-				long count = objectEntryLocalService.getObjectEntriesCount(
-					0, objectDefinition, column.isNotNull());
-
-				if (count > 0) {
-					throw new ObjectValidationRuleSettingValueException.
-						InvalidValue(
-							newObjectValidationRuleSetting.getName(),
-							newObjectValidationRuleSetting.getValue());
-				}
 			}
 
 			_objectValidationRuleSettingLocalService.
@@ -741,12 +711,48 @@ public class ObjectValidationRuleLocalServiceImpl
 						objectValidationRuleSetting.getValue());
 			}
 
-			if (objectValidationRuleSetting.compareName(
+			if (!objectValidationRuleSetting.compareName(
 					ObjectValidationRuleSettingConstants.
 						NAME_COMPOSITE_KEY_OBJECT_FIELD_ID)) {
 
-				count++;
+				continue;
 			}
+
+			ObjectDefinition objectDefinition =
+				_objectDefinitionPersistence.findByPrimaryKey(
+					objectDefinitionId);
+			ObjectValidationRuleSetting oldObjectValidationRuleSetting =
+				_objectValidationRuleSettingPersistence.fetchByOVRI_N_V(
+					objectValidationRuleId,
+					objectValidationRuleSetting.getName(),
+					objectValidationRuleSetting.getValue());
+
+			if ((oldObjectValidationRuleSetting == null) &&
+				objectDefinition.isApproved()) {
+
+				ObjectFieldLocalService objectFieldLocalService =
+					_objectFieldLocalServiceSnapshot.get();
+
+				Column<?, ?> column = objectFieldLocalService.getColumn(
+					objectDefinition.getObjectDefinitionId(),
+					objectField.getName());
+
+				ObjectEntryLocalService objectEntryLocalService =
+					_objectEntryLocalServiceSnapshot.get();
+
+				long objectEntriesCount =
+					objectEntryLocalService.getObjectEntriesCount(
+						0, objectDefinition, column.isNotNull());
+
+				if (objectEntriesCount > 0) {
+					throw new ObjectValidationRuleSettingValueException.
+						InvalidValue(
+							objectValidationRuleSetting.getName(),
+							objectValidationRuleSetting.getValue());
+				}
+			}
+
+			count++;
 		}
 
 		if (StringUtil.equals(

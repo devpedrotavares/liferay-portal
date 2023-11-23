@@ -1,5 +1,6 @@
 {
 	"dependencies": {
+		"frontend-js-web": "*"
 	},
 	"name": "@liferay/fragment-video-streaming",
 	"scripts": {
@@ -7,5 +8,5 @@
 		"checkFormat": "liferay-npm-scripts check",
 		"format": "liferay-npm-scripts fix"
 	},
-	"version": "1.0.0"
+	"version": "1.0.2"
 }

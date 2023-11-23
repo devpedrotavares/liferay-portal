@@ -51,22 +51,18 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 207");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
 
 		Form.gotoAddField(fieldType = "Select from List");
 
-		PopulateObjectFormsConfiguration.mapFormObjectField(
-			fieldLabelName = "Field Picklist",
-			formObjectField = "Choose an Option");
+		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Field Picklist");
 
 		Form.gotoAdvancedTab();
 
@@ -100,13 +96,11 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 208");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
@@ -114,6 +108,8 @@ definition {
 		Form.gotoAddField(fieldType = "Text");
 
 		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Custom Field");
+
+		Form.save();
 
 		Form.publishForm();
 
@@ -139,9 +135,6 @@ definition {
 	@description = "LPS-143064 - Verify that, when using objects as storage type, the user must be able to map to this field type to Rich Text Field and view its entries"
 	@priority = 4
 	test CanMapAndViewEntriesForRichTextField {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 151597",
 			objectName = "CustomObject151597",
@@ -164,13 +157,11 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 151597");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
@@ -178,6 +169,8 @@ definition {
 		Form.gotoAddField(fieldType = "Rich Text");
 
 		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Custom Field");
+
+		Form.save();
 
 		Form.publishForm();
 
@@ -221,13 +214,11 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 209");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
@@ -237,6 +228,8 @@ definition {
 		FormFields.selectTextFieldLineOption(textFieldLineOption = "Multiple Lines");
 
 		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Custom Field");
+
+		Form.save();
 
 		Form.publishForm();
 
@@ -278,13 +271,11 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 210");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
@@ -292,6 +283,8 @@ definition {
 		Form.gotoAddField(fieldType = "Text");
 
 		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Custom Field");
+
+		Form.save();
 
 		Form.publishForm();
 
@@ -340,22 +333,18 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "No Workflow",
-			labelName = "Select a Workflow",
+			labelName = "Select Object",
 			optionName = "Custom Object 211");
 
 		Click(locator1 = "PopulateObjectFormsConfiguration#BUTTON_SETTINGS_FORM");
 
 		Form.gotoAddField(fieldType = "Select from List");
 
-		PopulateObjectFormsConfiguration.mapFormObjectField(
-			fieldLabelName = "Field Picklist",
-			formObjectField = "Choose an Option");
+		PopulateObjectFormsConfiguration.mapFormField(fieldLabelName = "Field Picklist");
 
 		Form.gotoBasicTab();
 
@@ -377,11 +366,14 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 
-		AssertElementPresent(
+		Click(
+			key_labelName = "Select Object",
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+
+		AssertElementNotPresent(
 			key_optionName = "Custom Object 212",
 			locator1 = "ObjectAdmin#CLAY_GENERIC_DROPDOWN_ITEM");
 	}
@@ -389,9 +381,6 @@ definition {
 	@description = "LPS-135429 - It is possible to retrieve objects data from Data Providers and use in a Select from List field in Forms"
 	@priority = 4
 	test CanRetrieveDataProvidersOnSelectFromListField {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 213",
 			objectName = "CustomObject213",
@@ -448,22 +437,19 @@ definition {
 
 		FormsAdminNavigator.gotoPublishedForm();
 
-		FormViewBuilder.validatePredefinedSelectFromList(
-			fieldName = "Data Provider Select Field",
-			fieldValue = "Choose an Option");
+		ObjectAdmin.selectDropdownItem(
+			labelName = "Data Provider Select Field",
+			optionName = "Entry Test");
 
-		AssertElementPresent(
-			key_currentOption = "Entry Test",
+		AssertTextEquals(
 			key_labelName = "Data Provider Select Field",
-			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON",
+			value1 = "Entry Test");
 	}
 
 	@description = "LPS-135429 - It is possible to retrieve objects data from Data Providers and use in a Text field in Form"
 	@priority = 4
 	test CanRetrieveDataProvidersOnTextField {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 214",
 			objectName = "CustomObject214",
@@ -549,7 +535,6 @@ definition {
 		PopulateObjectFormsConfiguration.openFormSettings();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Select a Storage Type",
 			optionName = "Object");
 

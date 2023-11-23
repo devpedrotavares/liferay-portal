@@ -15,10 +15,8 @@ import com.liferay.asset.link.constants.AssetLinkConstants;
 import com.liferay.asset.link.service.AssetLinkLocalService;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFolder;
-import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
-import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
@@ -39,6 +37,7 @@ import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectEntryStatusException;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
+import com.liferay.object.field.attachment.AttachmentManager;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
@@ -123,16 +122,13 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.OrganizationTable;
-import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.Users_OrgsTable;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.module.service.Snapshot;
-import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
@@ -262,8 +258,8 @@ public class ObjectEntryLocalServiceImpl
 			values);
 
 		_validateValues(
-			user.isGuestUser(), objectDefinitionId, null,
-			objectDefinition.getPortletId(), serviceContext, userId, values);
+			user.isGuestUser(), objectDefinitionId, null, serviceContext,
+			userId, values);
 
 		long objectEntryId = counterLocalService.increment();
 
@@ -360,7 +356,7 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectDefinition.getObjectDefinitionId(), null,
-			objectDefinition.getClassName(), serviceContext, userId, values);
+			serviceContext, userId, values);
 
 		insertIntoOrUpdateExtensionTable(
 			userId, objectDefinition.getObjectDefinitionId(), primaryKey,
@@ -1448,8 +1444,7 @@ public class ObjectEntryLocalServiceImpl
 
 		_validateValues(
 			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
-			objectEntry, objectDefinition.getPortletId(), serviceContext,
-			userId, values);
+			objectEntry, serviceContext, userId, values);
 
 		int workflowAction = serviceContext.getWorkflowAction();
 
@@ -1584,35 +1579,13 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _addFileEntry(
 			DLFileEntry dlFileEntry, Map.Entry<String, Serializable> entry,
-			List<ObjectFieldSetting> objectFieldSettings, String portletId,
+			long objectFieldId, List<ObjectFieldSetting> objectFieldSettings,
 			ServiceContext serviceContext, long userId)
 		throws PortalException {
 
 		try {
-			String fileSource = null;
-			boolean showFilesInDocumentsAndMedia = false;
-			String storageDLFolderPath = null;
-
-			for (ObjectFieldSetting objectFieldSetting : objectFieldSettings) {
-				if (Objects.equals(
-						objectFieldSetting.getName(), "fileSource")) {
-
-					fileSource = objectFieldSetting.getValue();
-				}
-				else if (Objects.equals(
-							objectFieldSetting.getName(),
-							"showFilesInDocumentsAndMedia")) {
-
-					showFilesInDocumentsAndMedia = GetterUtil.getBoolean(
-						objectFieldSetting.getValue());
-				}
-				else if (Objects.equals(
-							objectFieldSetting.getName(),
-							"storageDLFolderPath")) {
-
-					storageDLFolderPath = objectFieldSetting.getValue();
-				}
-			}
+			String fileSource = ObjectFieldSettingUtil.getValue(
+				"fileSource", objectFieldSettings);
 
 			if (Objects.equals(fileSource, "documentsAndMedia")) {
 				return;
@@ -1620,10 +1593,9 @@ public class ObjectEntryLocalServiceImpl
 
 			DLFolder dlFileEntryFolder = dlFileEntry.getFolder();
 
-			DLFolder dlFolder = _getDLFolder(
-				dlFileEntry.getCompanyId(), dlFileEntry.getGroupId(), portletId,
-				serviceContext, showFilesInDocumentsAndMedia,
-				storageDLFolderPath, userId);
+			DLFolder dlFolder = _attachmentManager.getDLFolder(
+				dlFileEntry.getCompanyId(), dlFileEntry.getGroupId(),
+				objectFieldId, serviceContext, userId);
 
 			if (Objects.equals(
 					dlFileEntryFolder.getFolderId(), dlFolder.getFolderId())) {
@@ -2348,29 +2320,6 @@ public class ObjectEntryLocalServiceImpl
 		return objectFieldBusinessType.getDBType();
 	}
 
-	private DLFolder _getDLFolder(
-		long companyId, long groupId, String portletId,
-		ServiceContext serviceContext, boolean showFilesInDocumentsAndMedia,
-		String storageDLFolderPath, long userId) {
-
-		Long dlFolderId = null;
-
-		if (showFilesInDocumentsAndMedia) {
-			dlFolderId = _getStorageDLFolderId(
-				companyId, groupId, serviceContext, storageDLFolderPath);
-		}
-		else {
-			dlFolderId = _getObjectRepositoryFolderId(
-				companyId, groupId, portletId, serviceContext, userId);
-		}
-
-		if (dlFolderId == null) {
-			return null;
-		}
-
-		return _dlFolderLocalService.fetchDLFolder(dlFolderId);
-	}
-
 	private DynamicObjectDefinitionTable _getDynamicObjectDefinitionTable(
 			long objectDefinitionId)
 		throws PortalException {
@@ -2689,71 +2638,6 @@ public class ObjectEntryLocalServiceImpl
 					_objectFieldLocalService, search)
 			)
 		);
-	}
-
-	private Repository _getObjectRepository(
-		long groupId, String portletId, ServiceContext serviceContext) {
-
-		Repository repository = _portletFileRepository.fetchPortletRepository(
-			groupId, portletId);
-
-		if (repository != null) {
-			return repository;
-		}
-
-		serviceContext = (ServiceContext)serviceContext.clone();
-
-		serviceContext.setAddGroupPermissions(true);
-		serviceContext.setAddGuestPermissions(true);
-
-		try {
-			return _portletFileRepository.addPortletRepository(
-				groupId, portletId, serviceContext);
-		}
-		catch (PortalException portalException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(portalException);
-			}
-
-			return null;
-		}
-	}
-
-	private Long _getObjectRepositoryFolderId(
-		long companyId, long groupId, String portletId,
-		ServiceContext serviceContext, long userId) {
-
-		Repository repository = _getObjectRepository(
-			groupId, portletId, serviceContext);
-
-		if (repository == null) {
-			return null;
-		}
-
-		DLFolder dlFolder = _dlFolderLocalService.fetchFolder(
-			repository.getGroupId(), repository.getDlFolderId(),
-			String.valueOf(userId));
-
-		if (dlFolder != null) {
-			return dlFolder.getFolderId();
-		}
-
-		try {
-			dlFolder = _dlFolderLocalService.addFolder(
-				null, _userLocalService.getGuestUserId(companyId),
-				repository.getGroupId(), repository.getRepositoryId(), false,
-				repository.getDlFolderId(), String.valueOf(userId), null, false,
-				serviceContext);
-
-			return dlFolder.getFolderId();
-		}
-		catch (PortalException portalException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(portalException);
-			}
-
-			return null;
-		}
 	}
 
 	private GroupByStep _getOneToManyObjectEntriesGroupByStep(
@@ -3129,44 +3013,6 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		return selectExpressions.toArray(new Expression<?>[0]);
-	}
-
-	private Long _getStorageDLFolderId(
-		long companyId, long groupId, ServiceContext serviceContext,
-		String storageDLFolderPath) {
-
-		long storageDLFolderId = DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
-
-		for (String name :
-				com.liferay.petra.string.StringUtil.split(
-					storageDLFolderPath, CharPool.FORWARD_SLASH)) {
-
-			DLFolder dlFolder = _dlFolderLocalService.fetchFolder(
-				groupId, storageDLFolderId, name);
-
-			if (dlFolder != null) {
-				storageDLFolderId = dlFolder.getFolderId();
-
-				continue;
-			}
-
-			try {
-				Folder folder = _dlAppLocalService.addFolder(
-					null, _userLocalService.getGuestUserId(companyId), groupId,
-					storageDLFolderId, name, null, serviceContext);
-
-				storageDLFolderId = folder.getFolderId();
-			}
-			catch (PortalException portalException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(portalException);
-				}
-
-				return null;
-			}
-		}
-
-		return storageDLFolderId;
 	}
 
 	/**
@@ -4197,15 +4043,9 @@ public class ObjectEntryLocalServiceImpl
 			String fileExtension, long objectFieldId, String objectFieldName)
 		throws PortalException {
 
-		ObjectFieldSetting objectFieldSetting =
-			_objectFieldSettingPersistence.fetchByOFI_N(
-				objectFieldId, "acceptedFileExtensions");
-
-		String acceptedFileExtensions = objectFieldSetting.getValue();
-
 		if (!ArrayUtil.contains(
-				acceptedFileExtensions.split("\\s*,\\s*"), fileExtension,
-				true)) {
+				_attachmentManager.getAcceptedFileExtensions(objectFieldId),
+				fileExtension, true)) {
 
 			throw new ObjectEntryValuesException.InvalidFileExtension(
 				fileExtension, objectFieldName);
@@ -4217,24 +4057,10 @@ public class ObjectEntryLocalServiceImpl
 			String objectFieldName)
 		throws PortalException {
 
-		ObjectFieldSetting objectFieldSetting =
-			_objectFieldSettingPersistence.fetchByOFI_N(
-				objectFieldId, "maximumFileSize");
+		long maximumFileSize = _attachmentManager.getMaximumFileSize(
+			objectFieldId, !guestUser);
 
-		long maximumFileSize = GetterUtil.getLong(
-			objectFieldSetting.getValue());
-
-		if (guestUser &&
-			(_objectConfiguration.maximumFileSizeForGuestUsers() <
-				maximumFileSize)) {
-
-			maximumFileSize =
-				_objectConfiguration.maximumFileSizeForGuestUsers();
-		}
-
-		if ((maximumFileSize > 0) &&
-			(fileSize > (maximumFileSize * 1024 * 1024))) {
-
+		if ((maximumFileSize > 0) && (fileSize > maximumFileSize)) {
 			throw new ObjectEntryValuesException.ExceedsMaxFileSize(
 				maximumFileSize, objectFieldName);
 		}
@@ -4530,7 +4356,7 @@ public class ObjectEntryLocalServiceImpl
 
 	private void _validateValues(
 			boolean guestUser, long objectDefinitionId, ObjectEntry objectEntry,
-			String portletId, ServiceContext serviceContext, long userId,
+			ServiceContext serviceContext, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
 
@@ -4567,14 +4393,14 @@ public class ObjectEntryLocalServiceImpl
 
 		for (Map.Entry<String, Serializable> entry : values.entrySet()) {
 			_validateValues(
-				guestUser, entry, objectDefinitionId, objectEntry, portletId,
+				guestUser, entry, objectDefinitionId, objectEntry,
 				serviceContext, userId, values);
 		}
 	}
 
 	private void _validateValues(
 			boolean guestUser, Map.Entry<String, Serializable> entry,
-			long objectDefinitionId, ObjectEntry objectEntry, String portletId,
+			long objectDefinitionId, ObjectEntry objectEntry,
 			ServiceContext serviceContext, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
@@ -4617,8 +4443,9 @@ public class ObjectEntryLocalServiceImpl
 					objectField.getObjectFieldId(), objectField.getName());
 
 				_addFileEntry(
-					dlFileEntry, entry, objectField.getObjectFieldSettings(),
-					portletId, serviceContext, userId);
+					dlFileEntry, entry, objectField.getObjectFieldId(),
+					objectField.getObjectFieldSettings(), serviceContext,
+					userId);
 
 				return;
 			}
@@ -4826,6 +4653,9 @@ public class ObjectEntryLocalServiceImpl
 	private AssetLinkLocalService _assetLinkLocalService;
 
 	@Reference
+	private AttachmentManager _attachmentManager;
+
+	@Reference
 	private CurrentConnection _currentConnection;
 
 	@Reference
@@ -4836,9 +4666,6 @@ public class ObjectEntryLocalServiceImpl
 
 	@Reference
 	private DLFileEntryLocalService _dlFileEntryLocalService;
-
-	@Reference
-	private DLFolderLocalService _dlFolderLocalService;
 
 	@Reference
 	private Encryptor _encryptor;
@@ -4901,9 +4728,6 @@ public class ObjectEntryLocalServiceImpl
 
 	@Reference
 	private ObjectStateLocalService _objectStateLocalService;
-
-	@Reference
-	private PortletFileRepository _portletFileRepository;
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;

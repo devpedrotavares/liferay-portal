@@ -7,12 +7,12 @@ package com.liferay.source.formatter.dependencies.upgrade;
 
 import com.liferay.commerce.constants.CommerceOrderPaymentConstants;
 
-import com.liferay.portal.kernel.util.PortalUtil;
-
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
 import java.util.Date;
 
 import java.util.ArrayList;
+
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import com.liferay.portal.kernel.util.HtmlParser;
 
@@ -21,6 +21,8 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.document.library.util.DLURLHelperUtil;
 
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 
 import org.osgi.service.component.annotations.Reference;
 
@@ -88,6 +90,19 @@ public class UpgradeCatchAllCheck {
 	public void method(HttpServletRequest httpServletRequest) {
 		_commerceAccountHelper.getCurrentAccountEntry(0, httpServletRequest);
 		_commerceAccountHelper.getCurrentCommerceAccount(null);
+	}
+
+	public void method(HttpServletRequest httpServletRequest, String name) {
+		CookieUtil.get(httpServletRequest, "test123");
+		CookiesManagerUtil.getCookieValue(name, httpServletRequest);
+	}
+
+	public void method(
+		HttpServletRequest httpServletRequest, String name,
+		boolean toUpperCase) {
+
+		CookieUtil.get(httpServletRequest, "test123", toUpperCase);
+		CookiesManagerUtil.getCookieValue(name, httpServletRequest, toUpperCase);
 	}
 
 	public void method(
@@ -374,6 +389,14 @@ public class UpgradeCatchAllCheck {
 		_cpInstanceLocalService.fetchByExternalReferenceCode(externalReferenceCode, companyId);
 		_cpInstanceLocalService.fetchCPInstanceByExternalReferenceCode(externalReferenceCode, companyId);
 		_cpInstanceService.fetchByExternalReferenceCode(externalReferenceCode, companyId);
+	}
+
+	public void method(
+		long companyId, String externalReferenceCode, long groupId) {
+
+		AssetCategoryLocalServiceUtil.fetchAssetCategoryByExternalReferenceCode(companyId, externalReferenceCode);
+		AssetCategoryLocalServiceUtil.fetchAssetCategoryByExternalReferenceCode(externalReferenceCode, groupId);
+		_assetCategoryLocalService.fetchAssetCategoryByExternalReferenceCode(companyId, externalReferenceCode);
 	}
 
 	public void method(

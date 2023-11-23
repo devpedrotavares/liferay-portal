@@ -5,14 +5,18 @@
 
 package com.liferay.object.admin.rest.internal.resource.v1_0;
 
+import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectRelationship;
 import com.liferay.object.admin.rest.internal.dto.v1_0.converter.constants.DTOConverterConstants;
+import com.liferay.object.admin.rest.internal.dto.v1_0.util.ObjectFieldUtil;
 import com.liferay.object.admin.rest.internal.odata.entity.v1_0.ObjectRelationshipEntityModel;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectRelationshipResource;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.service.ObjectFilterLocalService;
 import com.liferay.object.service.ObjectRelationshipService;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.search.Field;
@@ -178,7 +182,7 @@ public class ObjectRelationshipResourceImpl
 				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
 				objectRelationship.getName(),
 				GetterUtil.getBoolean(objectRelationship.getSystem()),
-				objectRelationship.getTypeAsString()));
+				objectRelationship.getTypeAsString(), null));
 	}
 
 	@Override
@@ -214,7 +218,12 @@ public class ObjectRelationshipResourceImpl
 				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
 				objectRelationship.getName(),
 				GetterUtil.getBoolean(objectRelationship.getSystem()),
-				objectRelationship.getTypeAsString()));
+				objectRelationship.getTypeAsString(),
+				ObjectFieldUtil.toObjectField(
+					false, _listTypeDefinitionLocalService,
+					objectRelationship.getObjectField(),
+					_objectFieldLocalService, _objectFieldSettingLocalService,
+					_objectFilterLocalService)));
 	}
 
 	@Override
@@ -257,8 +266,12 @@ public class ObjectRelationshipResourceImpl
 					objectRelationship.getParameterObjectFieldId()),
 				objectRelationship.getDeletionTypeAsString(),
 				GetterUtil.getBoolean(objectRelationship.getEdge()),
-				LocalizedMapUtil.getLocalizedMap(
-					objectRelationship.getLabel())));
+				LocalizedMapUtil.getLocalizedMap(objectRelationship.getLabel()),
+				ObjectFieldUtil.toObjectField(
+					false, _listTypeDefinitionLocalService,
+					objectRelationship.getObjectField(),
+					_objectFieldLocalService, _objectFieldSettingLocalService,
+					_objectFilterLocalService)));
 	}
 
 	@Override
@@ -339,10 +352,19 @@ public class ObjectRelationshipResourceImpl
 		new ObjectRelationshipEntityModel();
 
 	@Reference
+	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
+
+	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Reference
+	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
+
+	@Reference
+	private ObjectFilterLocalService _objectFilterLocalService;
 
 	@Reference(target = DTOConverterConstants.OBJECT_RELATIONSHIP_DTO_CONVERTER)
 	private DTOConverter

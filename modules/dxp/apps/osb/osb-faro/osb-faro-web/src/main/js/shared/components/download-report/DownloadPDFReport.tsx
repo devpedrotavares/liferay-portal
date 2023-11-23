@@ -87,15 +87,15 @@ export const CONTAINERS: {[key in Containers]: TContainer} = {
 	},
 	[Containers.SegmentCompositionCard]: {
 		label: Liferay.Language.get('segment-composition'),
-		layout: 3
+		layout: 2
 	},
 	[Containers.SegmentCriteriaCard]: {
 		label: Liferay.Language.get('segment-criteria'),
-		layout: 3
+		layout: 2
 	},
 	[Containers.SegmentMembershipCard]: {
 		label: Liferay.Language.get('segment-membership'),
-		layout: 2
+		layout: 1
 	},
 	[Containers.SessionsByLocationCard]: {
 		label: Liferay.Language.get('sessions-by-location'),
@@ -166,7 +166,7 @@ type ContainerList = {
 	[key in Containers]: TransformedContainer;
 };
 
-const formatContainers = (containers: Containers[]): ContainerList =>
+export const formatContainers = (containers: Containers[]): ContainerList =>
 	containers.reduce((acc, id) => {
 		acc[id] = {
 			...CONTAINERS[id],

@@ -5,7 +5,7 @@
 
 import {format, isBefore} from 'date-fns';
 import {useMemo, useState} from 'react';
-import {useOutletContext, useParams} from 'react-router-dom';
+import {Link, useOutletContext, useParams} from 'react-router-dom';
 import useSWR from 'swr';
 
 import solutionsIcon from '../../../../assets/icons/bookmarks_icon.svg';
@@ -16,10 +16,14 @@ import i18n from '../../../../i18n';
 
 import './Licenses.scss';
 
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useModal} from '@clayui/modal';
+import {ClayTooltipProvider} from '@clayui/tooltip';
+import classNames from 'classnames';
 
 import DeactivateKeysModal from '../../../../components/DeactivateKeysModal/DeactivateKeysModal';
 import Modal from '../../../../components/Modal';
+import {OrderStatuses} from '../../../../components/OrderStatus';
 import {useMarketplaceContext} from '../../../../context/MarketplaceContext';
 import {OrderType} from '../../../../enums/OrderType';
 import useGetProductByOrderId from '../../../../hooks/useGetProductByOrderId';
@@ -82,6 +86,13 @@ const Licenses = () => {
 			}
 		}
 	);
+	const rows = licenseKeysResponse?.items ?? [];
+
+	const isLicenseExpired = (expirationDate: string) =>
+		!isBefore(new Date(), new Date(expirationDate));
+
+	const orderStatusIsNotCompleted =
+		placedOrder?.orderStatusInfo?.label !== OrderStatuses.COMPLETED;
 
 	const {
 		onDeativateLicenseKey,
@@ -118,21 +129,24 @@ const Licenses = () => {
 			nextButton: {
 				appendIcon: 'download',
 				className: 'ml-4 mr-1',
-				disabled: false,
+				disabled: isLicenseExpired(modalData?.expirationDate as string),
 				displayType: 'primary',
 				onClick: () => onDownload(modalData as LicenseKey),
 				show: true,
 				text: i18n.translate('download-key'),
+				tooltip: isLicenseExpired(modalData?.expirationDate as string)
+					? i18n.translate(
+							'this-key-is-expired-and-cannot-be-downloaded'
+					  )
+					: '',
 			},
 		}),
 		[licenseKeyModal, deactivateLicenseModal, onDownload, modalData]
 	);
 
 	if (isLoading) {
-		return <div>Loading...</div>;
+		return <ClayLoadingIndicator />;
 	}
-
-	const rows = licenseKeysResponse?.items ?? [];
 
 	return (
 		<div className="licenses mb-9 mt-4">
@@ -140,13 +154,23 @@ const Licenses = () => {
 				<Table
 					Actions={({row}) => (
 						<TableActions
+							isDisabled={isLicenseExpired(row.expirationDate)}
 							onDeactivate={() => {
 								setModalData(row);
 
 								deactivateLicenseModal.onOpenChange(true);
 							}}
-							onDownload={() => onDownload(row)}
+							onDownload={() => {
+								onDownload(row);
+							}}
 							onView={() => onViewLicenseKey(row)}
+							tooltip={
+								isLicenseExpired(row.expirationDate)
+									? i18n.translate(
+											'this-key-is-expired-and-cannot-be-downloaded'
+									  )
+									: ''
+							}
 						/>
 					)}
 					columns={[
@@ -188,6 +212,7 @@ const Licenses = () => {
 								/>
 							),
 						},
+
 						{
 							bodyClass: 'border-0 cursor-pointer',
 							key: 'startDate',
@@ -263,14 +288,31 @@ const Licenses = () => {
 				/>
 			) : (
 				<DashboardEmptyTable
-					button
-					buttonName={i18n.translate('create-license-key')}
 					description1={i18n.translate(
 						'create-new-licenses-and-they-will-show-up-here'
 					)}
 					icon={solutionsIcon}
 					title={i18n.translate('no-licenses-yet')}
-				/>
+				>
+					<ClayTooltipProvider>
+						<Link
+							className={classNames('btn btn-primary mt-4', {
+								disabled: orderStatusIsNotCompleted,
+							})}
+							data-tooltip-align="bottom"
+							title={
+								orderStatusIsNotCompleted
+									? i18n.translate(
+											'the-order-must-be-completed-before-licensing-this-app.'
+									  )
+									: undefined
+							}
+							to={`/order/${orderId}/create-license`}
+						>
+							{i18n.translate('create-license-key')}
+						</Link>
+					</ClayTooltipProvider>
+				</DashboardEmptyTable>
 			)}
 
 			{licenseKeyModal.open && (

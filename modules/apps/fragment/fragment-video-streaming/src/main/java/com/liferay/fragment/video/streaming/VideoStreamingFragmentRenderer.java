@@ -50,6 +50,7 @@ public class VideoStreamingFragmentRenderer implements FragmentRenderer {
 					"fields",
 					JSONUtil.putAll(
 						_createFieldJSONObject("url", "url", "text"),
+						_createFieldJSONObject("subtitle", "subtitles", "text"),
 						_createFieldJSONObject(
 							"autoplay", "autoplay", "checkbox"),
 						_createFieldJSONObject("loop", "loop", "checkbox"),
@@ -137,6 +138,13 @@ public class VideoStreamingFragmentRenderer implements FragmentRenderer {
 						getConfiguration(fragmentRendererContext),
 						fragmentEntryLink.getEditableValues(),
 						fragmentRendererContext.getLocale(), "url")));
+			httpServletRequest.setAttribute(
+				VideoStreamingWebKeys.VIDEO_STREAMING_SUBTITLES,
+				GetterUtil.getString(
+					_fragmentEntryConfigurationParser.getFieldValue(
+						getConfiguration(fragmentRendererContext),
+						fragmentEntryLink.getEditableValues(),
+						fragmentRendererContext.getLocale(), "subtitles")));
 			httpServletRequest.setAttribute(
 				VideoStreamingWebKeys.VIDEO_STREAMING_VIDEO_HEIGHT,
 				GetterUtil.getString(

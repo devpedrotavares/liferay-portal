@@ -239,7 +239,6 @@ definition {
 
 			if (${fieldType} == "Attachment") {
 				ObjectAdmin.selectDropdownItem(
-					currentOption = "Select an option",
 					labelName = "Request Files",
 					optionName = ${fieldAttachment});
 
@@ -253,23 +252,18 @@ definition {
 			}
 
 			if (${fieldType} == "Aggregation") {
-				Click(locator1 = "ObjectField#LABEL_RELATIONSHIP");
-
-				Click(
-					key_dropdownItem = ${relationship},
-					locator1 = "ObjectAdmin#SELECT_DROPDOWN_ITEM_DEFAULT_VALUE");
+				ObjectAdmin.selectDropdownItem(
+					labelName = "Relationship",
+					optionName = ${relationship});
 
 				ObjectAdmin.selectDropdownItem(
-					currentOption = "Select an option",
-					labelName = "Type",
+					labelName = "Function",
 					optionName = ${functionType});
 
 				if (isSet(field)) {
-					Click(locator1 = "ObjectField#LABEL_FIELD");
-
-					Click(
-						key_dropdownItem = ${field},
-						locator1 = "ObjectAdmin#SELECT_DROPDOWN_ITEM_DEFAULT_VALUE");
+					ObjectAdmin.selectDropdownItem(
+						labelName = "Field",
+						optionName = ${field});
 				}
 			}
 		}
@@ -285,17 +279,14 @@ definition {
 		}
 
 		if (isSet(fieldPicklist)) {
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			Click(
-				key_columnOption = ${fieldPicklist},
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Picklist",
+				optionName = ${fieldPicklist});
 
 			if (${markAsState} == "true") {
 				Check.checkToggleSwitch(locator1 = "ObjectField#MARK_AS_STATE_TOGGLE");
 
 				ObjectAdmin.selectDropdownItem(
-					currentOption = "Choose an Option",
 					labelName = "Default Value",
 					optionName = ${itemName});
 			}
@@ -303,7 +294,6 @@ definition {
 
 		if (isSet(formulaFieldOption)) {
 			ObjectAdmin.selectDropdownItem(
-				currentOption = "Select an option",
 				labelName = "Output",
 				optionName = ${formulaFieldOption});
 		}
@@ -362,7 +352,6 @@ definition {
 		LexiconEntry.gotoAdd();
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = ${currentOption},
 			labelName = ${labelName},
 			optionName = ${picklistOption});
 
@@ -399,17 +388,14 @@ definition {
 
 		if (isSet(type)) {
 			ObjectAdmin.selectDropdownItem(
-				currentOption = "Select an option",
 				labelName = "Type",
 				optionName = ${type});
 		}
 
 		if (isSet(object)) {
-			Click(locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE");
-
-			Click(
-				key_columnOption = ${object},
-				locator1 = "ObjectCustomViews#SELECT_AUTO_COMPLETE_OPTION");
+			ObjectAdmin.selectDropdownItem(
+				labelName = "Many Records Of",
+				optionName = ${object});
 		}
 
 		if (isSet(name)) {
@@ -492,7 +478,6 @@ definition {
 			pluralLabelName = ${pluralLabelName});
 
 		ObjectAdmin.selectDropdownItem(
-			currentOption = "Default",
 			labelName = "Storage Type",
 			optionName = ${storageType});
 
@@ -534,11 +519,9 @@ definition {
 				for (var fieldLabelName : list ${fieldList}) {
 					Click(locator1 = "ObjectAdmin#ADD_FIELD_ON_BLOCK");
 
-					Click(locator1 = "ObjectAdmin#LAYOUT_ENTRY_CHOOSE_OPTION");
-
-					Click(
-						key_optionName = ${fieldLabelName},
-						locator1 = "ObjectAdmin#LAYOUT_ADD_FIELD_OPTION");
+					ObjectAdmin.selectDropdownItem(
+						labelName = "Field",
+						optionName = ${fieldLabelName});
 
 					Click(
 						key_columnsNumber = ${columnsNumber},
@@ -552,11 +535,9 @@ definition {
 			else {
 				Click(locator1 = "ObjectAdmin#ADD_FIELD_ON_BLOCK");
 
-				Click(locator1 = "ObjectAdmin#LAYOUT_ENTRY_CHOOSE_OPTION");
-
-				Click(
-					key_optionName = ${fieldLabelName},
-					locator1 = "ObjectAdmin#LAYOUT_ADD_FIELD_OPTION");
+				ObjectAdmin.selectDropdownItem(
+					labelName = "Field",
+					optionName = ${fieldLabelName});
 
 				Click(
 					key_columnsNumber = ${columnsNumber},
@@ -581,12 +562,14 @@ definition {
 			locator1 = "ObjectAdmin#TAB_LABEL_NAME",
 			value1 = ${tabName});
 
-		Click(locator1 = "ObjectAdmin#LAYOUT_ENTRY_CHOOSE_OPTION");
+		Click(
+			key_labelName = "Relationship",
+			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
 
 		if (isSet(relationshipsLabelName)) {
 			Click(
 				key_optionName = ${relationshipsLabelName},
-				locator1 = "ObjectAdmin#LAYOUT_ADD_FIELD_OPTION");
+				locator1 = "ObjectAdmin#CLAY_GENERIC_DROPDOWN_ITEM");
 		}
 
 		Click(
@@ -1262,10 +1245,13 @@ definition {
 			}
 
 			if (${thenAction} == "Notification") {
-				ObjectAdmin.selectDropdownItem(
-					currentOption = "Select an option",
-					labelName = "",
-					optionName = ${notificationName});
+				Click(
+					key_currentOption = "Select an option",
+					locator1 = "ObjectAdmin#CLAY_GENERIC_SELECT_OPTION");
+
+				Click(
+					key_optionName = ${notificationName},
+					locator1 = "ObjectAdmin#CLAY_GENERIC_DROPDOWN_ITEM");
 			}
 		}
 
@@ -1616,9 +1602,8 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro selectDropdownItem(optionName = null,currentOption = null,labelName = null) {
+	macro selectDropdownItem(optionName = null,labelName = null) {
 		Click(
-			key_currentOption = ${currentOption},
 			key_labelName = ${labelName},
 			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
 
@@ -1658,7 +1643,6 @@ definition {
 	@summary = "Default summary"
 	macro selectObjectScope(optionName = null) {
 		Click(
-			key_currentOption = "",
 			key_labelName = "Scope",
 			locator1 = "ObjectAdmin#CLAY_GENERIC_BUTTON");
 
