@@ -253,9 +253,11 @@ public class ObjectEntryLocalServiceImpl
 
 		User user = _userLocalService.getUser(userId);
 
-		_fillDefaultValue(
-			_objectFieldLocalService.getObjectFields(objectDefinitionId),
-			values);
+		List<ObjectField> objectFields =
+			_objectFieldLocalService.getObjectFields(objectDefinitionId);
+
+		_fillDefaultValue(objectFields, values);
+		_fillRelationshipObjectField(true, objectFields, values);
 
 		_validateValues(
 			user.isGuestUser(), objectDefinitionId, null, serviceContext,
@@ -1442,6 +1444,12 @@ public class ObjectEntryLocalServiceImpl
 			_objectDefinitionPersistence.findByPrimaryKey(
 				objectEntry.getObjectDefinitionId());
 
+		_fillRelationshipObjectField(
+			false,
+			_objectFieldLocalService.getObjectFields(
+				objectDefinition.getObjectDefinitionId()),
+			values);
+
 		_validateValues(
 			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
 			objectEntry, serviceContext, userId, values);
@@ -1949,6 +1957,22 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		return predicate.and(searchPredicate.withParentheses());
+	}
+
+	private void _fillRelationshipObjectField(
+		boolean isNew, List<ObjectField> objectFields,
+		Map<String, Serializable> values) {
+
+		for (ObjectField objectField : objectFields) {
+			if (Validator.isNull(objectField.getRelationshipType()) ||
+				Validator.isNotNull(values.get(objectField.getName())) ||
+				(!isNew && !values.containsKey(objectField.getName()))) {
+
+				continue;
+			}
+
+			values.put(objectField.getName(), 0L);
+		}
 	}
 
 	private DSLQuery _getAccountEntriesDSLQuery(long companyId, long userId)
