@@ -132,9 +132,12 @@ public class UniqueCompositeKeyObjectValidationRuleEngineImpl
 
 			String value = null;
 
-			if (StringUtil.equals(
-					objectField.getBusinessType(),
-					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
+			if (entryValues.get(objectField.getName()) == null) {
+				value = null;
+			}
+			else if (StringUtil.equals(
+						objectField.getBusinessType(),
+						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
 
 				Map<String, Object> objectFieldProperties =
 					(Map<String, Object>)entryValues.get(objectField.getName());
