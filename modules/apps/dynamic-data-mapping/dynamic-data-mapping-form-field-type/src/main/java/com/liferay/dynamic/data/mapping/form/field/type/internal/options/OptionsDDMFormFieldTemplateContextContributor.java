@@ -63,6 +63,8 @@ public class OptionsDDMFormFieldTemplateContextContributor
 				return LocaleUtil.toLanguageId(ddmForm.getDefaultLocale());
 			}
 		).put(
+			"showKeyword", true
+		).put(
 			"value", _getValue(ddmFormField, ddmFormFieldRenderingContext)
 		).build();
 	}
