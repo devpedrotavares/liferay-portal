@@ -12,6 +12,7 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
 import com.liferay.journal.configuration.JournalServiceConfiguration;
+import com.liferay.journal.configuration.JournalStructureConfiguration;
 import com.liferay.journal.web.internal.configuration.JournalWebConfiguration;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -159,6 +160,22 @@ public class JournalEditDDMStructuresDisplayContext {
 		}
 
 		return LocaleUtil.toLanguageId(ddmForm.getDefaultLocale());
+	}
+
+	public boolean getDisplayFieldName() {
+		try {
+			JournalStructureConfiguration journalStructureConfiguration =
+				ConfigurationProviderUtil.getCompanyConfiguration(
+					JournalStructureConfiguration.class,
+					CompanyThreadLocal.getCompanyId());
+
+			return journalStructureConfiguration.displayFieldName();
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+
+		return false;
 	}
 
 	public Map<String, Object> getLocaleChangedHandlerContext() {
