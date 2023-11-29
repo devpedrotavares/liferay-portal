@@ -19,6 +19,7 @@ import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.action.executor.ObjectActionExecutorRegistry;
 import com.liferay.object.action.trigger.ObjectActionTriggerRegistry;
+import com.liferay.object.action.util.ObjectActionThreadLocal;
 import com.liferay.object.constants.ObjectActionConstants;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
@@ -780,91 +781,45 @@ public class ObjectActionLocalServiceTest {
 
 	@Test
 	public void testAddObjectActionWithCircularReference() throws Exception {
-		_publishCustomObjectDefinition();
+		_testAddObjectActionWithCircularReference(2);
 
-		UnicodeProperties unicodeProperties = UnicodePropertiesBuilder.put(
-			"objectDefinitionId", _objectDefinition.getObjectDefinitionId()
-		).put(
-			"predefinedValues",
-			JSONUtil.putAll(
-				JSONUtil.put(
-					"inputAsValue", true
-				).put(
-					"name", "firstName"
-				).put(
-					"value", RandomTestUtil.randomString()
-				)
-			).toString()
-		).build();
+		Class<ObjectActionThreadLocal> clazz = ObjectActionThreadLocal.class;
 
-		// When you add a new object entry that belongs to "_objectDefinition",
-		// update the newly added object entry
+		String originalFieldName = "_clearObjectEntryIdsMapThreadLocal";
 
-		ObjectAction objectAction1 = _addObjectAction(
-			RandomTestUtil.randomString(),
-			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
-			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, unicodeProperties,
-			false);
+		Object originalField = ReflectionTestUtil.getFieldValue(
+			clazz, originalFieldName);
 
-		Assert.assertEquals(
-			objectAction1.getStatus(), ObjectActionConstants.STATUS_NEVER_RAN);
-
-		// When you update an object entry that belongs to "_objectDefinition",
-		// add a new object entry to "_objectDefinition"
-
-		ObjectAction objectAction2 = _addObjectAction(
-			RandomTestUtil.randomString(),
-			ObjectActionExecutorConstants.KEY_ADD_OBJECT_ENTRY,
-			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE, unicodeProperties,
-			false);
-
-		Assert.assertEquals(
-			objectAction2.getStatus(), ObjectActionConstants.STATUS_NEVER_RAN);
-
-		// The actions should not be triggered indefinitely
-
-		PermissionChecker originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-		String originalName = PrincipalThreadLocal.getName();
+		int expectedObjectEntriesCount = RandomTestUtil.randomInt(3, 20);
 
 		try {
-			PermissionThreadLocal.setPermissionChecker(
-				PermissionCheckerFactoryUtil.create(_user));
-			PrincipalThreadLocal.setName(_user.getUserId());
+			ThreadLocal<Boolean> trueThreadLocal = new ThreadLocal<Boolean>() {
 
-			_objectEntryLocalService.addObjectEntry(
-				TestPropsValues.getUserId(), 0,
-				_objectDefinition.getObjectDefinitionId(),
-				Collections.singletonMap(
-					"firstName", RandomTestUtil.randomString()),
-				ServiceContextTestUtil.getServiceContext());
-		}
-		catch (StackOverflowError stackOverflowError) {
-			Assert.fail();
+				@Override
+				public Boolean get() {
+					if (_count < expectedObjectEntriesCount) {
+						_count++;
+
+						return true;
+					}
+
+					return false;
+				}
+
+				private int _count = 1;
+
+			};
+
+			ReflectionTestUtil.setFieldValue(
+				clazz, originalFieldName, trueThreadLocal);
+
+			_testAddObjectActionWithCircularReference(
+				expectedObjectEntriesCount);
 		}
 		finally {
-			PermissionThreadLocal.setPermissionChecker(
-				originalPermissionChecker);
-			PrincipalThreadLocal.setName(originalName);
+			ReflectionTestUtil.setFieldValue(
+				clazz, originalFieldName, originalField);
 		}
-
-		Assert.assertEquals(
-			2,
-			_objectEntryLocalService.getObjectEntriesCount(
-				0, _objectDefinition.getObjectDefinitionId()));
-
-		objectAction1 = _objectActionLocalService.getObjectAction(
-			objectAction1.getObjectActionId());
-		objectAction2 = _objectActionLocalService.getObjectAction(
-			objectAction2.getObjectActionId());
-
-		Assert.assertEquals(
-			objectAction1.getStatus(), ObjectActionConstants.STATUS_SUCCESS);
-		Assert.assertEquals(
-			objectAction2.getStatus(), ObjectActionConstants.STATUS_SUCCESS);
-
-		_objectActionLocalService.deleteObjectAction(objectAction1);
-		_objectActionLocalService.deleteObjectAction(objectAction2);
 	}
 
 	@Test
@@ -2056,6 +2011,91 @@ public class ObjectActionLocalServiceTest {
 		return _objectDefinitionLocalService.publishCustomObjectDefinition(
 			TestPropsValues.getUserId(),
 			_objectDefinition.getObjectDefinitionId());
+	}
+
+	private void _testAddObjectActionWithCircularReference(
+			int expectedObjectEntriesCount)
+		throws Exception {
+
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionTestUtil.addCustomObjectDefinition(
+				false, _objectDefinitionLocalService,
+				Collections.singletonList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, true, true, null,
+						"First Name", "firstName", false)));
+
+		_objectDefinitionLocalService.publishCustomObjectDefinition(
+			TestPropsValues.getUserId(),
+			objectDefinition.getObjectDefinitionId());
+
+		UnicodeProperties unicodeProperties = UnicodePropertiesBuilder.put(
+			"objectDefinitionId", objectDefinition.getObjectDefinitionId()
+		).build();
+
+		// When you add a new object entry that belongs to "objectDefinition",
+		// update the newly added object entry
+
+		ObjectAction objectAction1 = _objectActionLocalService.addObjectAction(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			objectDefinition.getObjectDefinitionId(), true, StringPool.BLANK,
+			RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, unicodeProperties,
+			false);
+
+		Assert.assertEquals(
+			objectAction1.getStatus(), ObjectActionConstants.STATUS_NEVER_RAN);
+
+		// When you update an object entry that belongs to "objectDefinition",
+		// add a new object entry to "objectDefinition"
+
+		ObjectAction objectAction2 = _objectActionLocalService.addObjectAction(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			objectDefinition.getObjectDefinitionId(), true, StringPool.BLANK,
+			RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_ADD_OBJECT_ENTRY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE, unicodeProperties,
+			false);
+
+		Assert.assertEquals(
+			objectAction2.getStatus(), ObjectActionConstants.STATUS_NEVER_RAN);
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+		String originalName = PrincipalThreadLocal.getName();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(_user));
+			PrincipalThreadLocal.setName(_user.getUserId());
+
+			_objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), 0,
+				objectDefinition.getObjectDefinitionId(),
+				Collections.emptyMap(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				expectedObjectEntriesCount,
+				_objectEntryLocalService.getObjectEntriesCount(
+					0, objectDefinition.getObjectDefinitionId()));
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+			PrincipalThreadLocal.setName(originalName);
+
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
 	}
 
 	private final Queue<Object[]> _argumentsList = new LinkedList<>();
