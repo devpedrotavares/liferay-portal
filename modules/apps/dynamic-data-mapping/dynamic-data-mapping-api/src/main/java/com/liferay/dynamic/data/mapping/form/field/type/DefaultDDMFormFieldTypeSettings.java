@@ -46,7 +46,8 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 							value = {
 								"dataType", "name", "showLabel", "repeatable",
 								"type", "validation", "visibilityExpression",
-								"visualProperty", "objectFieldName"
+								"visualProperty", "objectFieldName",
+								"htmlAutocomplete"
 							}
 						)
 					}
@@ -60,6 +61,12 @@ public interface DefaultDDMFormFieldTypeSettings
 
 	@DDMFormField(visibilityExpression = "FALSE")
 	public String fieldNamespace();
+
+	@DDMFormField(
+		label = "%html-autocomplete-attribute",
+		properties = "placeholder=%choose-an-autocomplete", type = "text"
+	)
+	public String htmlAutocomplete();
 
 	@DDMFormField(
 		label = "%searchable", optionLabels = {"%disable", "%keyword"},

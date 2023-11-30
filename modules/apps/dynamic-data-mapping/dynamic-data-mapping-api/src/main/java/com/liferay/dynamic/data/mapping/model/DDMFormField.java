@@ -225,6 +225,10 @@ public class DDMFormField implements Serializable {
 		return MapUtil.getString(_properties, "fieldReference");
 	}
 
+	public String getHtmlAutocomplete() {
+		return MapUtil.getString(_properties, "htmlAutocomplete");
+	}
+
 	public String getIndexType() {
 		return MapUtil.getString(_properties, "indexType");
 	}
@@ -438,6 +442,10 @@ public class DDMFormField implements Serializable {
 
 	public void setFieldReference(String fieldReference) {
 		_properties.put("fieldReference", fieldReference);
+	}
+
+	public void setHtmlAutocomplete(String htmlAutocomplete) {
+		_properties.put("htmlAutocomplete", htmlAutocomplete);
 	}
 
 	public void setIndexType(String indexType) {

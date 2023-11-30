@@ -638,6 +638,13 @@ public class DDMFormFieldTemplateContextFactory {
 		ddmFormFieldTemplateContext.put("fieldReference", fieldReference);
 	}
 
+	private void _setDDMFormFieldTemplateContextHtmlAutocomplete(
+		Map<String, Object> ddmFormFieldTemplateContext,
+		String htmlAutocomplete) {
+
+		ddmFormFieldTemplateContext.put("htmlAutocomplete", htmlAutocomplete);
+	}
+
 	private void _setDDMFormFieldTemplateContextInputMaskProperties(
 		Map<String, Object> changedProperties,
 		Map<String, Object> ddmFormFieldTemplateContext) {
@@ -992,6 +999,8 @@ public class DDMFormFieldTemplateContextFactory {
 		_setDDMFormFieldTemplateContextDataType(
 			ddmFormFieldTemplateContext, ddmFormField.getDataType());
 		_setDDMFormFieldTemplateContextDir(ddmFormFieldTemplateContext);
+		_setDDMFormFieldTemplateContextHtmlAutocomplete(
+			ddmFormFieldTemplateContext, ddmFormField.getHtmlAutocomplete());
 		_setDDMFormFieldTemplateContextInstanceId(
 			ddmFormFieldTemplateContext, ddmFormFieldValue.getInstanceId());
 		_setDDMFormFieldTemplateContextLocale(ddmFormFieldTemplateContext);

@@ -90,6 +90,8 @@ public class DDMFormTemplateContextProcessor {
 			jsonObject.getString("fieldName"), ddmFormField);
 		_setDDMFormFieldFieldReference(
 			jsonObject.getString("fieldReference"), ddmFormField);
+		_setDDMFormFieldHtmlAutoComplete(
+			ddmFormField, jsonObject.getString("htmlAutocomplete"));
 		_setDDMFormFieldInputMaskFormat(
 			jsonObject.getString("inputMaskFormat"), ddmFormField);
 		_setDDMFormFieldLabel(jsonObject.getString("label"), ddmFormField);
@@ -307,6 +309,12 @@ public class DDMFormTemplateContextProcessor {
 		String fieldReference, DDMFormField ddmFormField) {
 
 		ddmFormField.setFieldReference(GetterUtil.getString(fieldReference));
+	}
+
+	private void _setDDMFormFieldHtmlAutoComplete(
+		DDMFormField ddmFormField, String htmlAutoComplete) {
+
+		ddmFormField.setHtmlAutocomplete(htmlAutoComplete);
 	}
 
 	private void _setDDMFormFieldInputMaskFormat(

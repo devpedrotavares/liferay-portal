@@ -23,6 +23,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 	rules = {
 		@DDMFormRule(
 			actions = {
+				"setVisible('htmlAutocomplete', TRUE)",
 				"setVisible('inputMask', TRUE)",
 				"setVisible('repeatable', TRUE)",
 				"setVisible('requireConfirmation', TRUE)",
@@ -36,6 +37,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 				"setValue('inputMask', FALSE)", "setValue('repeatable', FALSE)",
 				"setValue('requireConfirmation', FALSE)",
 				"setValue('required', FALSE)", "setValue('showLabel', TRUE)",
+				"setVisible('htmlAutocomplete', FALSE)",
 				"setVisible('inputMask', FALSE)",
 				"setVisible('repeatable', FALSE)",
 				"setVisible('requireConfirmation', FALSE)",
@@ -102,11 +104,11 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 							size = 12,
 							value = {
 								"name", "fieldReference", "predefinedValue",
-								"objectFieldName", "visibilityExpression",
-								"fieldNamespace", "indexType",
-								"labelAtStructureLevel", "localizable",
-								"nativeField", "readOnly", "type", "hideField",
-								"showLabel", "repeatable",
+								"htmlAutocomplete", "objectFieldName",
+								"visibilityExpression", "fieldNamespace",
+								"indexType", "labelAtStructureLevel",
+								"localizable", "nativeField", "readOnly",
+								"type", "hideField", "showLabel", "repeatable",
 								"requireConfirmation", "direction",
 								"confirmationLabel", "confirmationErrorMessage",
 								"validation", "tooltip", "inputMask",

@@ -29,6 +29,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 		@DDMFormRule(
 			actions = {
 				"setVisible('autocomplete', TRUE)",
+				"setVisible('htmlAutocomplete', TRUE)",
 				"setVisible('repeatable', TRUE)",
 				"setVisible('requireConfirmation', TRUE)",
 				"setVisible('required', TRUE)", "setVisible('showLabel', TRUE)",
@@ -43,6 +44,7 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 				"setValue('requireConfirmation', FALSE)",
 				"setValue('required', FALSE)", "setValue('showLabel', TRUE)",
 				"setVisible('autocomplete', FALSE)",
+				"setVisible('htmlAutocomplete', FALSE)",
 				"setVisible('repeatable', FALSE)",
 				"setVisible('requireConfirmation', FALSE)",
 				"setVisible('required', FALSE)",
@@ -119,14 +121,15 @@ import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 							size = 12,
 							value = {
 								"name", "fieldReference", "predefinedValue",
-								"objectFieldName", "visibilityExpression",
-								"fieldNamespace", "indexType",
-								"labelAtStructureLevel", "localizable",
-								"nativeField", "readOnly", "dataType", "type",
-								"hideField", "showLabel", "repeatable",
-								"requireConfirmation", "direction",
-								"confirmationLabel", "confirmationErrorMessage",
-								"validation", "tooltip"
+								"htmlAutocomplete", "objectFieldName",
+								"visibilityExpression", "fieldNamespace",
+								"indexType", "labelAtStructureLevel",
+								"localizable", "nativeField", "readOnly",
+								"dataType", "type", "hideField", "showLabel",
+								"repeatable", "requireConfirmation",
+								"direction", "confirmationLabel",
+								"confirmationErrorMessage", "validation",
+								"tooltip"
 							}
 						)
 					}
