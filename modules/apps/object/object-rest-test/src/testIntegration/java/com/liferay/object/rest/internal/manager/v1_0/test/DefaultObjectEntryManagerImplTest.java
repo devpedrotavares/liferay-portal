@@ -931,6 +931,9 @@ public class DefaultObjectEntryManagerImplTest
 		LocalDateTime utcLocalDateTime = LocalDateTime.from(
 			zonedDateTime.withZoneSameInstant(ZoneId.of(StringPool.UTC)));
 
+		String datetimeString1 = utcLocalDateTime.format(
+			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+
 		assertEquals(
 			_defaultObjectEntryManager.addObjectEntry(
 				new DefaultDTOConverterContext(
@@ -947,14 +950,55 @@ public class DefaultObjectEntryManagerImplTest
 			new ObjectEntry() {
 				{
 					properties = Collections.singletonMap(
-						"dateTimeUTCObjectFieldName",
-						utcLocalDateTime.format(
-							DateTimeFormatter.ofPattern(
-								"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")));
+						"dateTimeUTCObjectFieldName", datetimeString1);
 				}
 			});
 
 		_userLocalService.deleteUser(user);
+
+		// Date time with filters
+
+		String datetimeString2 = utcLocalDateTime.plusHours(
+			1
+		).format(
+			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+		);
+
+		_objectEntryManager.addObjectEntry(
+			dtoConverterContext, _objectDefinition2,
+			new ObjectEntry() {
+				{
+					properties = Collections.singletonMap(
+						"dateTimeUTCObjectFieldName", datetimeString2);
+				}
+			},
+			ObjectDefinitionConstants.SCOPE_COMPANY);
+
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName eq null", _objectDefinition2, 1);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName eq " + datetimeString1,
+			_objectDefinition2, 1);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName ge " + datetimeString1,
+			_objectDefinition2, 2);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName gt " + datetimeString1,
+			_objectDefinition2, 1);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName le " + datetimeString2,
+			_objectDefinition2, 2);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName lt " + datetimeString2,
+			_objectDefinition2, 1);
+		_assertFilteredObjectEntriesSize(
+			"dateTimeUTCObjectFieldName ne null ", _objectDefinition2, 2);
+		_assertFilteredObjectEntriesSize(
+			String.format(
+				"dateTimeUTCObjectFieldName ne %s or " +
+					"dateTimeUTCObjectFieldName eq null",
+				datetimeString1),
+			_objectDefinition2, 2);
 
 		// Picklist by list entry
 
@@ -3356,6 +3400,23 @@ public class DefaultObjectEntryManagerImplTest
 					).build();
 				}
 			});
+	}
+
+	private void _assertFilteredObjectEntriesSize(
+			String filterString, ObjectDefinition objectDefinition, long size)
+		throws Exception {
+
+		Page<ObjectEntry> page = _defaultObjectEntryManager.getObjectEntries(
+			companyId, objectDefinition, null, null,
+			new DefaultDTOConverterContext(
+				false, Collections.emptyMap(), dtoConverterRegistry, null,
+				LocaleUtil.getDefault(), null, _user),
+			filterString, null, null, null);
+
+		Collection<ObjectEntry> objectEntries = page.getItems();
+
+		Assert.assertEquals(
+			objectEntries.toString(), size, objectEntries.size());
 	}
 
 	private void _assertLocalizedValues(
