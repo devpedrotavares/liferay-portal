@@ -259,11 +259,11 @@ public class ObjectEntryLocalServiceImpl
 			_objectFieldLocalService.getObjectFields(objectDefinitionId),
 			values);
 
-		_validateValues(
-			user.isGuestUser(), objectDefinitionId, null, serviceContext,
-			userId, values);
-
 		long objectEntryId = counterLocalService.increment();
+
+		_validateValues(
+			null, user.isGuestUser(), objectDefinitionId, objectEntryId,
+			serviceContext, userId, values);
 
 		_insertIntoLocalizationTable(
 			objectDefinition, objectEntryId, user, values, workflowAction);
@@ -366,8 +366,8 @@ public class ObjectEntryLocalServiceImpl
 		User user = _userLocalService.getUser(userId);
 
 		_validateValues(
-			user.isGuestUser(), objectDefinition.getObjectDefinitionId(), null,
-			serviceContext, userId, values);
+			null, user.isGuestUser(), objectDefinition.getObjectDefinitionId(),
+			primaryKey, serviceContext, userId, values);
 
 		insertIntoOrUpdateExtensionTable(
 			userId, objectDefinition.getObjectDefinitionId(), primaryKey,
@@ -1454,8 +1454,9 @@ public class ObjectEntryLocalServiceImpl
 				objectEntry.getObjectDefinitionId());
 
 		_validateValues(
-			user.isGuestUser(), objectEntry.getObjectDefinitionId(),
-			objectEntry, serviceContext, userId, values);
+			objectEntry, user.isGuestUser(),
+			objectEntry.getObjectDefinitionId(), objectEntryId, serviceContext,
+			userId, values);
 
 		int workflowAction = serviceContext.getWorkflowAction();
 
@@ -1589,8 +1590,9 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _addFileEntry(
-			DLFileEntry dlFileEntry, Map.Entry<String, Serializable> entry,
-			long objectFieldId, List<ObjectFieldSetting> objectFieldSettings,
+			DLFileEntry tempDLFileEntry, Map.Entry<String, Serializable> entry,
+			long objectDefinitionId, long objectEntryId, long objectFieldId,
+			List<ObjectFieldSetting> objectFieldSettings,
 			ServiceContext serviceContext, long userId)
 		throws PortalException {
 
@@ -1602,10 +1604,10 @@ public class ObjectEntryLocalServiceImpl
 				return;
 			}
 
-			DLFolder dlFileEntryFolder = dlFileEntry.getFolder();
+			DLFolder dlFileEntryFolder = tempDLFileEntry.getFolder();
 
 			DLFolder dlFolder = _attachmentManager.getDLFolder(
-				dlFileEntry.getCompanyId(), dlFileEntry.getGroupId(),
+				tempDLFileEntry.getCompanyId(), tempDLFileEntry.getGroupId(),
 				objectFieldId, serviceContext, userId);
 
 			if (Objects.equals(
@@ -1615,27 +1617,43 @@ public class ObjectEntryLocalServiceImpl
 			}
 
 			String originalFileName = TempFileEntryUtil.getOriginalTempFileName(
-				dlFileEntry.getFileName());
+				tempDLFileEntry.getFileName());
 
 			FileEntry fileEntry = _dlAppLocalService.addFileEntry(
 				null, userId, dlFolder.getRepositoryId(),
 				dlFolder.getFolderId(),
 				DLUtil.getUniqueFileName(
-					dlFileEntry.getGroupId(), dlFolder.getFolderId(),
+					tempDLFileEntry.getGroupId(), dlFolder.getFolderId(),
 					originalFileName, true),
-				dlFileEntry.getMimeType(),
+				tempDLFileEntry.getMimeType(),
 				DLUtil.getUniqueTitle(
-					dlFileEntry.getGroupId(), dlFolder.getFolderId(),
+					tempDLFileEntry.getGroupId(), dlFolder.getFolderId(),
 					FileUtil.stripExtension(originalFileName)),
-				StringPool.BLANK, null, null, dlFileEntry.getContentStream(),
-				dlFileEntry.getSize(), null, null, serviceContext);
+				StringPool.BLANK, null, null,
+				tempDLFileEntry.getContentStream(), tempDLFileEntry.getSize(),
+				null, null, serviceContext);
 
-			entry.setValue(fileEntry.getFileEntryId());
+			long fileEntryId = fileEntry.getFileEntryId();
+
+			DLFileEntry persistedDLFileEntry =
+				_dlFileEntryLocalService.getDLFileEntry(fileEntryId);
+
+			ObjectDefinition objectDefinition =
+				_objectDefinitionPersistence.fetchByPrimaryKey(
+					objectDefinitionId);
+
+			persistedDLFileEntry.setClassName(objectDefinition.getClassName());
+
+			persistedDLFileEntry.setClassPK(objectEntryId);
+
+			_dlFileEntryLocalService.updateDLFileEntry(persistedDLFileEntry);
+
+			entry.setValue(fileEntryId);
 		}
 		finally {
-			if (dlFileEntry != null) {
+			if (tempDLFileEntry != null) {
 				TempFileEntryUtil.deleteTempFileEntry(
-					dlFileEntry.getFileEntryId());
+					tempDLFileEntry.getFileEntryId());
 			}
 		}
 	}
@@ -4440,7 +4458,8 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _validateValues(
-			boolean guestUser, long objectDefinitionId, ObjectEntry objectEntry,
+			ObjectEntry existingObjectEntry, boolean guestUser,
+			long objectDefinitionId, long objectEntryId,
 			ServiceContext serviceContext, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
@@ -4478,15 +4497,15 @@ public class ObjectEntryLocalServiceImpl
 
 		for (Map.Entry<String, Serializable> entry : values.entrySet()) {
 			_validateValues(
-				guestUser, entry, objectDefinitionId, objectEntry,
-				serviceContext, userId, values);
+				existingObjectEntry, guestUser, entry, objectDefinitionId,
+				objectEntryId, serviceContext, userId, values);
 		}
 	}
 
 	private void _validateValues(
-			boolean guestUser, Map.Entry<String, Serializable> entry,
-			long objectDefinitionId, ObjectEntry objectEntry,
-			ServiceContext serviceContext, long userId,
+			ObjectEntry existingObjectEntry, boolean guestUser,
+			Map.Entry<String, Serializable> entry, long objectDefinitionId,
+			long objectEntryId, ServiceContext serviceContext, long userId,
 			Map<String, Serializable> values)
 		throws PortalException {
 
@@ -4528,7 +4547,8 @@ public class ObjectEntryLocalServiceImpl
 					objectField.getObjectFieldId(), objectField.getName());
 
 				_addFileEntry(
-					dlFileEntry, entry, objectField.getObjectFieldId(),
+					dlFileEntry, entry, objectDefinitionId, objectEntryId,
+					objectField.getObjectFieldId(),
 					objectField.getObjectFieldSettings(), serviceContext,
 					userId);
 
@@ -4583,7 +4603,7 @@ public class ObjectEntryLocalServiceImpl
 					objectField.getObjectFieldId(),
 					objectDefinition.
 						getAccountEntryRestrictedObjectFieldId()) ||
-				(objectEntry == null)) {
+				(existingObjectEntry == null)) {
 
 				return;
 			}
@@ -4682,10 +4702,11 @@ public class ObjectEntryLocalServiceImpl
 			else {
 				_validateListTypeEntryKey(String.valueOf(value), objectField);
 
-				if ((objectEntry != null) && objectField.isState()) {
+				if ((existingObjectEntry != null) && objectField.isState()) {
 					_validateObjectStateTransition(
 						entry, objectField.getListTypeDefinitionId(),
-						objectEntry, objectField.getObjectFieldId(), userId);
+						existingObjectEntry, objectField.getObjectFieldId(),
+						userId);
 				}
 			}
 		}
