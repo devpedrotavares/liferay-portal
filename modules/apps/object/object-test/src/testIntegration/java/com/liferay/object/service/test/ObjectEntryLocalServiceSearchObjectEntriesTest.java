@@ -223,17 +223,14 @@ public class ObjectEntryLocalServiceSearchObjectEntriesTest {
 	@Test
 	public void testClob() throws Exception {
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
 			ObjectFieldConstants.DB_TYPE_CLOB, false, false);
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
 			ObjectFieldConstants.DB_TYPE_CLOB, true, false);
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
 			ObjectFieldConstants.DB_TYPE_CLOB, true, true);
-		_testCharacterDataType(
-			true, ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
-			ObjectFieldConstants.DB_TYPE_CLOB, true, false);
 	}
 
 	@Test
@@ -499,17 +496,14 @@ public class ObjectEntryLocalServiceSearchObjectEntriesTest {
 	@Test
 	public void testString() throws Exception {
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 			ObjectFieldConstants.DB_TYPE_STRING, false, false);
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 			ObjectFieldConstants.DB_TYPE_STRING, true, false);
 		_testCharacterDataType(
-			false, ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 			ObjectFieldConstants.DB_TYPE_STRING, true, true);
-		_testCharacterDataType(
-			true, ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-			ObjectFieldConstants.DB_TYPE_STRING, true, false);
 	}
 
 	private void _addObjectDefinition(ObjectField objectField)
@@ -614,13 +608,19 @@ public class ObjectEntryLocalServiceSearchObjectEntriesTest {
 	}
 
 	private void _testCharacterDataType(
-			boolean analyzed, String businessType, String dbType,
-			boolean indexed, boolean indexedAsKeyword)
+			String businessType, String dbType, boolean indexed,
+			boolean indexedAsKeyword)
 		throws Exception {
 
 		if (_objectDefinition != null) {
 			_objectDefinitionLocalService.deleteObjectDefinition(
 				_objectDefinition);
+		}
+
+		boolean analyzed = false;
+
+		if (indexed && !indexedAsKeyword) {
+			analyzed = true;
 		}
 
 		_addObjectDefinition(
