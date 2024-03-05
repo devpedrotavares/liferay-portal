@@ -357,7 +357,7 @@ export default function ViewObjectDefinitions({
 			const objectFolderNameSearchParam = currentURL.searchParams.get(
 				'objectFolderName'
 			);
-
+			// todo: mudar algo aqui?
 			if (objectFolderNameSearchParam === null) {
 				setDefaultToSearchParams(allObjectFolders, currentURL);
 			}
