@@ -30,11 +30,11 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	property = {
 		"javax.portlet.name=" + NotificationPortletKeys.NOTIFICATION_TEMPLATES,
-		"mvc.command.name=/notification_templates/get_account_roles"
+		"mvc.command.name=/notification_templates/get_email_notification_roles"
 	},
 	service = MVCResourceCommand.class
 )
-public class GetAccountRolesMVCResourceCommand extends BaseMVCResourceCommand {
+public class GetEmailNotificationRolesMVCResourceCommand extends BaseMVCResourceCommand {
 
 	@Override
 	protected void doServeResource(
