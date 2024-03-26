@@ -49,7 +49,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
  * @author Carolina Barbosa
  */
 @RunWith(Arquillian.class)
-public class GetAccountRolesMVCResourceCommandTest {
+public class GetEmailNotificationRolesMVCResourceCommandTest {
 
 	@ClassRule
 	@Rule
@@ -153,7 +153,7 @@ public class GetAccountRolesMVCResourceCommandTest {
 	private CompanyLocalService _companyLocalService;
 
 	@Inject(
-		filter = "mvc.command.name=/notification_templates/get_account_roles"
+		filter = "mvc.command.name=/notification_templates/get_email_notification_roles"
 	)
 	private MVCResourceCommand _mvcResourceCommand;
 
