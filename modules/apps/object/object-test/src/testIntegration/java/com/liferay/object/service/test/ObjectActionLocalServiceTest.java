@@ -1654,6 +1654,86 @@ public class ObjectActionLocalServiceTest {
 	}
 
 	@Test
+	public void testConcurrentObjectActions() throws Exception {
+		// Whenever an object entry is added, trigger a groovy script
+
+		_addObjectAction(
+			RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_GROOVY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD,
+			UnicodePropertiesBuilder.put(
+				"script", "println \"Hello World\""
+			).build(),
+			false);
+
+		_objectDefinition = _publishCustomObjectDefinition();
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+		String originalName = PrincipalThreadLocal.getName();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(_user));
+			PrincipalThreadLocal.setName(_user.getUserId());
+
+			Thread thread1 = new Thread(
+				() -> {
+					try {
+						ObjectEntry objectEntry =
+							_objectEntryLocalService.addObjectEntry(
+								TestPropsValues.getUserId(), 0,
+								_objectDefinition.getObjectDefinitionId(),
+								HashMapBuilder.<String, Serializable>put(
+									"firstName", "John"
+								).build(),
+								ServiceContextTestUtil.getServiceContext());
+
+						_assertGroovyObjectActionExecutorArguments(
+							"John", objectEntry);
+					}
+					catch (PortalException portalException) {
+					}
+				});
+
+			Thread thread2 = new Thread(
+				() -> {
+					try {
+						ObjectEntry objectEntry =
+							_objectEntryLocalService.addObjectEntry(
+								TestPropsValues.getUserId(), 0,
+								_objectDefinition.getObjectDefinitionId(),
+								HashMapBuilder.<String, Serializable>put(
+									"firstName", "Peter"
+								).build(),
+								ServiceContextTestUtil.getServiceContext());
+
+						_assertGroovyObjectActionExecutorArguments(
+							"Peter", objectEntry);
+					}
+					catch (PortalException portalException) {
+					}
+				});
+
+			thread1.start();
+			thread2.start();
+
+			thread1.join();
+			thread2.join();
+
+			Assert.assertEquals(
+				2,
+				_objectEntryLocalService.getObjectEntriesCount(
+					0, _objectDefinition.getObjectDefinitionId()));
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+			PrincipalThreadLocal.setName(originalName);
+		}
+	}
+
+	@Test
 	public void testDeleteObjectAction() throws Exception {
 		ObjectAction systemObjectAction =
 			_objectActionLocalService.addObjectAction(
