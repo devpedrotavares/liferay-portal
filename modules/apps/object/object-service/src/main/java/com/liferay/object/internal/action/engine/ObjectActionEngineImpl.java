@@ -281,14 +281,22 @@ public class ObjectActionEngineImpl implements ObjectActionEngine {
 				objectAction.getParametersUnicodeProperties(),
 				payloadJSONObject, userId);
 
-			_objectActionLocalService.updateStatus(
-				objectAction.getObjectActionId(),
-				ObjectActionConstants.STATUS_SUCCESS);
+			if (objectAction.getStatus() !=
+					ObjectActionConstants.STATUS_SUCCESS) {
+
+				_objectActionLocalService.updateStatus(
+					objectAction.getObjectActionId(),
+					ObjectActionConstants.STATUS_SUCCESS);
+			}
 		}
 		catch (Exception exception) {
-			_objectActionLocalService.updateStatus(
-				objectAction.getObjectActionId(),
-				ObjectActionConstants.STATUS_FAILED);
+			if (objectAction.getStatus() !=
+					ObjectActionConstants.STATUS_FAILED) {
+
+				_objectActionLocalService.updateStatus(
+					objectAction.getObjectActionId(),
+					ObjectActionConstants.STATUS_FAILED);
+			}
 
 			throw exception;
 		}
