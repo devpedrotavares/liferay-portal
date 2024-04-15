@@ -41,7 +41,9 @@ import com.liferay.object.tree.TreeFactory;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -66,6 +68,10 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.script.management.configuration.helper.ScriptManagementConfigurationHelper;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 
 import java.util.HashMap;
 import java.util.List;
@@ -394,12 +400,32 @@ public class ObjectActionLocalServiceImpl
 	public ObjectAction updateStatus(long objectActionId, int status)
 		throws PortalException {
 
+		Connection connection = _currentConnection.getConnection(
+			objectActionPersistence.getDataSource());
+
+		Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"update ObjectAction set modifiedDate = ?, status = ? where " +
+					"objectActionId = ?")) {
+
+			preparedStatement.setTimestamp(1, currentTime);
+			preparedStatement.setInt(2, status);
+			preparedStatement.setLong(3, objectActionId);
+
+			preparedStatement.executeUpdate();
+		}
+		catch (Exception exception) {
+			throw new SystemException(exception);
+		}
+
 		ObjectAction objectAction = objectActionPersistence.findByPrimaryKey(
 			objectActionId);
 
+		objectAction.setModifiedDate(currentTime);
 		objectAction.setStatus(status);
 
-		return objectActionPersistence.update(objectAction);
+		return objectAction;
 	}
 
 	private void _validateErrorMessage(
@@ -877,6 +903,9 @@ public class ObjectActionLocalServiceImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectActionLocalServiceImpl.class);
+
+	@Reference
+	private CurrentConnection _currentConnection;
 
 	@Reference
 	private DDMExpressionFactory _ddmExpressionFactory;
