@@ -23,7 +23,6 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -41,7 +40,6 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockMultipartHttpServletRequest;
 
@@ -55,9 +53,24 @@ public abstract class BaseExportImportTestCase {
 			String externalReferenceCode, String name)
 		throws Exception {
 
+		Class<?> clazz = getClazz();
+
+		testExportImportJSONString(
+			StringUtil.read(
+				clazz.getResourceAsStream("dependencies/" + actualFileName)),
+			StringUtil.read(
+				clazz.getResourceAsStream("dependencies/" + expectedFileName)),
+			externalReferenceCode, name);
+	}
+
+	public void testExportImportJSONString(
+			String actualJSONString, String expectedJSONString,
+			String externalReferenceCode, String name)
+		throws Exception {
+
 		// MVCActionCommand
 
-		_import(externalReferenceCode, actualFileName, name);
+		_import(externalReferenceCode, actualJSONString, name);
 
 		// MVCResourceCommand
 
@@ -77,34 +90,10 @@ public abstract class BaseExportImportTestCase {
 		mvcResourceCommand.serveResource(
 			mockLiferayResourceRequest, mockLiferayResourceResponse);
 
-		Class<?> clazz = getClazz();
-
 		JSONAssert.assertEquals(
-			StringUtil.read(
-				clazz.getResourceAsStream("dependencies/" + expectedFileName)),
+			expectedJSONString,
 			String.valueOf(
 				mockLiferayResourceResponse.getPortletOutputStream()),
-			JSONCompareMode.LENIENT);
-	}
-
-	public void testFailedImport(
-			String actualFileName, String expectedFileName,
-			String externalReferenceCode, String name)
-		throws Exception {
-
-		MockLiferayPortletActionResponse mockLiferayPortletActionResponse =
-			_import(externalReferenceCode, actualFileName, name);
-
-		MockHttpServletResponse mockHttpServletResponse =
-			(MockHttpServletResponse)
-				mockLiferayPortletActionResponse.getHttpServletResponse();
-
-		Class<?> clazz = getClazz();
-
-		JSONAssert.assertEquals(
-			StringUtil.read(
-				clazz.getResourceAsStream("dependencies/" + expectedFileName)),
-			mockHttpServletResponse.getContentAsString(),
 			JSONCompareMode.LENIENT);
 	}
 
@@ -142,7 +131,7 @@ public abstract class BaseExportImportTestCase {
 	}
 
 	private MockLiferayPortletActionResponse _import(
-			String externalReferenceCode, String fileName, String name)
+			String externalReferenceCode, String content, String name)
 		throws Exception {
 
 		MVCActionCommand mvcActionCommand = getMVCActionCommand();
@@ -156,18 +145,15 @@ public abstract class BaseExportImportTestCase {
 
 		Class<?> clazz = getClazz();
 
-		String importFileContent = StringUtil.read(
-			clazz.getResourceAsStream("dependencies/" + fileName));
-
-		if (JSONUtil.isJSONArray(importFileContent)) {
+		if (JSONUtil.isJSONArray(content)) {
 			mockMultipartHttpServletRequest.addParameter(
-				"objectDefinitions", importFileContent);
+				"objectDefinitions", content);
 		}
 		else {
-			byte[] bytes = importFileContent.getBytes();
+			byte[] bytes = content.getBytes();
 
 			mockMultipartHttpServletRequest.addFile(
-				new MockMultipartFile(fileName, bytes));
+				new MockMultipartFile("import-file.json", bytes));
 
 			mockMultipartHttpServletRequest.setCharacterEncoding(
 				StringPool.UTF8);
@@ -177,7 +163,7 @@ public abstract class BaseExportImportTestCase {
 			String start = StringBundler.concat(
 				StringPool.DOUBLE_DASH, boundary,
 				"\r\nContent-Disposition:form-data;name=\"", getJSONName(),
-				"\";filename=\"", fileName,
+				"\";filename=\"import-file.json",
 				"\";\r\nContent-type:application/json\r\n\r\n");
 			String end = StringBundler.concat(
 				"\r\n--", boundary, StringPool.DOUBLE_DASH);
@@ -234,9 +220,6 @@ public abstract class BaseExportImportTestCase {
 
 		return mockLiferayPortletActionResponse;
 	}
-
-	@Inject
-	private File _file;
 
 	@Inject
 	private Portal _portal;

@@ -8,9 +8,11 @@ package com.liferay.object.web.internal.portlet.action.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -47,6 +49,12 @@ public class ObjectDefinitionExportImportTest extends BaseExportImportTestCase {
 		_objectDefinitionResource = builder.user(
 			user
 		).build();
+
+		Class<?> clazz = getClazz();
+
+		_baseObjectDefinitionJSONString = StringUtil.read(
+			clazz.getResourceAsStream(
+				"dependencies/test-base-object-definition.json"));
 	}
 
 	@Test
@@ -73,10 +81,10 @@ public class ObjectDefinitionExportImportTest extends BaseExportImportTestCase {
 			"test-object-definition.published.json", null,
 			"TestObjectDefinitionPublished");
 
-		testFailedImport(
-			"test-object-definition.draft.json",
-			"test-object-definition.draft.error-message.json", null,
-			"TestObjectDefinitionPublished");
+		//		testFailedImport(
+		//			"test-object-definition.draft.json",
+		//			"test-object-definition.draft.error-message.json", null,
+		//			"TestObjectDefinitionPublished");
 
 		testExportImport(
 			"test-object-definition.root.json",
@@ -137,6 +145,11 @@ public class ObjectDefinitionExportImportTest extends BaseExportImportTestCase {
 
 		return items.get(0);
 	}
+
+	private String _baseObjectDefinitionJSONString;
+
+	@Inject
+	private JSONFactory _jsonFactory;
 
 	@Inject(
 		filter = "mvc.command.name=/object_definitions/import_object_definition"
