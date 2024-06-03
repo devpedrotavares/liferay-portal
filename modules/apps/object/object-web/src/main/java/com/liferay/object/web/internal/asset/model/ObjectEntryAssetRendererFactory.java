@@ -8,6 +8,7 @@ package com.liferay.object.web.internal.asset.model;
 import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvider;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.BaseAssetRendererFactory;
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -18,6 +19,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import javax.servlet.ServletContext;
 
@@ -97,6 +99,12 @@ public class ObjectEntryAssetRendererFactory
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isSelectable() {
+		return StringUtil.equals(
+			_objectDefinition.getScope(), ObjectDefinitionConstants.SCOPE_SITE);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
