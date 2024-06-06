@@ -96,7 +96,9 @@ public class GroupUtil {
 	}
 
 	private static boolean _isDepotOrSite(Group group) {
-		if ((group != null) && (group.isDepot() || group.isSite())) {
+		if ((group != null) &&
+			(group.isDepot() || group.isSite() || group.isUserGroup())) {
+
 			return true;
 		}
 
