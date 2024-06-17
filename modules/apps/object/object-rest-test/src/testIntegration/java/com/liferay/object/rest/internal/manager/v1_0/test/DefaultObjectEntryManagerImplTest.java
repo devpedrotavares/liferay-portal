@@ -2902,10 +2902,7 @@ public class DefaultObjectEntryManagerImplTest
 			_simpleDTOConverterContext, _objectDefinition3,
 			new ObjectEntry() {
 				{
-					properties = HashMapBuilder.<String, Object>put(
-						"r_oneToManyRelationshipName_accountEntryId",
-						accountEntry.getAccountEntryId()
-					).build();
+					properties = Collections.emptyMap();
 				}
 			},
 			ObjectDefinitionConstants.SCOPE_COMPANY);
@@ -2970,10 +2967,7 @@ public class DefaultObjectEntryManagerImplTest
 			_simpleDTOConverterContext, _objectDefinition3,
 			new ObjectEntry() {
 				{
-					properties = HashMapBuilder.<String, Object>put(
-						"r_oneToManyRelationshipName_accountEntryId",
-						accountEntry.getAccountEntryId()
-					).build();
+					properties = Collections.emptyMap();
 				}
 			},
 			ObjectDefinitionConstants.SCOPE_COMPANY);
@@ -3043,10 +3037,7 @@ public class DefaultObjectEntryManagerImplTest
 			_simpleDTOConverterContext, _objectDefinition3,
 			new ObjectEntry() {
 				{
-					properties = HashMapBuilder.<String, Object>put(
-						"r_oneToManyRelationshipName_accountEntryId",
-						accountEntry.getAccountEntryId()
-					).build();
+					properties = Collections.emptyMap();
 				}
 			},
 			ObjectDefinitionConstants.SCOPE_COMPANY);

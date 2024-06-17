@@ -6475,10 +6475,11 @@ public class ObjectEntryResourceTest {
 		throws Exception {
 
 		_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
-			Http.Method.PATCH, _objectDefinition1,
-			_siteScopedObjectDefinition1);
+			Http.Method.PATCH, _objectDefinition1, _siteScopedObjectDefinition1,
+			_OBJECT_FIELD_NAME_1);
 		_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
-			Http.Method.PUT, _objectDefinition2, _siteScopedObjectDefinition2);
+			Http.Method.PUT, _objectDefinition2, _siteScopedObjectDefinition2,
+			_OBJECT_FIELD_NAME_2);
 	}
 
 	@Test
@@ -7231,14 +7232,14 @@ public class ObjectEntryResourceTest {
 			_objectDefinition1.getRESTContextPath(), Http.Method.POST);
 		HTTPTestUtil.invokeToJSONObject(
 			JSONUtil.put(
-				_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+				_OBJECT_FIELD_NAME_2, RandomTestUtil.randomString()
 			).put(
 				"externalReferenceCode", "c"
 			).toString(),
 			_objectDefinition2.getRESTContextPath(), Http.Method.POST);
 		HTTPTestUtil.invokeToJSONObject(
 			JSONUtil.put(
-				_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+				_OBJECT_FIELD_NAME_2, RandomTestUtil.randomString()
 			).put(
 				"externalReferenceCode", "c/d"
 			).toString(),
@@ -7507,8 +7508,7 @@ public class ObjectEntryResourceTest {
 				).put(
 					_objectRelationship2.getName(),
 					_createObjectEntriesJSONArray(
-						new String[] {_ERC_VALUE_3},
-						RandomTestUtil.randomString(),
+						new String[] {_ERC_VALUE_3}, _OBJECT_FIELD_NAME_3,
 						new String[] {RandomTestUtil.randomString()})
 				).toString(),
 				_objectDefinition1.getRESTContextPath(), Http.Method.POST));
@@ -12170,25 +12170,28 @@ public class ObjectEntryResourceTest {
 	private void
 			_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
 				Http.Method httpMethod, ObjectDefinition objectDefinition,
-				ObjectDefinition siteScopedObjectDefinition)
+				ObjectDefinition siteScopedObjectDefinition,
+				String objectFieldName)
 		throws Exception {
 
 		_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
 			objectDefinition.getRESTContextPath(),
 			objectDefinition.getRESTContextPath() +
 				"/by-external-reference-code/",
-			httpMethod);
+			httpMethod, objectFieldName);
 
 		String endpoint = _getEndpoint(
 			TestPropsValues.getGroupId(), siteScopedObjectDefinition);
 
 		_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
-			endpoint, endpoint + "/by-external-reference-code/", httpMethod);
+			endpoint, endpoint + "/by-external-reference-code/", httpMethod,
+			objectFieldName);
 	}
 
 	private void
 			_testPatchPutCustomObjectEntryWithDuplicateExternalReferenceCode(
-				String endpoint1, String endpoint2, Http.Method httpMethod)
+				String endpoint1, String endpoint2, Http.Method httpMethod,
+				String objectFieldName)
 		throws Exception {
 
 		String externalReferenceCode1 = RandomTestUtil.randomString();
@@ -12198,7 +12201,7 @@ public class ObjectEntryResourceTest {
 			200,
 			HTTPTestUtil.invokeToHttpCode(
 				JSONUtil.put(
-					_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+					objectFieldName, RandomTestUtil.randomString()
 				).put(
 					"externalReferenceCode", externalReferenceCode1
 				).toString(),
@@ -12207,7 +12210,7 @@ public class ObjectEntryResourceTest {
 			200,
 			HTTPTestUtil.invokeToHttpCode(
 				JSONUtil.put(
-					_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+					objectFieldName, RandomTestUtil.randomString()
 				).put(
 					"externalReferenceCode", externalReferenceCode2
 				).toString(),
