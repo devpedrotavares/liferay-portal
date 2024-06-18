@@ -14,12 +14,17 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.entry.util.ObjectEntryDTOConverterUtil;
 import com.liferay.object.exception.NoSuchObjectEntryException;
+import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.field.attachment.AttachmentManager;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectFieldSetting;
+import com.liferay.object.model.ObjectLayout;
+import com.liferay.object.model.ObjectLayoutBox;
+import com.liferay.object.model.ObjectLayoutTab;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
@@ -43,6 +48,8 @@ import com.liferay.object.rest.manager.v1_0.ObjectRelationshipElementsParserRegi
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryService;
+import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectRelationshipService;
 import com.liferay.object.system.SystemObjectDefinitionManager;
@@ -78,6 +85,7 @@ import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -114,6 +122,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -1673,6 +1682,10 @@ public class DefaultObjectEntryManagerImpl
 			ServiceContext serviceContext)
 		throws Exception {
 
+		_validateObjectEntryProperties(
+			objectDefinition.getObjectDefinitionId(),
+			objectEntry.getProperties());
+
 		Map<String, Serializable> values = new HashMap<>();
 
 		for (ObjectField objectField :
@@ -1752,6 +1765,91 @@ public class DefaultObjectEntryManagerImpl
 		return values;
 	}
 
+	private boolean _validateKeyInLayout(String key, long objectDefinitionId)
+		throws Exception {
+
+		if (Validator.isNumber(key)) {
+			List<ObjectLayout> objectLayouts =
+				_objectLayoutLocalService.getObjectLayouts(objectDefinitionId);
+
+			for (ObjectLayout objectLayout : objectLayouts) {
+				List<ObjectLayoutTab> objectLayoutTabs =
+					objectLayout.getObjectLayoutTabs();
+
+				for (ObjectLayoutTab objectLayoutTab : objectLayoutTabs) {
+					List<ObjectLayoutBox> objectLayoutBoxes =
+						objectLayoutTab.getObjectLayoutBoxes();
+
+					for (ObjectLayoutBox objectLayoutBox : objectLayoutBoxes) {
+						if (Long.valueOf(key) ==
+								objectLayoutBox.getObjectLayoutBoxId()) {
+
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private void _validateObjectEntryProperties(
+			long objectDefinitionId, Map<String, Object> properties)
+		throws Exception {
+
+		Set<String> validKeys = SetUtil.fromArray("categoryIds", "tagNames");
+
+		for (ObjectField objectField :
+				objectFieldLocalService.getObjectFields(objectDefinitionId)) {
+
+			validKeys.add(objectField.getName());
+
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT)) {
+
+				validKeys.add(objectField.getName() + "RawText");
+			}
+
+			if (objectField.isLocalized()) {
+				validKeys.add(objectField.getI18nObjectFieldName());
+			}
+		}
+
+		for (ObjectRelationship objectRelationship :
+				_objectRelationshipLocalService.getAllObjectRelationships(
+					objectDefinitionId)) {
+
+			// TODO: consider the tree test failing
+			// todo: (because entries are added through the service layer
+
+			validKeys.add(objectRelationship.getName());
+
+			validKeys.add(objectRelationship.getName() + "ERC");
+
+			ObjectFieldSetting objectRelationshipERCObjectFieldName =
+				_objectFieldSettingLocalService.fetchObjectFieldSetting(
+					objectRelationship.getObjectFieldId2(),
+					ObjectFieldSettingConstants.
+						NAME_OBJECT_RELATIONSHIP_ERC_OBJECT_FIELD_NAME);
+
+			if (objectRelationshipERCObjectFieldName != null) {
+				validKeys.add(objectRelationshipERCObjectFieldName.getValue());
+			}
+		}
+
+		for (String key : properties.keySet()) {
+			if (validKeys.contains(key) ||
+				key.contains("objectEntrySiteInitializerKey") ||
+				_validateKeyInLayout(key, objectDefinitionId)) {
+
+				continue;
+			}
+
+			throw new ObjectEntryValuesException.KeyNotExpected(key);
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DefaultObjectEntryManagerImpl.class);
 
@@ -1801,6 +1899,12 @@ public class DefaultObjectEntryManagerImpl
 
 	@Reference
 	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
+
+	@Reference
+	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
+
+	@Reference
+	private ObjectLayoutLocalService _objectLayoutLocalService;
 
 	@Reference
 	private ObjectRelatedModelsProviderRegistry
