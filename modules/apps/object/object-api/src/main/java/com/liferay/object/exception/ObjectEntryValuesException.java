@@ -262,6 +262,14 @@ public class ObjectEntryValuesException extends PortalException {
 
 	}
 
+	public static class KeyNotExpected extends ObjectEntryValuesException {
+
+		public KeyNotExpected(String parameter) {
+			super("Key " + parameter + " is not an expected parameter");
+		}
+
+	}
+
 	public static class ListTypeEntry extends ObjectEntryValuesException {
 
 		public ListTypeEntry(String objectFieldName) {
