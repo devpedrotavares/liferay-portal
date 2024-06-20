@@ -6753,6 +6753,30 @@ public class ObjectEntryResourceTest {
 
 		_assertEquals(nestedObjectEntriesJSONArray);
 
+		// Company scope, invalid object fields
+
+		String invalidObjectFieldName = RandomTestUtil.randomString();
+
+		objectEntryJSONObject = JSONUtil.put(
+			_objectRelationship1.getName(),
+			_createObjectEntriesJSONArray(
+				new String[] {_ERC_VALUE_1, _ERC_VALUE_2},
+				invalidObjectFieldName,
+				new String[] {
+					_NEW_OBJECT_FIELD_VALUE_1, _NEW_OBJECT_FIELD_VALUE_2
+				}));
+
+		jsonObject = HTTPTestUtil.invokeToJSONObject(
+			objectEntryJSONObject.toString(),
+			_objectDefinition1.getRESTContextPath(), Http.Method.POST);
+
+		Assert.assertEquals("BAD_REQUEST", jsonObject.getString("status"));
+		Assert.assertEquals(
+			StringBundler.concat(
+				"Key ", invalidObjectFieldName,
+				" is not an expected parameter"),
+			jsonObject.getString("title"));
+
 		// Site scope
 
 		_objectRelationship6 = ObjectRelationshipTestUtil.addObjectRelationship(
