@@ -56,8 +56,12 @@ function getLabel<T extends ObjectMap<any>>(
 
 		return value ? String(value) : '';
 	}
+
+	const localizedValue = value as LocalizedValue<string>;
+
 	const label =
-		(value as LocalizedValue<string>)[defaultLanguageId] ??
+		localizedValue[Liferay.ThemeDisplay.getLanguageId()] ??
+		localizedValue[defaultLanguageId] ??
 		(value as {[key: string]: string})['name'] ??
 		(value as {[key: string]: string})['label_i18n'];
 
