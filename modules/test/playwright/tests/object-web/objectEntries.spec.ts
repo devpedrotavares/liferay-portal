@@ -5,6 +5,7 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
+import {accountSettingsPagesTest} from '../../fixtures/accountSettingsPagesTest';
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {collectionsPagesTest} from '../../fixtures/collectionsPagesTest';
@@ -22,6 +23,7 @@ import {getFDSDateFormat, getPageEditorDateFormat} from './utils/dateFormat';
 import {mockObjectFields} from './utils/mockObjectFields';
 
 export const test = mergeTests(
+	accountSettingsPagesTest,
 	apiHelpersTest,
 	applicationsMenuPageTest,
 	collectionsPagesTest,
@@ -44,7 +46,9 @@ const createdEntities = {
 	objectDefinitions: ObjectDefinition[];
 };
 
-test.afterEach(async ({apiHelpers}) => {
+let resetUserLanguageId: boolean = false;
+
+test.afterEach(async ({accountSettingsPage, apiHelpers, page}) => {
 	for (const listTypeDefinition of createdEntities.listTypeDefinitions) {
 		await apiHelpers.listTypeAdmin.deleteListTypeDefinition(
 			listTypeDefinition.id
@@ -56,20 +60,68 @@ test.afterEach(async ({apiHelpers}) => {
 			objectDefinition.id
 		);
 	}
+
+	if (resetUserLanguageId) {
+		await page.goto('en');
+
+		await page.locator('button[data-qa-id="userPersonalMenu"]').click();
+
+		await page.getByRole('menuitem', {name: 'Account Settings'}).click();
+
+		await accountSettingsPage.selectAccountLanguage('en_US');
+
+		resetUserLanguageId = false;
+	}
 });
 
 test.describe('Manage object entries through Page Templates', () => {
 	test('can view all entries related to an object in the relationship field', async ({
+		accountSettingsPage,
 		apiHelpers,
 		page,
 		viewObjectEntriesPage,
 	}) => {
 		const {objectDefinitions} = createdEntities;
 
+		const objectFields = [
+			{
+				DBType: 'String',
+				businessType: 'Text',
+				externalReferenceCode: 'textField',
+				indexed: true,
+				indexedAsKeyword: false,
+				indexedLanguageId: '',
+				label: {en_US: 'textField'},
+				listTypeDefinitionId: 0,
+				localized: true,
+				name: 'textField',
+				required: false,
+				system: false,
+				type: 'String',
+			},
+		];
+
+		const objectDefinitionExternalReferenceCode =
+			'ObjectDefinition' + getRandomInt();
+
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			await apiHelpers.objectAdmin.postObjectDefinition({
+				active: true,
+				enableLocalization: true,
+				externalReferenceCode: objectDefinitionExternalReferenceCode,
+				label: {
+					en_US: objectDefinitionExternalReferenceCode,
+				},
+				name: objectDefinitionExternalReferenceCode,
+				objectFields,
 				objectFolderExternalReferenceCode: 'default',
+				pluralLabel: {
+					en_US: objectDefinitionExternalReferenceCode,
+				},
+				portlet: true,
+				scope: 'company',
 				status: {code: 0},
+				titleObjectFieldName: 'textField',
 			});
 
 		objectDefinitions.push(objectDefinition1);
@@ -109,30 +161,43 @@ test.describe('Manage object entries through Page Templates', () => {
 		const applicationName =
 			'c/' + objectDefinition1.name.toLowerCase() + 's';
 
-		const textObjectEntry = {
-			textField: 'entry',
-		};
-
-		const objectEntries = [];
+		const itemValues = [];
 
 		for (let i = 0; i <= 15; i++) {
 			const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
-				textObjectEntry,
+				{
+					textField_i18n: {
+						en_US: 'entry_en_US' + i,
+						pt_BR: 'entry_pt_BR' + i,
+					},
+				},
 				applicationName
 			);
 
-			objectEntries.push(objectEntry.id);
+			itemValues.push(objectEntry.textField_i18n['pt_BR']);
 		}
 
-		await viewObjectEntriesPage.goto(objectDefinition2.id);
-		await viewObjectEntriesPage.clickAddObjectEntry(
-			objectDefinition2.label['en_US']
-		);
-		await page.getByPlaceholder('Search', {exact: true}).click();
+		await page.goto('/');
 
-		objectEntries.forEach((objectEntryId) => {
+		await page.locator('button[data-qa-id="userPersonalMenu"]').click();
+
+		await page.getByRole('menuitem', {name: 'Account Settings'}).click();
+
+		await accountSettingsPage.selectAccountLanguage('pt_BR');
+
+		resetUserLanguageId = true;
+
+		await page.waitForLoadState('networkidle');
+
+		await viewObjectEntriesPage.goto(objectDefinition2.id, 'pt');
+
+		await viewObjectEntriesPage.clickAddObjectEntry();
+
+		await page.getByPlaceholder('Buscar', {exact: true}).click(); // TODO fix search
+
+		itemValues.forEach((itemValue) => {
 			expect(
-				page.getByRole('menuitem', {name: objectEntryId})
+				page.getByRole('menuitem', {exact: true, name: itemValue})
 			).toBeVisible();
 		});
 	});
