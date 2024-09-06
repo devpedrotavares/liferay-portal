@@ -62,7 +62,7 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('assert presence of selected node style on click and its transition after dragging an unselected one', async ({
 		apiHelpers,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
 	}) => {
 		const objectDefinition =
 			await apiHelpers.objectAdmin.postRandomObjectDefinition({
@@ -74,38 +74,38 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 		objectDefinitions.push(objectDefinition);
 
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
-		await modelBuilderPage.toggleSidebarsButton.click();
+		await modelBuilderDiagramPage.toggleSidebarsButton.click();
 
-		await modelBuilderPage.fitViewButton.click();
+		await modelBuilderDiagramPage.fitViewButton.click();
 
-		await modelBuilderPage.objectDefinitionNodes
+		await modelBuilderDiagramPage.objectDefinitionNodes
 			.filter({hasText: commerceOrderItemLabel})
 			.click();
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: commerceOrderItemLabel,
 			})
 		).toHaveClass(/selected/);
 
-		await modelBuilderPage.dragNodeThroughDiagram(
+		await modelBuilderDiagramPage.dragNodeThroughDiagram(
 			objectDefinition.label['en_US'],
 			1400,
 			940
 		);
 
-		await modelBuilderPage.fitViewButton.click();
+		await modelBuilderDiagramPage.fitViewButton.click();
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: commerceOrderItemLabel,
 			})
 		).not.toHaveClass(/selected/);
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: objectDefinition.label['en_US'],
 			})
 		).toHaveClass(/selected/);
@@ -113,13 +113,14 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('can create an object definition by model builder', async ({
 		modalAddObjectDefinitionPage,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
 	}) => {
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
 		const objectDefinitionLabel = 'ObjectDefinitionLabel' + getRandomInt();
 
-		modelBuilderPage.createNewObjectDefinitionButton.click();
+		modelBuilderLeftSidebarPage.createNewObjectDefinitionButton.click();
 
 		const objectDefinition =
 			await modalAddObjectDefinitionPage.createObjectDefinition(
@@ -129,13 +130,13 @@ test.describe('Manage object definitions through Model Builder', () => {
 		objectDefinitions.push(objectDefinition);
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: objectDefinition.label['en_US'],
 			})
 		).toBeVisible();
 
 		await expect(
-			modelBuilderPage.leftSidebarItems.filter({
+			modelBuilderLeftSidebarPage.sidebarItems.filter({
 				hasText: objectDefinition.label['en_US'],
 			})
 		).toBeVisible();
@@ -143,7 +144,8 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('can create an object definition inside a folder and see if it renders correctly in the model builder', async ({
 		modalAddObjectDefinitionPage,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
 		page,
 		viewObjectDefinitionsPage,
 	}) => {
@@ -165,13 +167,13 @@ test.describe('Manage object definitions through Model Builder', () => {
 		await viewObjectDefinitionsPage.viewInModelBuilderButton.click();
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: objectDefinition.label['en_US'],
 			})
 		).toBeVisible();
 
 		await expect(
-			modelBuilderPage.leftSidebarItems.filter({
+			modelBuilderLeftSidebarPage.sidebarItems.filter({
 				hasText: objectDefinition.label['en_US'],
 			})
 		).toBeVisible();
@@ -179,7 +181,9 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('can delete an object definition by model builder leftsidebar', async ({
 		apiHelpers,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
+		modelBuilderObjectDefinitionNodePage,
 	}) => {
 		const objectDefinition1 =
 			await apiHelpers.objectAdmin.postRandomObjectDefinition({
@@ -197,26 +201,26 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 		objectDefinitions.push(objectDefinition2);
 
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
-		await modelBuilderPage.clickLeftSideBarItem(
+		await modelBuilderLeftSidebarPage.clickSideBarItem(
 			objectDefinition1.label['en_US']
 		);
 
-		await modelBuilderPage.clickObjectDefinitionActionsButtonInLeftSidebar(
+		await modelBuilderLeftSidebarPage.clickObjectDefinitionActionsButtonInSidebar(
 			objectDefinition1.label['en_US']
 		);
 
-		await modelBuilderPage.deleteObjectDefinitionOption.click();
+		await modelBuilderObjectDefinitionNodePage.deleteObjectDefinitionOption.click();
 
 		await expect(
-			modelBuilderPage.leftSidebarItems.filter({
+			modelBuilderLeftSidebarPage.sidebarItems.filter({
 				hasText: objectDefinition2.label['en_US'],
 			})
 		).toBeVisible();
 
 		await expect(
-			modelBuilderPage.leftSidebarItems.filter({
+			modelBuilderLeftSidebarPage.sidebarItems.filter({
 				hasText: objectDefinition1.label['en_US'],
 			})
 		).toBeHidden();
@@ -225,7 +229,9 @@ test.describe('Manage object definitions through Model Builder', () => {
 	test('can delete an published object definition by model builder', async ({
 		apiHelpers,
 		modalAddObjectDefinitionPage,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
+		modelBuilderObjectDefinitionNodePage,
 	}) => {
 		const objectDefinition1 =
 			await apiHelpers.objectAdmin.postRandomObjectDefinition({
@@ -233,9 +239,9 @@ test.describe('Manage object definitions through Model Builder', () => {
 				status: {code: 0},
 			});
 
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
-		await modelBuilderPage.createNewObjectDefinitionButton.click();
+		await modelBuilderLeftSidebarPage.createNewObjectDefinitionButton.click();
 
 		const objectDefinition2 =
 			await modalAddObjectDefinitionPage.createObjectDefinition(
@@ -246,24 +252,27 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 		objectDefinitions.push(objectDefinition2);
 
-		await modelBuilderPage.toggleSidebarsButton.click();
+		await modelBuilderDiagramPage.toggleSidebarsButton.click();
 
-		await modelBuilderPage.fitViewButton.click();
+		await modelBuilderDiagramPage.fitViewButton.click();
 
-		await modelBuilderPage.clickObjectDefinitionActionsButton(
-			objectDefinition1.label['en_US']
+		await modelBuilderObjectDefinitionNodePage.clickObjectDefinitionActionsButton(
+			objectDefinition1.label['en_US'],
+			modelBuilderDiagramPage.objectDefinitionNodes
 		);
 
-		await modelBuilderPage.deleteObjectDefinition(objectDefinition1.name);
+		await modelBuilderObjectDefinitionNodePage.deleteObjectDefinition(
+			objectDefinition1.name
+		);
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: objectDefinition2.label['en_US'],
 			})
 		).toBeVisible();
 
 		await expect(
-			modelBuilderPage.objectDefinitionNodes.filter({
+			modelBuilderDiagramPage.objectDefinitionNodes.filter({
 				hasText: objectDefinition1.label['en_US'],
 			})
 		).toBeHidden();
@@ -271,7 +280,9 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('linked object definitions are created when object definitions are related and put into different folders', async ({
 		apiHelpers,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
+		modelBuilderObjectDefinitionNodePage,
 	}) => {
 		const objectFolder =
 			await apiHelpers.objectAdmin.postRandomObjectFolder();
@@ -317,35 +328,39 @@ test.describe('Manage object definitions through Model Builder', () => {
 			objectRelationshipData
 		);
 
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
 		await expect(
-			modelBuilderPage.getLinkedObjectDefinitionIconLocator(
-				objectDefinition1.label['en_US']
+			modelBuilderObjectDefinitionNodePage.getLinkedObjectDefinitionIconLocator(
+				objectDefinition1.label['en_US'],
+				modelBuilderDiagramPage.objectDefinitionNodes
 			)
 		).toBeVisible();
 
 		await expect(
-			modelBuilderPage.getLinkedObjectDefinitionIconLocator(
-				objectDefinition2.label['en_US']
+			modelBuilderObjectDefinitionNodePage.getLinkedObjectDefinitionIconLocator(
+				objectDefinition2.label['en_US'],
+				modelBuilderDiagramPage.objectDefinitionNodes
 			)
 		).toBeHidden();
 
-		await modelBuilderPage.leftSidebarItems
+		await modelBuilderLeftSidebarPage.sidebarItems
 			.filter({hasText: objectFolder.name})
 			.hover();
 
-		await modelBuilderPage.goToFolderButton.click();
+		await modelBuilderLeftSidebarPage.goToFolderButton.click();
 
 		await expect(
-			modelBuilderPage.getLinkedObjectDefinitionIconLocator(
-				objectDefinition1.label['en_US']
+			modelBuilderObjectDefinitionNodePage.getLinkedObjectDefinitionIconLocator(
+				objectDefinition1.label['en_US'],
+				modelBuilderDiagramPage.objectDefinitionNodes
 			)
 		).toBeHidden();
 
 		await expect(
-			modelBuilderPage.getLinkedObjectDefinitionIconLocator(
-				objectDefinition2.label['en_US']
+			modelBuilderObjectDefinitionNodePage.getLinkedObjectDefinitionIconLocator(
+				objectDefinition2.label['en_US'],
+				modelBuilderDiagramPage.objectDefinitionNodes
 			)
 		).toBeVisible();
 
@@ -356,19 +371,23 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('navigate to edit object definition page', async ({
 		context,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderObjectDefinitionNodePage,
 	}) => {
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
-		await modelBuilderPage.clickObjectDefinitionActionsButton(
-			'organization'
+		await modelBuilderDiagramPage.toggleSidebarsButton.click();
+
+		await modelBuilderObjectDefinitionNodePage.clickObjectDefinitionActionsButton(
+			'organization',
+			modelBuilderDiagramPage.objectDefinitionNodes
 		);
 
-		await modelBuilderPage.editInPageViewOption.click();
+		await modelBuilderDiagramPage.editInPageViewOption.click();
 
 		const pagePromise = context.waitForEvent('page');
 
-		await modelBuilderPage.openPageViewButton.click();
+		await modelBuilderDiagramPage.openPageViewButton.click();
 
 		const editObjectDefinitionPage = await pagePromise;
 
@@ -379,7 +398,9 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 	test('see object definition details', async ({
 		apiHelpers,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
+		modelBuilderRightSidebarPage,
 		page,
 	}) => {
 		const objectFolder =
@@ -435,15 +456,22 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 		objectDefinitions.push(employee);
 
-		await modelBuilderPage.goto({objectFolderName: objectFolder.name});
+		await modelBuilderDiagramPage.goto({
+			objectFolderName: objectFolder.name,
+		});
 
 		for (const objectDefinition of [department, employee]) {
-			await modelBuilderPage.leftSidebarItems
+			await modelBuilderLeftSidebarPage.sidebarItems
 				.filter({hasText: objectDefinition.label['en_US']})
 				.click();
 
+			const rightSidebar =
+				modelBuilderRightSidebarPage.getRightSidebarLocator(
+					modelBuilderLeftSidebarPage.createNewObjectDefinitionButton
+				);
+
 			await expect(
-				modelBuilderPage.rightSidebar.getByTitle(
+				rightSidebar.getByTitle(
 					`${objectDefinition.label['en_US']} Details`
 				)
 			).toBeVisible();
@@ -451,43 +479,43 @@ test.describe('Manage object definitions through Model Builder', () => {
 			// Object Data Container
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionLabel
+				modelBuilderRightSidebarPage.objectDefinitionLabel
 			).toHaveValue(objectDefinition.label['en_US']);
 
-			await modelBuilderPage.rightSidebarObjectDefinitionLabelLocalizationButton.click();
+			await modelBuilderRightSidebarPage.objectDefinitionLabelLocalizationButton.click();
 
 			await page
 				.getByRole('menuitem', {name: 'pt_BR Translated'})
 				.click();
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionLabel
+				modelBuilderRightSidebarPage.objectDefinitionLabel
 			).toHaveValue(objectDefinition.label['pt_BR']);
 
 			await page.keyboard.press('Escape');
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionPluralLabel
+				modelBuilderRightSidebarPage.objectDefinitionPluralLabel
 			).toHaveValue(objectDefinition.pluralLabel['pt_BR']);
 
-			await modelBuilderPage.rightSidebarObjectDefinitionPluralLabelLocalizationButton.click();
+			await modelBuilderRightSidebarPage.objectDefinitionPluralLabelLocalizationButton.click();
 
 			await page.getByRole('menuitem', {name: 'en_US Default'}).click();
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionPluralLabel
+				modelBuilderRightSidebarPage.objectDefinitionPluralLabel
 			).toHaveValue(objectDefinition.pluralLabel['en_US']);
 
 			await page.keyboard.press('Escape');
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionActivateObject
+				modelBuilderRightSidebarPage.objectDefinitionActivateObject
 			).toBeChecked({checked: objectDefinition.active});
 
 			// Entry Display Container
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionEntryTitleField
+				modelBuilderRightSidebarPage.objectDefinitionEntryTitleField
 			).toHaveText(objectDefinition.titleObjectFieldName, {
 				ignoreCase: true,
 			});
@@ -495,26 +523,28 @@ test.describe('Manage object definitions through Model Builder', () => {
 			// Scope Container
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionScope
+				modelBuilderRightSidebarPage.objectDefinitionScope
 			).toHaveText(objectDefinition.scope, {ignoreCase: true});
 
 			const [_, panelLink] = objectDefinition.panelCategoryKey.split('.');
 
 			await expect(
-				modelBuilderPage.rightSidebarObjectDefinitionPanelLink
+				modelBuilderRightSidebarPage.objectDefinitionPanelLink
 			).toHaveText(panelLink, {ignoreCase: true});
 		}
 	});
 
 	test('show object definition details in "RightSidebar" after create object definition', async ({
 		modalAddObjectDefinitionPage,
-		modelBuilderPage,
+		modelBuilderDiagramPage,
+		modelBuilderLeftSidebarPage,
+		modelBuilderRightSidebarPage,
 	}) => {
-		await modelBuilderPage.goto({objectFolderName: 'Default'});
+		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
 		const objectDefinitionLabel = 'ObjectDefinitionLabel' + getRandomInt();
 
-		modelBuilderPage.createNewObjectDefinitionButton.click();
+		modelBuilderLeftSidebarPage.createNewObjectDefinitionButton.click();
 
 		const objectDefinition =
 			await modalAddObjectDefinitionPage.createObjectDefinition(
@@ -523,10 +553,13 @@ test.describe('Manage object definitions through Model Builder', () => {
 
 		objectDefinitions.push(objectDefinition);
 
+		const rightSidebar =
+			modelBuilderRightSidebarPage.getRightSidebarLocator(
+				modelBuilderLeftSidebarPage.createNewObjectDefinitionButton
+			);
+
 		await expect(
-			modelBuilderPage.rightSidebar.getByTitle(
-				objectDefinitionLabel + ' Details'
-			)
+			rightSidebar.getByTitle(objectDefinitionLabel + ' Details')
 		).toBeVisible();
 	});
 });

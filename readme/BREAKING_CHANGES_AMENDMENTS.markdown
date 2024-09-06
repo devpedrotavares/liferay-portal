@@ -575,16 +575,15 @@ LPS-197267 Move PermissionConverter to portal-security-permission-api and Remove
 
 ## What portal-kernel/src/com/liferay/portal/kernel/security/permission/PermissionConverterUtil.java
 
-Remove class PermissionConverterUtil.
+The PermissionConverterUtil class is removed.
 
 ## Why
 
-Move PermissionConverter to portal-security-permission-api.
+The PermissionConverter APIs are now in portal-security-permission-api.
 
 ## Alternative
 
- Use OSGi service reference PermissionConverter
-
+Use an OSGi service to reference PermissionConverter.
 ```
 
 ----
@@ -598,11 +597,11 @@ LPS-197267 Remove unused PermissionConverter overloaded methods
 
 # breaking
 
-## What portal-kernel/src/com/liferay/portal/kernel/security/permission/PermissionConverterUtil.java
+## What modules/apps/portal-security/portal-security-permission-api/src/main/java/com/liferay/portal/security/permission/converter/PermissionConverter.java
 
-Remove class PermissionConverterUtil.
+The convertPermissions(long) and convertPermissions(long, PermissionConversionFilter) methods are removed from PermissionConverter.
 
 ## Why
 
-Move PermissionConverter to portal-security-permission-api.
+These methods are no longer used after refactoring the PermissionConverter APIs.
 ```

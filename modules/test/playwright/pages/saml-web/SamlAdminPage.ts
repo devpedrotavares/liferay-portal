@@ -33,7 +33,7 @@ export class SamlAdminPage {
 		entityId?: string,
 		samlRole?: string
 	) {
-		await this.applicationsMenuPage.goToSamlAdmin();
+		await this.applicationsMenuPage.goToSamlAdmin(false);
 
 		// We must disable SAML before making configuration changes
 
@@ -50,32 +50,50 @@ export class SamlAdminPage {
 			await this.saveButton.click();
 
 			await expect(await this.successMessage).toBeVisible();
+
+			await this.page.getByLabel('Close').click();
 		}
+		else if (enabled === undefined) {
+			enabled = false;
+		}
+
+		let updated = false;
 
 		if (entityId !== undefined) {
 			await this.entityIdField.fill(entityId);
+
+			updated = true;
 		}
 
 		if (samlRole !== undefined) {
 			await this.samlRoleField.selectOption(samlRole);
+
+			updated = true;
 		}
 
-		await this.saveButton.click();
+		if (updated) {
+			await this.saveButton.click();
 
-		await expect(await this.successMessage).toBeVisible();
+			await expect(await this.successMessage).toBeVisible();
 
-		// Our existing cert will work if the entityId doesn't change
-
-		if (entityId) {
-			await this.createOrReplaceCertificate();
+			await this.page.getByLabel('Close').click();
 		}
 
 		if (enabled) {
+			if (entityId !== undefined) {
+
+				// Our existing cert will work if the entityId doesn't change
+
+				await this.createOrReplaceCertificate();
+			}
+
 			await this.enabledField.setChecked(enabled);
 
 			await this.saveButton.click();
 
 			await expect(await this.successMessage).toBeVisible();
+
+			await this.page.getByLabel('Close').click();
 		}
 	}
 

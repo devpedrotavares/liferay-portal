@@ -252,8 +252,15 @@ export class ApplicationsMenuPage {
 		await this.clientExtensionsLink.click();
 	}
 
-	async goToCustomFields() {
-		await this.goto();
+	async goToCustomFields(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+
+			await expect(this.applicationsMenuTabButton).toBeVisible();
+		}
 		await this.controlPanelButton.click();
 		await this.customFieldsMenuItem.click();
 	}
@@ -308,8 +315,17 @@ export class ApplicationsMenuPage {
 		await this.siteTemplatesButton.click();
 	}
 
-	async goToSites() {
-		await this.goToControlPanel();
+	async goToSites(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+
+			await expect(this.applicationsMenuTabButton).toBeVisible();
+		}
+
+		await this.controlPanelButton.click();
 		await this.sitesItem.click();
 	}
 
@@ -409,8 +425,16 @@ export class ApplicationsMenuPage {
 		await this.rolesItem.click();
 	}
 
-	async goToSamlAdmin() {
-		await this.goto();
+	async goToSamlAdmin(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+
+			await expect(this.applicationsMenuTabButton).toBeVisible();
+		}
+
 		await this.controlPanelButton.click();
 		await this.samlAdminItem.click();
 	}

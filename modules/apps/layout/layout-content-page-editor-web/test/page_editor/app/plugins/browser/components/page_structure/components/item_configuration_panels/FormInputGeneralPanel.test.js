@@ -14,9 +14,6 @@ import {VIEWPORT_SIZES} from '../../../../../../../../../src/main/resources/META
 import {StoreAPIContextProvider} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/StoreContext';
 import {FormInputGeneralPanel} from '../../../../../../../../../src/main/resources/META-INF/resources/page_editor/plugins/browser/components/page_structure/components/item_configuration_panels/FormInputGeneralPanel';
 
-const FRAGMENT_ENTRY_LINK_ID_1 = '1';
-const FRAGMENT_ENTRY_LINK_ID_2 = '2';
-
 const FORM_ITEM = {
 	children: ['input-item-1', 'input-item-2'],
 	config: {
@@ -27,6 +24,9 @@ const FORM_ITEM = {
 	parentId: '',
 	type: LAYOUT_DATA_ITEM_TYPES.form,
 };
+
+const FRAGMENT_ENTRY_LINK_ID_1 = '1';
+const FRAGMENT_ENTRY_LINK_ID_2 = '2';
 
 const INPUT_ITEM_1 = {
 	children: [],
@@ -48,7 +48,7 @@ const INPUT_ITEM_2 = {
 	type: LAYOUT_DATA_ITEM_TYPES.fragment,
 };
 
-const MOCK_CACHE = {
+let MOCK_CACHE = {
 	'allowedInputTypes-dateFragment': ['date'],
 	'allowedInputTypes-numericFragment': ['numeric'],
 	'allowedInputTypes-textFragment': ['text'],
@@ -80,16 +80,7 @@ const MOCK_CACHE = {
 			label: 'Fieldset',
 		},
 	],
-	'relationships-classNameId-classTypeId': [
-		{classNameId: 'relationship-1', label: 'Relationship 1'},
-		{classNameId: 'relationship-2', label: 'Relationship 2'},
-	],
 };
-
-jest.mock(
-	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/useCache',
-	() => jest.fn(({key}) => MOCK_CACHE[key.join('-')])
-);
 
 jest.mock(
 	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/index',
@@ -115,6 +106,25 @@ jest.mock(
 		},
 	})
 );
+
+jest.mock(
+	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/utils/useCache',
+	() => jest.fn(({key}) => MOCK_CACHE[key.join('-')])
+);
+
+const mockRelationships = () => {
+	MOCK_CACHE = {
+		...MOCK_CACHE,
+		'relationships-classNameId-classTypeId': [
+			{classNameId: 'relationship-1', label: 'Relationship 1'},
+			{classNameId: 'relationship-2', label: 'Relationship 2'},
+		],
+	};
+};
+
+const clearRelationships = () => {
+	delete MOCK_CACHE['relationships-classNameId-classTypeId'];
+};
 
 const renderComponent = ({
 	fragmentEntryKey = 'textFragment',
@@ -243,12 +253,12 @@ describe('FormInputGeneralPanel', () => {
 	});
 
 	it('shows source selector when there is any relationship', () => {
-		Liferay.FeatureFlags['LPD-20213'] = true;
+		mockRelationships();
 
 		renderComponent();
 
 		expect(screen.getByLabelText('source')).toBeInTheDocument();
 
-		Liferay.FeatureFlags['LPD-20213'] = false;
+		clearRelationships();
 	});
 });

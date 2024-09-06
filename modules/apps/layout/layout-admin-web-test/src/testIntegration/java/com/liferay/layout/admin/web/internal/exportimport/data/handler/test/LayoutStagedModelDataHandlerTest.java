@@ -19,11 +19,15 @@ import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
+import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactoryUtil;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.exportimport.kernel.lar.PortletDataContextFactoryUtil;
+import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleManagerUtil;
 import com.liferay.exportimport.kernel.lifecycle.constants.ExportImportLifecycleConstants;
+import com.liferay.exportimport.kernel.service.StagingLocalServiceUtil;
+import com.liferay.exportimport.kernel.staging.StagingUtil;
 import com.liferay.exportimport.test.util.lar.BaseStagedModelDataHandlerTestCase;
 import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
@@ -47,10 +51,16 @@ import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
+import com.liferay.layout.provider.LayoutStructureProvider;
+import com.liferay.layout.seo.model.LayoutSEOEntry;
+import com.liferay.layout.seo.service.LayoutSEOEntryLocalService;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.background.task.model.BackgroundTask;
+import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
+import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -75,6 +85,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.DateTestUtil;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -85,6 +96,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -93,6 +105,9 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portlet.display.template.PortletDisplayTemplate;
@@ -352,6 +367,71 @@ public class LayoutStagedModelDataHandlerTest
 
 		Assert.assertNotEquals(
 			layout.getMasterLayoutPlid(), importedLayout.getMasterLayoutPlid());
+	}
+
+	@Test
+	@TestInfo("LPD-35629")
+	public void testLocalStagingWithMasterLayoutWithSameLayoutId()
+		throws Exception {
+
+		Group group = GroupTestUtil.addGroup();
+
+		Layout layout = LayoutTestUtil.addTypeContentLayout(group);
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				group.getGroupId(), TestPropsValues.getUserId());
+
+		Layout masterLayout = _addMasterLayout(serviceContext);
+
+		StagingLocalServiceUtil.enableLocalStaging(
+			TestPropsValues.getUserId(), group, false, false, serviceContext);
+
+		Group stagingGroup = group.getStagingGroup();
+
+		Layout stagingLayout = _layoutLocalService.fetchLayout(
+			layout.getUuid(), stagingGroup.getGroupId(), false);
+
+		LayoutSEOEntry stagingLayoutSEOEntry = _updateLayoutSEOEntry(
+			stagingLayout);
+
+		_publishLayouts(group, stagingGroup);
+
+		_assertLayoutSEOEntry(
+			stagingLayoutSEOEntry.getCanonicalURLMap(), group.getGroupId(),
+			stagingLayoutSEOEntry.getUuid());
+
+		Layout stagingMasterLayout = _layoutLocalService.fetchLayout(
+			masterLayout.getUuid(), stagingGroup.getGroupId(), true);
+
+		stagingLayout = _layoutLocalService.updateMasterLayoutPlid(
+			stagingGroup.getGroupId(), false, stagingLayout.getLayoutId(),
+			stagingMasterLayout.getPlid());
+
+		stagingMasterLayout.setLayoutId(layout.getLayoutId());
+
+		stagingMasterLayout = _layoutLocalService.updateLayout(
+			stagingMasterLayout);
+
+		Assert.assertEquals(
+			layout.getLayoutId(), stagingMasterLayout.getLayoutId());
+
+		_publishLayouts(group, stagingGroup);
+
+		layout = _layoutLocalService.fetchLayout(
+			stagingLayout.getUuid(), group.getGroupId(), false);
+		masterLayout = _layoutLocalService.fetchLayout(
+			stagingMasterLayout.getUuid(), group.getGroupId(), true);
+
+		Assert.assertEquals(layout.getLayoutId(), masterLayout.getLayoutId());
+
+		stagingLayoutSEOEntry = _updateLayoutSEOEntry(stagingLayout);
+
+		_publishLayouts(group, stagingGroup);
+
+		_assertLayoutSEOEntry(
+			stagingLayoutSEOEntry.getCanonicalURLMap(), group.getGroupId(),
+			stagingLayoutSEOEntry.getUuid());
 	}
 
 	@Test
@@ -867,6 +947,21 @@ public class LayoutStagedModelDataHandlerTest
 		return fragmentEntryLink;
 	}
 
+	private Layout _addMasterLayout(ServiceContext serviceContext)
+		throws Exception {
+
+		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
+				null, TestPropsValues.getUserId(),
+				serviceContext.getScopeGroupId(), 0,
+				RandomTestUtil.randomString(),
+				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
+				WorkflowConstants.STATUS_APPROVED, serviceContext);
+
+		return _layoutLocalService.fetchLayout(
+			masterLayoutPageTemplateEntry.getPlid());
+	}
+
 	private String _addPortletToLayout(Layout layout) throws Exception {
 		JSONObject processAddPortletJSONObject =
 			ContentLayoutTestUtil.addPortletToLayout(
@@ -992,6 +1087,27 @@ public class LayoutStagedModelDataHandlerTest
 			JSONUtil.equals(expectedEditableJSONObject, editableJSONObject));
 	}
 
+	private void _assertLayoutSEOEntry(
+		Map<Locale, String> canonicalURLMap, long groupId, String uuid) {
+
+		LayoutSEOEntry layoutSEOEntry =
+			_layoutSEOEntryLocalService.fetchLayoutSEOEntryByUuidAndGroupId(
+				uuid, groupId);
+
+		_assertMapEquals(canonicalURLMap, layoutSEOEntry.getCanonicalURLMap());
+	}
+
+	private void _assertMapEquals(
+		Map<Locale, String> expectedMap, Map<Locale, String> map) {
+
+		Assert.assertEquals(
+			MapUtil.toString(map), expectedMap.size(), map.size());
+
+		for (Map.Entry<Locale, String> entry : expectedMap.entrySet()) {
+			Assert.assertEquals(entry.getValue(), map.get(entry.getKey()));
+		}
+	}
+
 	private List<FriendlyURLEntry> _getFriendlyURLEntries(Layout layout) {
 		return _friendlyURLEntryLocalService.getFriendlyURLEntries(
 			layout.getGroupId(),
@@ -1024,6 +1140,45 @@ public class LayoutStagedModelDataHandlerTest
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
+	}
+
+	private void _publishLayouts(Group group, Group stagingGroup)
+		throws Exception {
+
+		Map<String, String[]> parameterMap =
+			ExportImportConfigurationParameterMapFactoryUtil.
+				buildParameterMap();
+
+		parameterMap.put(
+			PortletDataHandlerKeys.PORTLET_DATA,
+			new String[] {Boolean.TRUE.toString()});
+		parameterMap.put(
+			PortletDataHandlerKeys.PORTLET_DATA_ALL,
+			new String[] {Boolean.TRUE.toString()});
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.exportimport.internal.lifecycle." +
+					"LoggerExportImportLifecycleListener",
+				LoggerTestUtil.ERROR)) {
+
+			StagingUtil.publishLayouts(
+				TestPropsValues.getUserId(), stagingGroup.getGroupId(),
+				group.getGroupId(), false, parameterMap);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertTrue(logEntries.toString(), logEntries.isEmpty());
+		}
+
+		List<BackgroundTask> failedBackgroundTasks =
+			_backgroundTaskLocalService.getBackgroundTasks(
+				stagingGroup.getGroupId(),
+				"com.liferay.exportimport.internal.background.task." +
+					"LayoutStagingBackgroundTaskExecutor",
+				BackgroundTaskConstants.STATUS_FAILED);
+
+		Assert.assertTrue(
+			failedBackgroundTasks.toString(), failedBackgroundTasks.isEmpty());
 	}
 
 	private ServiceRegistration<Portlet> _registerTestPortlet() {
@@ -1159,11 +1314,32 @@ public class LayoutStagedModelDataHandlerTest
 					importedLayout.getPlid(), type));
 	}
 
+	private LayoutSEOEntry _updateLayoutSEOEntry(Layout layout)
+		throws Exception {
+
+		Map<Locale, String> canonicalURLMap =
+			RandomTestUtil.randomLocaleStringMap();
+
+		LayoutSEOEntry layoutSEOEntry =
+			_layoutSEOEntryLocalService.updateLayoutSEOEntry(
+				TestPropsValues.getUserId(), layout.getGroupId(), false,
+				layout.getLayoutId(), true, canonicalURLMap,
+				ServiceContextTestUtil.getServiceContext(
+					layout.getGroupId(), TestPropsValues.getUserId()));
+
+		_assertMapEquals(canonicalURLMap, layoutSEOEntry.getCanonicalURLMap());
+
+		return layoutSEOEntry;
+	}
+
 	private static final String _TEST_PORTLET_NAME =
 		"com_liferay_test_portlet_TestPortlet";
 
 	@Inject
 	private AssetCategoryLocalService _assetCategoryLocalService;
+
+	@Inject
+	private BackgroundTaskLocalService _backgroundTaskLocalService;
 
 	@Inject
 	private ClientExtensionEntryLocalService _clientExtensionEntryLocalService;
@@ -1211,6 +1387,12 @@ public class LayoutStagedModelDataHandlerTest
 	@Inject
 	private LayoutPageTemplateEntryLocalService
 		_layoutPageTemplateEntryLocalService;
+
+	@Inject
+	private LayoutSEOEntryLocalService _layoutSEOEntryLocalService;
+
+	@Inject
+	private LayoutStructureProvider _layoutStructureProvider;
 
 	@Inject
 	private Portal _portal;

@@ -10,6 +10,7 @@ import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import {ApplicationsMenuPage} from '../product-navigation-applications-menu/ApplicationsMenuPage';
 
 export class ServiceProviderConnectionsPage {
+	readonly addServiceProviderConnectionButton: Locator;
 	readonly applicationsMenuPage: ApplicationsMenuPage;
 	readonly assertionLifetimeField: Locator;
 	readonly attributesEnabledToggle: Locator;
@@ -25,9 +26,14 @@ export class ServiceProviderConnectionsPage {
 	readonly nameIdentifierFormatField: Locator;
 	readonly page: Page;
 	readonly saveButton: Locator;
+	readonly serviceProviderConnectionsTab: Locator;
+	readonly serviceProviderConnectionsTable: Locator;
 	readonly successMessage: Locator;
 
 	constructor(page: Page) {
+		this.addServiceProviderConnectionButton = page.getByRole('button', {
+			name: 'Add Service Provider',
+		});
 		this.applicationsMenuPage = new ApplicationsMenuPage(page);
 		this.assertionLifetimeField = page.getByLabel('Assertion Lifetime');
 		this.attributesEnabledToggle = page.getByText('Attributes Enabled', {
@@ -57,17 +63,34 @@ export class ServiceProviderConnectionsPage {
 		);
 		this.page = page;
 		this.saveButton = page.getByRole('button', {name: 'Save'});
+		this.serviceProviderConnectionsTab = page.getByRole('tab', {
+			name: 'Service Provider Connections',
+		});
+		this.serviceProviderConnectionsTable = page.locator(
+			'#_com_liferay_saml_web_internal_portlet_SamlAdminPortlet_samlIdpSpConnectionsSearchContainer'
+		);
 		this.successMessage = page.getByText(
 			'Your request completed successfully'
 		);
 	}
 
-	async addServiceProviderConnection(spConnection: TSpConnection) {
-		await this.goToServiceProviderConnectionsTab();
+	async addServiceProviderConnection(
+		spConnection: TSpConnection,
+		deleteExistingConnection = true
+	) {
+		if (deleteExistingConnection) {
+			const row = await this.page.getByRole('row').filter({
+				hasText: spConnection.spName,
+			});
 
-		await this.page
-			.getByRole('button', {name: 'Add Service Provider'})
-			.click();
+			if (await row.isVisible()) {
+				await this._deleteServiceProviderConnection(
+					spConnection.spName
+				);
+			}
+		}
+
+		await this.addServiceProviderConnectionButton.click();
 
 		await this.populateAndSaveServiceProviderConnectionDetails(
 			spConnection
@@ -75,26 +98,36 @@ export class ServiceProviderConnectionsPage {
 	}
 
 	async deleteServiceProviderConnection(name: string) {
-		await this.goToServiceProviderConnectionsTab();
+		await this._deleteServiceProviderConnection(name);
+	}
 
-		this.page.once('dialog', (dialog) => {
+	async deleteServiceProviderConnections() {
+		this.page.on('dialog', (dialog) => {
 			dialog.accept();
 		});
 
-		const row = await this.page.getByRole('row').filter({hasText: name});
+		await this.page.waitForTimeout(1000);
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: this.page.getByRole('link', {name: 'Delete'}),
-			trigger: row.locator('.dropdown-toggle'),
-		});
+		const row = await this.serviceProviderConnectionsTable
+			.getByRole('row')
+			.last();
 
-		expect(await this.successMessage).toBeVisible();
+		while (await row.isVisible()) {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: this.page.getByRole('link', {name: 'Delete'}),
+				trigger: row.locator('.dropdown-toggle'),
+			});
+
+			await expect(await this.successMessage).toBeVisible();
+
+			// Prevent the above expect from passing due to previous success
+
+			await this.page.getByLabel('Close').click();
+		}
 	}
 
 	async editServiceProviderConnection(spConnection: TSpConnection) {
-		await this.goToServiceProviderConnectionsTab();
-
 		const row = await this.page.getByRole('row').filter({
 			hasText: spConnection.spName,
 		});
@@ -110,14 +143,36 @@ export class ServiceProviderConnectionsPage {
 		);
 	}
 
-	async goToServiceProviderConnectionsTab() {
-		await this.applicationsMenuPage.goToSamlAdmin();
-		await this.page
-			.getByRole('tab', {name: 'Service Provider Connections'})
-			.click();
-		expect(
-			await this.page.getByRole('button', {name: 'Add Service Provider'})
+	async goTo(forceReload = false) {
+		if (
+			forceReload ||
+			(await this.serviceProviderConnectionsTab.isHidden())
+		) {
+			await this.applicationsMenuPage.goToSamlAdmin(forceReload);
+		}
+
+		await this.serviceProviderConnectionsTab.click();
+		await expect(
+			await this.addServiceProviderConnectionButton
 		).toBeVisible();
+	}
+
+	private async _deleteServiceProviderConnection(name: string) {
+		this.page.once('dialog', (dialog) => {
+			dialog.accept();
+		});
+
+		const row = await this.page.getByRole('row').filter({hasText: name});
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('link', {name: 'Delete'}),
+			trigger: row.locator('.dropdown-toggle'),
+		});
+
+		await expect(await this.successMessage).toBeVisible();
+
+		await this.page.getByLabel('Close').click();
 	}
 
 	private async populateAndSaveServiceProviderConnectionDetails(
@@ -183,5 +238,6 @@ export class ServiceProviderConnectionsPage {
 
 		await this.saveButton.click();
 		await expect(await this.successMessage).toBeVisible();
+		await this.page.getByLabel('Close').click();
 	}
 }

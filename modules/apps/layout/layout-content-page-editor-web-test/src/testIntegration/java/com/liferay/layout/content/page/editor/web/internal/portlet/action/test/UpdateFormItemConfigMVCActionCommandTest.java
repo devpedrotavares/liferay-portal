@@ -173,21 +173,24 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
+			long classNameId = _portal.getClassNameId(
+				MockObject.class.getName());
+
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
 					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
 					_layoutStructureProvider, _segmentsExperienceId);
 
-			long classNameId = _portal.getClassNameId(
-				MockObject.class.getName());
-
 			String formItemId = addItemJSONObject.getString("addedItemId");
+
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(allInfoFields), InfoField::getUniqueId);
 
 			JSONObject updateFormJSONObject = ReflectionTestUtil.invoke(
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
 				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
-					null,
+					StringUtil.merge(uniqueInfoFieldIds),
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
@@ -227,13 +230,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(_INFO_FIELDS), InfoField::getUniqueId);
+
+			long classNameId = _portal.getClassNameId(
+				MockObject.class.getName());
+
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
 					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
 					_layoutStructureProvider, _segmentsExperienceId);
-
-			long classNameId = _portal.getClassNameId(
-				MockObject.class.getName());
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
@@ -241,7 +247,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
 				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
-					null,
+					StringUtil.merge(uniqueInfoFieldIds),
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
@@ -279,13 +285,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(_INFO_FIELDS), InfoField::getUniqueId);
+
+			long classNameId = _portal.getClassNameId(
+				MockObject.class.getName());
+
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
 					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
 					_layoutStructureProvider, _segmentsExperienceId);
-
-			long classNameId = _portal.getClassNameId(
-				MockObject.class.getName());
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
@@ -293,7 +302,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
 				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
-					null,
+					StringUtil.merge(uniqueInfoFieldIds),
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
@@ -312,7 +321,6 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 		}
 	}
 
-	@FeatureFlags("LPD-20213")
 	@Test
 	public void testUpdateFormItemConfigMVCActionCommandMappingFormChangingFormTypeMultistep()
 		throws Exception {
@@ -415,7 +423,6 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 			layoutStructureItem instanceof ContainerStyledLayoutStructureItem);
 	}
 
-	@FeatureFlags("LPD-20213")
 	@Test
 	public void testUpdateFormItemConfigMVCActionCommandMappingFormDeletingInfoFields()
 		throws Exception {
@@ -490,7 +497,6 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 		}
 	}
 
-	@FeatureFlags("LPD-20213")
 	@Test
 	public void testUpdateFormItemConfigMVCActionCommandMappingFormWithEmptySpecificInfoField()
 		throws Exception {
@@ -538,7 +544,6 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 		}
 	}
 
-	@FeatureFlags("LPD-20213")
 	@Test
 	public void testUpdateFormItemConfigMVCActionCommandMappingFormWithNewInfoFields()
 		throws Exception {
@@ -779,13 +784,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(allInfoFields), InfoField::getUniqueId);
+
+			long classNameId = _portal.getClassNameId(
+				MockObject.class.getName());
+
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
 					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
 					_layoutStructureProvider, _segmentsExperienceId);
-
-			long classNameId = _portal.getClassNameId(
-				MockObject.class.getName());
 
 			String formItemId = addItemJSONObject.getString("addedItemId");
 
@@ -793,7 +801,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
 				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
-					null,
+					StringUtil.merge(uniqueInfoFieldIds),
 					JSONUtil.put(
 						"classNameId", classNameId
 					).put(
@@ -838,6 +846,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 						).build(),
 						_portal, _editPageInfoItemCapability)) {
 
+			List<String> uniqueInfoFieldIds = TransformUtil.transform(
+				ListUtil.fromArray(_INFO_FIELDS), InfoField::getUniqueId);
+
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
 
@@ -855,7 +866,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				_mvcActionCommand, "_updateFormStyledLayoutStructureItemConfig",
 				new Class<?>[] {ActionRequest.class, ActionResponse.class},
 				_getMockLiferayPortletActionRequest(
-					null,
+					StringUtil.merge(uniqueInfoFieldIds),
 					JSONUtil.put(
 						"successMessage",
 						JSONUtil.put(
