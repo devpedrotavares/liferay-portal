@@ -4,8 +4,11 @@
  */
 
 import ClayTable from '@clayui/table';
+import {useNavigate} from 'react-router-dom';
 
 import './SVTable.css';
+
+import React from 'react';
 
 export interface IColumn {
 	columnKey: string;
@@ -13,6 +16,7 @@ export interface IColumn {
 }
 
 export interface IRow {
+	link?: string;
 	[key: string]: string | number | JSX.Element | undefined;
 }
 
@@ -22,6 +26,8 @@ interface IProps {
 }
 
 const SVTable = ({columns, rows}: IProps) => {
+	const navigate = useNavigate();
+
 	return (
 		<ClayTable borderless className="sv-table table" noWrap striped={false}>
 			<ClayTable.Head align="left">
@@ -39,12 +45,14 @@ const SVTable = ({columns, rows}: IProps) => {
 
 			<ClayTable.Body align="left">
 				{rows.map((row, index) => (
-					<ClayTable.Row key={index}>
+					<ClayTable.Row
+						className="sv-row"
+						key={index}
+						onClick={() => row.link && navigate(row.link)} // Navigate only if link is present
+					>
 						{columns.map((column) => (
 							<ClayTable.Cell key={column.columnKey}>
-								{column.columnKey === 'prioritySummary'
-									? row[column.columnKey]
-									: row[column.columnKey]}
+								{row[column.columnKey]}
 							</ClayTable.Cell>
 						))}
 					</ClayTable.Row>

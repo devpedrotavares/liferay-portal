@@ -315,6 +315,15 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 
 		assertEquals(user2, User.toDTO(httpResponse.getContent()));
 
+		ScimTestUtil.saveSCIMClientId(
+			com.liferay.portal.kernel.model.User.class.getName(),
+			GetterUtil.getLong(user2.getId()), TestPropsValues.getCompanyId(),
+			ScimClientUtil.generateScimClientId(
+				"scim-client-test" + RandomTestUtil.randomString()));
+
+		assertHttpResponseStatusCode(
+			409, userResource.putV2UserHttpResponse(user2.getId(), user2));
+
 		ConfigurationTestUtil.deleteConfiguration(_pid);
 
 		assertHttpResponseStatusCode(

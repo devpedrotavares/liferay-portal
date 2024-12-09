@@ -69,10 +69,12 @@ import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlParserUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -100,6 +102,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -584,14 +587,13 @@ public class ObjectEntryDTOConverter
 		};
 	}
 
-	private String _getLocalizedValue(
+	private Serializable _getLocalizedValue(
 			DTOConverterContext dtoConverterContext, Long groupId,
 			Map<String, Serializable> objectField_i18n)
 		throws Exception {
 
-		String serializable = GetterUtil.getString(
-			objectField_i18n.get(
-				String.valueOf(dtoConverterContext.getLocale())));
+		Serializable serializable = objectField_i18n.get(
+			String.valueOf(dtoConverterContext.getLocale()));
 
 		if (Validator.isNotNull(serializable)) {
 			return serializable;
@@ -600,17 +602,16 @@ public class ObjectEntryDTOConverter
 		User user = dtoConverterContext.getUser();
 
 		if (user != null) {
-			serializable = GetterUtil.getString(
-				objectField_i18n.get(String.valueOf(user.getLocale())));
+			serializable = objectField_i18n.get(
+				String.valueOf(user.getLocale()));
 
 			if (Validator.isNotNull(serializable)) {
 				return serializable;
 			}
 		}
 
-		return GetterUtil.getString(
-			objectField_i18n.get(
-				String.valueOf(_portal.getSiteDefaultLocale(groupId))));
+		return objectField_i18n.get(
+			String.valueOf(_portal.getSiteDefaultLocale(groupId)));
 	}
 
 	private Map<String, UnsafeSupplier<Object, Exception>>
@@ -897,6 +898,19 @@ public class ObjectEntryDTOConverter
 					serializable = _getLocalizedValue(
 						dtoConverterContext, objectEntry.getGroupId(),
 						objectField_i18n);
+
+					if (Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_BLOB) ||
+						Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_CLOB) ||
+						Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_STRING)) {
+
+						serializable = GetterUtil.getString(serializable);
+					}
 				}
 			}
 
@@ -920,6 +934,18 @@ public class ObjectEntryDTOConverter
 						ObjectFieldConstants.BUSINESS_TYPE_DATE) ||
 					 objectField.compareBusinessType(
 						 ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
+
+				if (Validator.isNull(serializable)) {
+					continue;
+				}
+
+				if (serializable instanceof String) {
+					Date date = DateUtil.parseDate(
+						"yyyy-MM-dd", (String)serializable,
+						LocaleUtil.getSiteDefault());
+
+					serializable = new Timestamp(date.getTime());
+				}
 
 				Timestamp timestamp = (Timestamp)serializable;
 

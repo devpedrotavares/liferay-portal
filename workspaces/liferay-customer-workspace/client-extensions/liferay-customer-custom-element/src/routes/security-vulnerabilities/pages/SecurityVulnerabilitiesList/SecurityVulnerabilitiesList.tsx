@@ -6,11 +6,13 @@
 import i18n from '~/common/I18n';
 
 import SVFilter from '../../components/SVFilter';
+import SVPanel from '../../components/SVPanel';
 import SVSearch from '../../components/SVSearch';
 import SVTable from '../../components/SVTable';
 
 import './SecurityVulnerabilitiesList.css';
 
+import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar/lib/PaginationBarWithBasicItems';
 import {useMemo} from 'react';
 import {Link} from 'react-router-dom';
 import {SVWaves} from '~/common/icons/sv_waves';
@@ -19,14 +21,38 @@ import {getFormattedDate} from '~/routes/customer-portal/utils/getFormattedDate'
 import {IRow} from '../../components/SVTable/SVTable';
 import SVAffectedVersions from '../../components/SVTable/components/SVAffectedVersions';
 import {IJiraIssue} from '../../hooks/useJiraIssue';
-import useJiraSearch from '../../hooks/useJiraSearch';
+import useJiraSearch, {IProps as IJiraSearch} from '../../hooks/useJiraSearch';
 import {FILTER_OPTIONS} from '../../utils/constants/filterOptions';
 import {JiraEnum} from '../../utils/constants/jiraEnum';
+import {
+	paginationDeltas,
+	paginationLabels,
+} from '../../utils/constants/paginationOptions';
 import {SORT_OPTIONS} from '../../utils/constants/sortOptions';
 
 const SecurityVulnerabilitiesList = () => {
+	const defaultParams: IJiraSearch = useMemo(
+		() => ({
+			[JiraEnum.PAGE]: 1,
+			[JiraEnum.PAGE_SIZE]: 15,
+		}),
+		[]
+	);
+
 	const {jiraSearch, loading, searchParams, updateSearchParams} =
-		useJiraSearch();
+		useJiraSearch(defaultParams);
+
+	const setPage = (page: number) => {
+		updateSearchParams({
+			[JiraEnum.PAGE]: page,
+		});
+	};
+
+	const setPageSize = (pageSize: number) => {
+		updateSearchParams({
+			[JiraEnum.PAGE_SIZE]: pageSize,
+		});
+	};
 
 	const columns = [
 		{
@@ -68,6 +94,7 @@ const SecurityVulnerabilitiesList = () => {
 				category: issue[JiraEnum.FIELDS]?.[JiraEnum.CATEGORY],
 				classification:
 					issue[JiraEnum.FIELDS]?.[JiraEnum.CLASSIFICATION],
+				link: `/${issue?.[JiraEnum.KEY]}`,
 				prioritySummary: (
 					<div>
 						<div className="align-items-center d-flex">
@@ -137,16 +164,38 @@ const SecurityVulnerabilitiesList = () => {
 								params={searchParams}
 								sortOptions={SORT_OPTIONS}
 							/>
+
+							<SVPanel text="for-information-on-previously-addressed-cves-fixed-in-dxp-2024-q1-1-or-earlier-please-visit-our-help-center" />
 						</div>
 
 						<div className="col-9">
 							{loading ? (
 								<span className="cp-spinner ml-2 spinner-border spinner-border-sm"></span>
 							) : rows?.length ? (
-								<SVTable
-									columns={columns}
-									rows={rows as unknown as IRow[]}
-								/>
+								<>
+									<SVTable
+										columns={columns}
+										rows={rows as unknown as IRow[]}
+									/>
+
+									<ClayPaginationBarWithBasicItems
+										active={jiraSearch?.[JiraEnum.PAGE]}
+										activeDelta={
+											jiraSearch?.[JiraEnum.PAGE_SIZE]
+										}
+										deltas={paginationDeltas}
+										labels={paginationLabels}
+										onActiveChange={(value: number) =>
+											setPage(value)
+										}
+										onDeltaChange={(value: number) =>
+											setPageSize(value)
+										}
+										totalItems={
+											jiraSearch?.[JiraEnum.TOTAL]!
+										}
+									/>
+								</>
 							) : (
 								<div className="py-2">
 									{i18n.translate(

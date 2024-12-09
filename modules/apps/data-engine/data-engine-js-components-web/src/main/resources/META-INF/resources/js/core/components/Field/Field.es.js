@@ -6,14 +6,7 @@
 import ClayButton from '@clayui/button';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {loadModule} from 'frontend-js-web';
-import React, {
-	Suspense,
-	lazy,
-	useCallback,
-	useContext,
-	useRef,
-	useState,
-} from 'react';
+import React, {useContext, useRef, useState} from 'react';
 
 import {sub} from '../../../utils/strings';
 import {useFormState} from '../../hooks/useForm.es';
@@ -31,39 +24,30 @@ const getModule = (fieldTypes, fieldType) => {
 	return field;
 };
 
-const useLazy = () => {
+const useLazy = (fieldModule) => {
 	const {components} = useStorage();
 
-	return useCallback(
-		(fieldModule) => {
-			if (!components.has(fieldModule)) {
-				const Component = lazy(() => {
-					return loadModule(fieldModule)
-						.then((instance) => {
-							if (!instance) {
-								return null;
-							}
+	const hasFieldInStorage = components.has(fieldModule);
 
-							if (!instance.default) {
-								return {default: instance};
-							}
+	const [loading, setLoading] = useState(!hasFieldInStorage);
 
-							return instance;
-						})
-						.catch((error) => {
-							components.delete(fieldModule);
+	if (!hasFieldInStorage) {
+		loadModule(fieldModule)
+			.then((instance) => {
+				if (instance) {
+					components.set(fieldModule, instance);
+				}
 
-							throw error;
-						});
-				});
+				setLoading(false);
+			})
+			.catch((error) => {
+				components.delete(fieldModule);
 
-				components.set(fieldModule, Component);
-			}
+				throw error;
+			});
+	}
 
-			return components.get(fieldModule);
-		},
-		[components]
-	);
+	return [components.get(fieldModule), loading];
 };
 
 class FieldEventStruct {
@@ -120,9 +104,11 @@ const FieldLazy = ({
 		field.type
 	);
 
-	const ComponentLazy = useLazy()(javaScriptModule);
+	const [ComponentLazy, loading] = useLazy(javaScriptModule);
 
-	return (
+	return loading ? (
+		<ClayLoadingIndicator />
+	) : !ComponentLazy ? null : (
 		<ComponentLazy
 			itemPath={itemPath}
 			onBlur={(event) => {
@@ -224,21 +210,19 @@ export function Field({field, itemPath, loc, ...otherProps}) {
 					data-field-name={field.fieldName}
 					data-qa-id={field.fieldName}
 				>
-					<Suspense fallback={<ClayLoadingIndicator />}>
-						<ParentFieldContext.Provider
-							value={getRootParentField(field, loc, parentField)}
-						>
-							<FieldLazy
-								field={{
-									...field,
-									readOnly: getReadOnly(field),
-								}}
-								fieldTypes={fieldTypes}
-								itemPath={itemPath}
-								{...otherProps}
-							/>
-						</ParentFieldContext.Provider>
-					</Suspense>
+					<ParentFieldContext.Provider
+						value={getRootParentField(field, loc, parentField)}
+					>
+						<FieldLazy
+							field={{
+								...field,
+								readOnly: getReadOnly(field),
+							}}
+							fieldTypes={fieldTypes}
+							itemPath={itemPath}
+							{...otherProps}
+						/>
+					</ParentFieldContext.Provider>
 				</div>
 			</AutoFocus>
 		</ErrorBoundary>

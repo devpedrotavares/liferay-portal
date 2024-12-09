@@ -9,6 +9,7 @@ import {ViewObjectDefinitionsPage} from '../ViewObjectDefinitionsPage';
 
 export class ObjectRelationshipsPage {
 	readonly actionsButton: Locator;
+	readonly addObjectRelationshipButton: Locator;
 	readonly cancelButton: Locator;
 	readonly deleteObjectRelationshipOption: Locator;
 	readonly inheritanceModalHeader: Locator;
@@ -21,6 +22,9 @@ export class ObjectRelationshipsPage {
 
 	constructor(page: Page) {
 		this.actionsButton = page.getByRole('button', {name: 'Actions'});
+		this.addObjectRelationshipButton = page.getByLabel(
+			'Add Object Relationship'
+		);
 		this.cancelButton = page.frameLocator('iframe').getByText('Cancel');
 		this.deleteObjectRelationshipOption = page.getByRole('menuitem', {
 			name: 'Delete',
@@ -37,7 +41,7 @@ export class ObjectRelationshipsPage {
 		this.inheritanceWarningMessage = page
 			.frameLocator('iframe')
 			.getByText(
-				'Warning:Unable to bind the object definitions when the child object definition is bound to another object definition'
+				'Error:Unable to bind the object definitions when the child object definition is bound to another object definition'
 			);
 		this.relationshipTabItem = page.getByRole('link', {
 			name: 'Relationships',
@@ -48,8 +52,14 @@ export class ObjectRelationshipsPage {
 		this.viewObjectDefinitionsPage = new ViewObjectDefinitionsPage(page);
 	}
 
-	async goto(objectDefinitionLabel: string) {
+	async goto(objectDefinitionLabel: string, objectFolderLabel?: string) {
 		await this.viewObjectDefinitionsPage.goto();
+
+		if (objectFolderLabel) {
+			await this.viewObjectDefinitionsPage.openObjectFolder(
+				objectFolderLabel
+			);
+		}
 
 		await this.viewObjectDefinitionsPage.clickEditObjectDefinitionLink(
 			objectDefinitionLabel

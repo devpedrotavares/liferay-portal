@@ -2,9 +2,11 @@
 	"dependencies": {
 		"@clayui/alert": "3.111.0",
 		"@clayui/button": "3.116.0",
+		"@clayui/drop-down": "3.123.1",
 		"@clayui/form": "3.122.0",
 		"@clayui/icon": "3.111.0",
 		"@clayui/label": "3.111.0",
+		"@clayui/link": "3.111.0",
 		"@clayui/modal": "3.122.0",
 		"@clayui/multi-step-nav": "3.123.1",
 		"@clayui/sticker": "3.111.0",
@@ -13,7 +15,8 @@
 		"frontend-js-web": "*",
 		"moment": "2.29.4",
 		"prop-types": "15.7.2",
-		"react": "16.12.0"
+		"react": "18.2.0",
+		"react-dom": "18.2.0"
 	},
 	"main": "js/index.js",
 	"name": "@liferay/commerce-order-content-web",

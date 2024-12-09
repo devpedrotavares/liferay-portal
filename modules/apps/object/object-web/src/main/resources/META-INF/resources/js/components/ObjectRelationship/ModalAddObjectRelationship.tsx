@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
 import ClayModal, {ClayModalProvider, useModal} from '@clayui/modal';
@@ -41,13 +40,15 @@ export function ModalAddObjectRelationship({
 	onAfterAddObjectRelationship,
 	reload = true,
 }: ModalAddObjectRelationshipProps) {
+	const formId = 'modalAddObjectRelationshipForm';
+
 	const {observer, onClose} = useModal({
 		onClose: () => {
 			handleOnClose();
 		},
 	});
 
-	const [error, setError] = useState<string>('');
+	const [submitError, setSubmitError] = useState<SubmitError>(null);
 
 	const initialValues: Partial<ObjectRelationship> = {
 		objectDefinitionExternalReferenceCode1,
@@ -89,7 +90,15 @@ export function ModalAddObjectRelationship({
 		catch (error: unknown) {
 			const {message} = error as Error;
 
-			setError(message);
+			setSubmitError(message);
+
+			const modalBodyElement = document.querySelector(
+				'.lfr-objects__modal-add-object-relationship-body'
+			);
+
+			if (modalBodyElement) {
+				modalBodyElement.scrollTop = modalBodyElement.scrollHeight;
+			}
 		}
 	};
 
@@ -100,21 +109,30 @@ export function ModalAddObjectRelationship({
 			parameterRequired: objectRelationshipParameterRequired,
 		});
 
+	const handleInheritanceCheckboxChange = ({
+		target,
+	}: React.ChangeEvent<HTMLInputElement>) => {
+		setValues({
+			...values,
+			edge: target.checked,
+		});
+	};
+
 	return (
 		<ClayModalProvider>
 			<ClayModal center observer={observer}>
-				<ClayForm onSubmit={handleSubmit}>
-					<ClayModal.Header>
-						{Liferay.Language.get('new-relationship')}
-					</ClayModal.Header>
+				<ClayModal.Header>
+					{Liferay.Language.get('new-relationship')}
+				</ClayModal.Header>
 
-					<ClayModal.Body>
-						{error && (
-							<ClayAlert displayType="danger">{error}</ClayAlert>
-						)}
-
+				<ClayModal.Body
+					className="lfr-objects__modal-add-object-relationship-body"
+					scrollable
+				>
+					<ClayForm id={formId} onSubmit={handleSubmit}>
 						<Input
 							error={errors.label}
+							id={formId + 'LabelField'}
 							label={Liferay.Language.get('label')}
 							onChange={({target: {value}}) =>
 								setValues({label: {[defaultLanguageId]: value}})
@@ -137,7 +155,11 @@ export function ModalAddObjectRelationship({
 							objectDefinitionExternalReferenceCode2={
 								objectDefinitionExternalReferenceCode2
 							}
+							onChangeInheritanceCheckbox={
+								handleInheritanceCheckboxChange
+							}
 							setValues={setValues}
+							submitError={submitError}
 							values={{
 								...values,
 								name:
@@ -169,25 +191,29 @@ export function ModalAddObjectRelationship({
 								/>
 							) : undefined}
 						</ObjectRelationshipFormBase>
-					</ClayModal.Body>
+					</ClayForm>
+				</ClayModal.Body>
 
-					<ClayModal.Footer
-						last={
-							<ClayButton.Group spaced>
-								<ClayButton
-									displayType="secondary"
-									onClick={() => onClose()}
-								>
-									{Liferay.Language.get('cancel')}
-								</ClayButton>
+				<ClayModal.Footer
+					last={
+						<ClayButton.Group spaced>
+							<ClayButton
+								displayType="secondary"
+								onClick={() => onClose()}
+							>
+								{Liferay.Language.get('cancel')}
+							</ClayButton>
 
-								<ClayButton displayType="primary" type="submit">
-									{Liferay.Language.get('save')}
-								</ClayButton>
-							</ClayButton.Group>
-						}
-					/>
-				</ClayForm>
+							<ClayButton
+								displayType="primary"
+								form={formId}
+								type="submit"
+							>
+								{Liferay.Language.get('save')}
+							</ClayButton>
+						</ClayButton.Group>
+					}
+				/>
 			</ClayModal>
 		</ClayModalProvider>
 	);

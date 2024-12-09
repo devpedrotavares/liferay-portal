@@ -18,6 +18,10 @@ import {clickAndExpectToBeHidden} from '../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getGlobalSiteId from '../../utils/getGlobalSiteId';
 import getRandomString from '../../utils/getRandomString';
+import {
+	disableSystemFeatureFlag,
+	enableSystemFeatureFlag,
+} from '../../utils/systemFeatureFlag';
 import {waitForAlert} from '../../utils/waitForAlert';
 import getFormContainerDefinition from '../layout-content-page-editor-web/utils/getFormContainerDefinition';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
@@ -538,14 +542,6 @@ test(
 
 		await expect(
 			page.getByRole('link').filter({hasText: 'Button'})
-		).toBeVisible();
-
-		// Go to Basic Components fragment set
-
-		await fragmentsPage.gotoFragmentSet('Featured Content');
-
-		await expect(
-			page.getByRole('link').filter({hasText: 'Banner Slider'})
 		).toBeVisible();
 	}
 );
@@ -1316,5 +1312,50 @@ test(
 			'fragmentCollectionId',
 			globalFragmentCollection.fragmentCollectionId
 		);
+	}
+);
+
+test(
+	'The deprecated label and button exist for the contributed Featured Content Fragment Set',
+	{
+		tag: '@LPD-42061',
+	},
+	async ({fragmentsPage, page, site}) => {
+
+		// Enable feature flag
+
+		await enableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
+
+		// Go to fragment administration and look for the label
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await expect(
+			page.getByRole('menuitem', {name: 'Featured Content Deprecated'})
+		).toBeVisible();
+
+		// Go to fragment set and look for the button
+
+		await fragmentsPage.gotoFragmentSet('Featured Content Deprecated');
+
+		await page.getByRole('button', {name: 'Deprecated'}).click();
+
+		await expect(
+			page.getByText(
+				'This feature is deprecated. Learn more about deprecated features.'
+			)
+		).toBeVisible();
+
+		// Disable feature flag
+
+		await disableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
 	}
 );

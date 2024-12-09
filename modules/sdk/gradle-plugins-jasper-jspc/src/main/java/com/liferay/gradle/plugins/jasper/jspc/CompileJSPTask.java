@@ -10,12 +10,24 @@ import com.liferay.gradle.util.GradleUtil;
 
 import java.io.File;
 
+import java.net.URL;
+
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.jasper.JspC;
+import org.apache.jasper.servlet.JspCServletContext;
+import org.apache.jasper.servlet.TldScanner;
+import org.apache.tomcat.JarScanType;
+import org.apache.tomcat.JarScanner;
+import org.apache.tomcat.JarScannerCallback;
+import org.apache.tomcat.util.scan.StandardJarScanner;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -41,7 +53,53 @@ public class CompileJSPTask extends DefaultTask {
 	public void compileJSP() {
 		FileCollection jspCClasspath = getJspCClasspath();
 
-		JspC jspC = new JspC();
+		JspC jspC = new JspC() {
+
+			@Override
+			protected TldScanner newTldScanner(
+				JspCServletContext jspCServletContext, boolean namespaceAware,
+				boolean validate, boolean blockExternal) {
+
+				return new TldScanner(
+					jspCServletContext, namespaceAware, validate,
+					blockExternal) {
+
+					@Override
+					public void scanJars() {
+						jspCServletContext.setAttribute(
+							JarScanner.class.getName(),
+							new StandardJarScanner() {
+
+								protected void processURLs(
+									JarScanType scanType,
+									JarScannerCallback callback,
+									Set<URL> processedURLs, boolean webApp,
+									Deque<URL> classPathUrlsToProcess) {
+
+									if (!webApp) {
+										classPathUrlsToProcess.clear();
+
+										return;
+									}
+
+									super.processURLs(
+										scanType, callback, processedURLs,
+										webApp, classPathUrlsToProcess);
+								}
+
+							});
+
+						super.scanJars();
+					}
+
+				};
+			}
+
+		};
+
+		Logger logger = Logger.getLogger("org.apache.tomcat");
+
+		logger.setLevel(Level.INFO);
 
 		try {
 			jspC.setArgs(_getCompleteArgs());
@@ -107,7 +165,7 @@ public class CompileJSPTask extends DefaultTask {
 	private String[] _getCompleteArgs() {
 		return new String[] {
 			"-d", FileUtil.getAbsolutePath(getDestinationDir()),
-			"-disablePooling", "-webapp",
+			"-no-strictQuoteEscaping", "-webapp",
 			FileUtil.getAbsolutePath(getWebAppDir())
 		};
 	}

@@ -14,6 +14,10 @@ import {pagesAdminPagesTest} from '../../fixtures/pagesAdminPagesTest';
 import {liferayConfig} from '../../liferay.config';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../utils/getRandomString';
+import {
+	disableSystemFeatureFlag,
+	enableSystemFeatureFlag,
+} from '../../utils/systemFeatureFlag';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
 import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
@@ -206,5 +210,47 @@ test(
 		expect(await page.title()).toBe(
 			`${pageName} - ${site.name} - Liferay DXP`
 		);
+	}
+);
+
+test(
+	'The deprecated label exist for the contributed Featured Content Fragment Set',
+	{
+		tag: '@LPD-42061',
+	},
+	async ({apiHelpers, page, pageEditorPage, site}) => {
+
+		// Enable feature flag
+
+		await enableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
+
+		// Create a content page
+
+		const pageName = getRandomString();
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			siteId: site.id,
+			title: pageName,
+		});
+
+		// Go to edit mode and check deprecated Feature Content
+
+		await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+		await expect(
+			page.getByRole('menuitem', {name: 'Featured Content Deprecated'})
+		).toBeVisible();
+
+		// Disable feature flag
+
+		await disableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
 	}
 );
