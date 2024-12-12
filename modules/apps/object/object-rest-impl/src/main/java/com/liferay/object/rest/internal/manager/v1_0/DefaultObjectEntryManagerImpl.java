@@ -123,6 +123,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -1359,13 +1360,10 @@ public class DefaultObjectEntryManagerImpl
 	}
 
 	private void _processAttachment(
-			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
-			ObjectField objectField, String scopeKey,
+			Consumer<Object> consumer, ObjectDefinition objectDefinition,
+			ObjectField objectField, Object propertyValue, String scopeKey,
 			ServiceContext serviceContext)
 		throws Exception {
-
-		Object propertyValue = objectEntry.getPropertyValue(
-			objectField.getName());
 
 		if (propertyValue == null) {
 			return;
@@ -1449,9 +1447,44 @@ public class DefaultObjectEntryManagerImpl
 		fileEntry.setFileBase64(() -> (String)null);
 		fileEntry.setId(serviceBuilderFileEntry::getFileEntryId);
 
+		consumer.accept(fileEntry);
+	}
+
+	private void _processAttachment(
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			ObjectField objectField, String scopeKey,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		if (objectField.isLocalized()) {
+			Map<String, Serializable> localizedValues =
+				(Map<String, Serializable>)objectEntry.getPropertyValue(
+					objectField.getI18nObjectFieldName());
+
+			if (localizedValues == null) {
+				return;
+			}
+
+			for (Map.Entry<String, Serializable> entry :
+					localizedValues.entrySet()) {
+
+				_processAttachment(
+					fileEntry -> entry.setValue(fileEntry.toString()),
+					objectDefinition, objectField, entry.getValue(), scopeKey,
+					serviceContext);
+			}
+
+			return;
+		}
+
 		Map<String, Object> properties = objectEntry.getProperties();
 
-		properties.put(objectField.getName(), fileEntry.toString());
+		_processAttachment(
+			fileEntry -> properties.put(
+				objectField.getName(), fileEntry.toString()),
+			objectDefinition, objectField,
+			objectEntry.getPropertyValue(objectField.getName()), scopeKey,
+			serviceContext);
 	}
 
 	private void _processVulcanAggregation(
