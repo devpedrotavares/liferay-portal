@@ -29,6 +29,7 @@ import {config as commerceChannelWebConfig} from './tests/commerce/commerce-chan
 import {config as commerceCheckoutWebConfig} from './tests/commerce/commerce-checkout-web/config';
 import {config as commerceDiscountContentWebConfig} from './tests/commerce/commerce-discount-content-web/config';
 import {config as commerceOrderContentWebConfig} from './tests/commerce/commerce-order-content-web/config';
+import {config as commerceOrderWebConfig} from './tests/commerce/commerce-order-web/config';
 import {config as commercePaymentsWebConfig} from './tests/commerce/commerce-payment-web/config';
 import {config as commerceProductContentSearchWebConfig} from './tests/commerce/commerce-product-content-search-web/config';
 import {config as commerceProductContentWebConfig} from './tests/commerce/commerce-product-content-web/config';
@@ -79,6 +80,7 @@ import {config as portalDefaultPermissionsWebConfig} from './tests/portal-defaul
 import {config as portalLanguageOverrideWebConfig} from './tests/portal-language-override-web/config';
 import {config as portalSearchAdminWebConfig} from './tests/portal-search-admin-web/config';
 import {config as portalSearchWebConfig} from './tests/portal-search-web/config';
+import {config as portalSecurityAuditWebConfig} from './tests/portal-security-audit-web/config';
 import {config as portalSecurityScriptManagementWebConfig} from './tests/portal-security-script-management-web/config';
 import {config as portalSecurityServiceAccessPolicyService} from './tests/portal-security-service-access-policy-service/config';
 import {config as portalToolsRestBuilderTestImpl} from './tests/portal-tools-rest-builder-test-impl/config';
@@ -96,6 +98,7 @@ import {config as samlWebConfig} from './tests/saml-web/config';
 import {config as scimConfiguraitonWebConfig} from './tests/scim-configuration-web/config';
 import {config as searchExperiencesWebConfig} from './tests/search-experiences-web/config';
 import {config as segmentExperimentWebConfig} from './tests/segment-experiment-web/config';
+import {config as segmentsWebConfig} from './tests/segments-web/config';
 import {
 	pageManagementSiteSetup,
 	pageManagementSiteTeardown,
@@ -145,6 +148,7 @@ export default defineConfig({
 		commerceChannelWebConfig,
 		commerceCheckoutWebConfig,
 		commerceDiscountContentWebConfig,
+		commerceOrderWebConfig,
 		commerceOrderContentWebConfig,
 		commercePaymentsWebConfig,
 		commerceProductContentSearchWebConfig,
@@ -200,6 +204,7 @@ export default defineConfig({
 		portalLanguageOverrideWebConfig,
 		portalSearchAdminWebConfig,
 		portalSearchWebConfig,
+		portalSecurityAuditWebConfig,
 		portalSecurityScriptManagementWebConfig,
 		portalSecurityServiceAccessPolicyService,
 		portalToolsRestBuilderTestImpl,
@@ -217,6 +222,7 @@ export default defineConfig({
 		scimConfiguraitonWebConfig,
 		searchExperiencesWebConfig,
 		segmentExperimentWebConfig,
+		segmentsWebConfig,
 		siteAdminWebConfig,
 		siteNavigationAdminWebConfig,
 		siteNavigationBreadcrumbWebConfig,

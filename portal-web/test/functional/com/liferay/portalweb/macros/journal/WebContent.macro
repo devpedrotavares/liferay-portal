@@ -8,7 +8,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -129,7 +129,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		Button.clickSaveAsDraft();
+		WebContent.saveAsDraftWithPermissions();
 
 		Alert.viewSuccessMessage();
 	}
@@ -146,7 +146,7 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro addExistingRelatedAssetCP(scopeSite = null, webContentTitle = null, otherSite = null, assetTitle = null, siteName = null, assetType = null) {
+	macro addExistingRelatedAssetCP(scopeSite = null, webContentTitle = null, otherSite = null, assetTitle = null, siteName = null, assetType = null, edit = null) {
 		var key_webContentTitle = ${webContentTitle};
 
 		RelatedAssets.selectAsset(
@@ -173,7 +173,12 @@ definition {
 
 		AssertElementPresent(locator1 = "AssetRelatedAssets#RELATED_ASSETS_TABLE_REMOVE_LINK");
 
-		PortletEntry.publish();
+		if (${edit} == "true") {
+			WebContent.publishExistingWCArticleWithPermissions();
+		}
+		else {
+			WebContent.publishWithPermissions();
+		}
 	}
 
 	@summary = "Default summary"
@@ -201,11 +206,9 @@ definition {
 			content = "Web Content Content",
 			fieldLabel = "Content");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		AssertElementPresent(locator1 = "Icon#ASTERISK");
-
-		Alert.viewRequestFailedToComplete();
 
 		Panel.expandPanel(panel = "Categorization");
 
@@ -307,7 +310,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WaitForPageLoad();
 
@@ -336,7 +339,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -377,7 +380,7 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro addWithCategoryCP(userSegmentDetailTitle = null, webContentTitle = null, webContentContent = null, vocabularyName = null, categoryName = null) {
+	macro addWithCategoryCP(userSegmentDetailTitle = null, webContentTitle = null, webContentContent = null, vocabularyName = null, categoryName = null, edit = null) {
 		for (var key_panel : list "Basic Information,Default Template,Display Page Template,Featured Image ") {
 			if ((IsElementPresent(locator1 = "Panel#PANEL_EXPANDED")) && (IsVisible(locator1 = "Panel#PANEL_EXPANDED"))) {
 				AssertClick(
@@ -395,7 +398,12 @@ definition {
 			userSegmentDetailTitle = ${userSegmentDetailTitle},
 			vocabularyName = ${vocabularyName});
 
-		PortletEntry.publish();
+		if (${edit} == "true") {
+			WebContent.publishExistingWCArticleWithPermissions();
+		}
+		else {
+			WebContent.publishWithPermissions();
+		}
 	}
 
 	@summary = "Default summary"
@@ -431,7 +439,7 @@ definition {
 
 		SelectFrameTop();
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -445,7 +453,7 @@ definition {
 			locator1 = "TextInput#INPUT_ID",
 			value1 = ${friendlyURL});
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -474,7 +482,7 @@ definition {
 			Alert.viewErrorMessage(errorMessage = "You cannot select more than one category for Vocabulary Name.");
 		}
 		else {
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 	}
 
@@ -490,7 +498,7 @@ definition {
 			locator1 = "TextInput#ASSET_PRIORITY",
 			value1 = ${assetPriority});
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -869,7 +877,7 @@ definition {
 		}
 
 		if (${saveAsDraft} == "true") {
-			PortletEntry.saveAsDraft();
+			WebContent.saveAsDraftWithPermissions();
 
 			AssertTextEquals(
 				key_status = "Draft",
@@ -898,7 +906,7 @@ definition {
 			AssetCategorization.addTag(tagName = ${tagName});
 		}
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -907,7 +915,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		Button.clickSubmitForWorkflow();
+		WebContent.submitForWorkflowWithPermission();
 
 		Alert.viewSuccessMessage();
 	}
@@ -1187,7 +1195,7 @@ definition {
 				value1 = "Draft");
 		}
 		else {
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 
 			LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
@@ -1231,8 +1239,13 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro editDisplayPage(pageType = null, pageName = null) {
-		Panel.expandPanel(panel = "Display Page");
+	macro editDisplayPage(pageType = null, pageName = null, assetType = null) {
+		if (${assetType} == "Blogs Entry") {
+			Blogs.expandPanel(panel = "Display Page");
+		}
+		else {
+			Panel.expandPanel(panel = "Display Page");
+		}
 
 		if (!(isSet(displayPageTemplateType))) {
 			var displayPageTemplateType = "Specific";
@@ -1424,7 +1437,7 @@ definition {
 				fieldLabel = "Content");
 		}
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		AssertElementPresent(locator1 = "TextInput#REQUIRED_ALERT");
 	}
@@ -1460,7 +1473,7 @@ definition {
 		}
 
 		if (${saveAsDraft} == "true") {
-			PortletEntry.saveAsDraft();
+			WebContent.saveAsDraftWithPermissions();
 
 			AssertTextEquals.assertPartialText(
 				key_status = "Draft",
@@ -1468,7 +1481,7 @@ definition {
 				value1 = "Draft");
 		}
 		else {
-			Button.clickPublish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 	}
 
@@ -1486,7 +1499,7 @@ definition {
 		SelectFrame(value1 = "relative=top");
 
 		if (${saveAsDraft} == "true") {
-			PortletEntry.saveAsDraft();
+			WebContent.saveAsDraftWithPermissions();
 
 			AssertTextEquals.assertPartialText(
 				key_status = "Draft",
@@ -1494,7 +1507,7 @@ definition {
 				value1 = "Draft");
 		}
 		else {
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 	}
 
@@ -1531,7 +1544,7 @@ definition {
 			webContentWebContent = ${webContentWebContent});
 
 		if (${saveAsDraft} == "true") {
-			PortletEntry.saveAsDraft();
+			WebContent.saveAsDraftWithPermissions();
 
 			AssertTextEquals.assertPartialText(
 				key_status = "Draft",
@@ -1539,7 +1552,7 @@ definition {
 				value1 = "Draft");
 		}
 		else {
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 	}
 
@@ -1786,6 +1799,65 @@ definition {
 	}
 
 	@summary = "Default summary"
+	macro publishExistingWCArticleWithPermissions() {
+		Button.clickPublish();
+
+		Click(locator1 = "WCEditWebContent#PUBLISH_BUTTON");
+	}
+
+	@summary = "Default summary"
+	macro publishWithPermissions(viewableBy = null) {
+		Button.clickPublish();
+
+		Click(locator1 = "WCEditWebContent#PUBLISH_WITH_PERMISSIONS_BUTTON");
+
+		if (isSet(viewableBy)) {
+			Select(
+				locator1 = "Select#PERMISSIONS",
+				value1 = ${viewableBy});
+		}
+
+		Click(locator1 = "WCEditWebContent#PUBLISH_IN_MODAL");
+
+		WaitForElementPresent.waitForElementPresentNoException(locator1 = "Message#ALERT_DISMISSIBLE");
+
+		if (IsElementPresent(locator1 = "Message#WARNING")) {
+			VerifyElementPresent(locator1 = "Message#WARNING");
+		}
+		else {
+			Alert.viewSuccessMessage();
+		}
+	}
+
+	@summary = "Default summary"
+	macro publishWithPermissionsLocalized(publish = null, publishWithPermissions = null, viewableBy = null) {
+		Button.click(button = ${publish});
+
+		Click(
+			key_text = ${publishWithPermissions},
+			locator1 = "WCEditWebContent#DROPDOWN_BUTTON");
+
+		if (isSet(viewableBy)) {
+			Select(
+				locator1 = "Select#PERMISSIONS",
+				value1 = ${viewableBy});
+		}
+
+		Click(
+			key_text = ${publish},
+			locator1 = "WCEditWebContent#BUTTON_IN_MODAL");
+
+		WaitForElementPresent.waitForElementPresentNoException(locator1 = "Message#ALERT_DISMISSIBLE");
+
+		if (IsElementPresent(locator1 = "Message#WARNING")) {
+			VerifyElementPresent(locator1 = "Message#WARNING");
+		}
+		else {
+			Alert.viewSuccessMessage();
+		}
+	}
+
+	@summary = "Default summary"
 	macro removeDuplicatedFieldsGroup(index = null) {
 		Click(
 			key_class = "delete-button",
@@ -1802,6 +1874,43 @@ definition {
 		Refresh();
 
 		AssertElementNotPresent(locator1 = "AP#ASSET_ABSTRACT_GENERIC");
+	}
+
+	@summary = "Default summary"
+	macro saveAsDraftWithPermissions() {
+		Button.clickSaveAsDraft();
+
+		Click(locator1 = "WCEditWebContent#SAVE_AS_DRAFT_IN_MODAL");
+	}
+
+	@summary = "Default summary"
+	macro scheduleExistingWCArticleWithPermissions(displayDate = null) {
+		Button.clickPublish();
+
+		Click(locator1 = "WCEditWebContent#SCHEDULE_PUBLICATION_BUTTON");
+
+		Type.clickAtType(
+			locator1 = "TextInput#DISPLAY_DATE",
+			value1 = ${displayDate});
+
+		if (isSet(displayTime)) {
+			var displayTime = StringUtil.removeSpaces(${displayTime});
+
+			Type.sendKeys(
+				locator1 = "TextInput#DISPLAY_DATE_TIME",
+				value1 = ${displayTime});
+		}
+
+		Click(locator1 = "WCEditWebContent#SCHEDULE_IN_MODAL");
+
+		WaitForElementPresent.waitForElementPresentNoException(locator1 = "Message#ALERT_DISMISSIBLE");
+
+		if (IsElementPresent(locator1 = "Message#WARNING")) {
+			VerifyElementPresent(locator1 = "Message#WARNING");
+		}
+		else {
+			Alert.viewSuccessMessage();
+		}
 	}
 
 	@summary = "Default summary"
@@ -1990,6 +2099,30 @@ definition {
 			key_fieldFieldLabel = ${fieldFieldLabel},
 			locator1 = "WCEditWebContent#IMAGE_DESCRIPTION",
 			value1 = ${webContentImageDescription});
+	}
+
+	@summary = "Default summary"
+	macro submitForWorkflowWithPermission(viewableBy = null) {
+		Button.clickSubmitForWorkflow();
+
+		Click(locator1 = "WCEditWebContent#SUBMIT_FOR_WORKFLOW_WITH_PERMISSIONS_BUTTON");
+
+		if (isSet(viewableBy)) {
+			Select(
+				locator1 = "Select#PERMISSIONS",
+				value1 = ${viewableBy});
+		}
+
+		Click(locator1 = "WCEditWebContent#SUBMIT_FOR_WORKFLOW_IN_MODAL");
+
+		WaitForElementPresent.waitForElementPresentNoException(locator1 = "Message#ALERT_DISMISSIBLE");
+
+		if (IsElementPresent(locator1 = "Message#WARNING")) {
+			VerifyElementPresent(locator1 = "Message#WARNING");
+		}
+		else {
+			Alert.viewSuccessMessage();
+		}
 	}
 
 	@summary = "Default summary"

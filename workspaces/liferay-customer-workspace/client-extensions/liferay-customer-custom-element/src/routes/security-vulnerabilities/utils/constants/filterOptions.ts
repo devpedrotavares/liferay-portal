@@ -7,30 +7,30 @@ import {JiraEnum} from './jiraEnum';
 
 export interface IProps {
 	[JiraEnum.AFFECTED_VERSIONS]?: string[];
-	[JiraEnum.CATEGORY]?: string[];
-	[JiraEnum.CLASSIFICATION]?: string[];
+	[JiraEnum.CATEGORIES]?: string[];
 	[JiraEnum.FIX_VERSIONS]?: string[];
+	[JiraEnum.ISSUE_CLASSIFICATION]?: string[];
 	[JiraEnum.SEVERITY]?: string[];
 }
 
 export const FILTER_MAP: {[key: string]: string} = {
 	affectedVersions: 'filterAffectedVersions',
-	category: 'filterCategories',
+	categories: 'filterCategories',
 	fixVersions: 'filterFixVersions',
-	issueClassification: 'clea',
+	issueClassification: 'filterClassifications',
 	severity: 'filterSeverities',
 };
 
 export const FILTER_OPTIONS: IProps = {
 	[JiraEnum.AFFECTED_VERSIONS]: ['2024.Q4', '2024.Q3', '2024.Q2', '2024.Q1'],
-	[JiraEnum.CATEGORY]: ['Paas', 'Saas', 'Self-Hosted', 'Docker'],
-	[JiraEnum.CLASSIFICATION]: [
-		'Confirmed Vulnerability',
-		'Ignored',
-		'False Positive',
+	[JiraEnum.CATEGORIES]: ['Docker', 'On Premise', 'PaaS', 'SaaS'],
+	[JiraEnum.FIX_VERSIONS]: ['2024.Q4', '2024.Q3', '2024.Q2', '2024.Q1'],
+	[JiraEnum.ISSUE_CLASSIFICATION]: [
 		'Advisory',
+		'Confirmed Vulnerability',
+		'False Positive',
+		'Ignored',
 		'Threat Information',
 	],
-	[JiraEnum.FIX_VERSIONS]: ['2024.Q4', '2024.Q3', '2024.Q2', '2024.Q1'],
 	[JiraEnum.SEVERITY]: ['Critical', 'High', 'Medium', 'Low', 'None'],
 };

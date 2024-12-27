@@ -11,8 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import com.liferay.account.constants.AccountConstants;
-import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
+import com.liferay.commerce.constants.CommerceCheckoutWebKeys;
 import com.liferay.commerce.constants.CommercePortletKeys;
 import com.liferay.commerce.context.CommerceContext;
 import com.liferay.commerce.context.CommerceContextFactory;
@@ -28,9 +28,11 @@ import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.commerce.util.CommerceAccountHelper;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -78,6 +80,7 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
+ * @author Gianmarco Brunialti Masera
  */
 @Component(service = CommerceAccountResource.class)
 public class CommerceAccountResource {
@@ -258,9 +261,33 @@ public class CommerceAccountResource {
 
 			HttpSession httpSession = originalHttpServletRequest.getSession();
 
-			httpSession.removeAttribute(
-				CommerceOrder.class.getName() + StringPool.POUND +
-					channelGroupId);
+			if (FeatureFlagManagerUtil.isEnabled("LPD-35678")) {
+				CommerceOrder commerceOrder =
+					(CommerceOrder)httpSession.getAttribute(
+						CommerceCheckoutWebKeys.
+							COMMERCE_ORDER_ON_ACCOUNT_SELECTION);
+
+				if (commerceOrder != null) {
+					httpSession.setAttribute(
+						CommerceOrder.class.getName() + StringPool.POUND +
+							channelGroupId,
+						commerceOrder.getUuid());
+
+					httpSession.removeAttribute(
+						CommerceCheckoutWebKeys.
+							COMMERCE_ORDER_ON_ACCOUNT_SELECTION);
+				}
+				else {
+					httpSession.removeAttribute(
+						CommerceOrder.class.getName() + StringPool.POUND +
+							channelGroupId);
+				}
+			}
+			else {
+				httpSession.removeAttribute(
+					CommerceOrder.class.getName() + StringPool.POUND +
+						channelGroupId);
+			}
 		}
 		catch (Exception exception) {
 			_log.error(exception);
@@ -279,26 +306,18 @@ public class CommerceAccountResource {
 			String keywords, int page, int pageSize, String imagePath)
 		throws PortalException {
 
-		List<Account> accounts = new ArrayList<>();
-
 		int start = (page - 1) * pageSize;
 		int end = page * pageSize;
 
-		List<AccountEntry> userAccountEntries =
+		return TransformUtil.transform(
 			_accountEntryLocalService.getUserAccountEntries(
 				userId, parentAccountId, keywords,
 				_commerceAccountHelper.toAccountEntryTypes(commerceSiteType),
-				_commerceAccountHelper.toAccountEntryStatus(true), start, end);
-
-		for (AccountEntry accountEntry : userAccountEntries) {
-			accounts.add(
-				new Account(
-					String.valueOf(accountEntry.getAccountEntryId()),
-					accountEntry.getName(),
-					_getLogoThumbnailSrc(accountEntry.getLogoId(), imagePath)));
-		}
-
-		return accounts;
+				_commerceAccountHelper.toAccountEntryStatus(true), start, end),
+			accountEntry -> new Account(
+				String.valueOf(accountEntry.getAccountEntryId()),
+				accountEntry.getName(),
+				_getLogoThumbnailSrc(accountEntry.getLogoId(), imagePath)));
 	}
 
 	private int _getAccountsCount(
@@ -346,8 +365,6 @@ public class CommerceAccountResource {
 			HttpServletRequest httpServletRequest)
 		throws PortalException {
 
-		List<Order> orders = new ArrayList<>();
-
 		int start = (page - 1) * pageSize;
 		int end = page * pageSize;
 
@@ -360,15 +377,18 @@ public class CommerceAccountResource {
 				commerceChannelGroupId, commerceAccountId, StringPool.BLANK,
 				start, end);
 
-		for (CommerceOrder commerceOrder : userCommerceOrders) {
-			Date modifiedDate = commerceOrder.getModifiedDate();
+		return TransformUtil.transform(
+			userCommerceOrders,
+			commerceOrder -> {
+				Date modifiedDate = commerceOrder.getModifiedDate();
 
-			String modifiedDateTimeDescription = _language.getTimeDescription(
-				httpServletRequest,
-				System.currentTimeMillis() - modifiedDate.getTime(), true);
+				String modifiedDateTimeDescription =
+					_language.getTimeDescription(
+						httpServletRequest,
+						System.currentTimeMillis() - modifiedDate.getTime(),
+						true);
 
-			orders.add(
-				new Order(
+				return new Order(
 					commerceOrder.getCommerceOrderId(),
 					commerceOrder.getCommerceAccountId(),
 					commerceOrder.getCommerceAccountName(),
@@ -379,10 +399,8 @@ public class CommerceAccountResource {
 					WorkflowConstants.getStatusLabel(commerceOrder.getStatus()),
 					_getOrderLinkURL(
 						groupId, commerceOrder.getCommerceOrderId(),
-						httpServletRequest)));
-		}
-
-		return orders;
+						httpServletRequest));
+			});
 	}
 
 	private Response _getResponse(Object object) {
@@ -441,21 +459,15 @@ public class CommerceAccountResource {
 	private List<AccountUser> _searchUsers(
 		long companyId, String keywords, String imagePath) {
 
-		List<AccountUser> accountUsers = new ArrayList<>();
-
 		List<User> users = _userLocalService.search(
 			companyId, keywords, WorkflowConstants.STATUS_APPROVED, null, 0, 10,
 			(OrderByComparator<User>)null);
 
-		for (User user : users) {
-			accountUsers.add(
-				new AccountUser(
-					user.getUserId(), user.getFullName(),
-					user.getEmailAddress(),
-					_getUserPortraitSrc(user, imagePath)));
-		}
-
-		return accountUsers;
+		return TransformUtil.transform(
+			users,
+			user -> new AccountUser(
+				user.getUserId(), user.getFullName(), user.getEmailAddress(),
+				_getUserPortraitSrc(user, imagePath)));
 	}
 
 	private static final ObjectMapper _OBJECT_MAPPER = new ObjectMapper() {

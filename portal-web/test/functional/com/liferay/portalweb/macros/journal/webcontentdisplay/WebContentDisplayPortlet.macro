@@ -39,7 +39,7 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@summary = "Default summary"
@@ -52,7 +52,7 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro addLocalized(webContentTitle = null, portletNameTranslation = null, localizedBasicWebContent = null, webContentContent = null) {
+	macro addLocalized(localizedBasicWebContent = null, portletNameTranslation = null, publish = null, publishWithPermissions = null,  webContentContent = null, webContentTitle = null) {
 		WebContentDisplayPortletNavigator.gotoAdd(
 			portletNameTranslation = ${portletNameTranslation},
 			structureName = ${localizedBasicWebContent});
@@ -61,13 +61,15 @@ definition {
 			webContentContent = ${webContentContent},
 			webContentTitle = ${webContentTitle});
 
-		Click(locator1 = "Button#PUBLISH_LOCALIZED");
+		WebContent.publishWithPermissionsLocalized(
+			publish = ${publish},
+			publishWithPermissions = ${publishWithPermissions});
 
 		SelectFrame(value1 = "relative=top");
 	}
 
 	@summary = "Default summary"
-	macro addTag(tagNameList = null) {
+	macro addTag(tagNameList = null, edit = null) {
 		Panel.expandPanel(panel = "Categorization");
 
 		for (var tagName : list ${tagNameList}) {
@@ -92,7 +94,12 @@ definition {
 				value1 = ${tagName});
 		}
 
-		PortletEntry.publish();
+		if (${edit} == "true") {
+			WebContent.publishExistingWCArticleWithPermissions();
+		}
+		else {
+			WebContent.publishWithPermissions();
+		}
 
 		SelectFrame(value1 = "relative=top");
 	}
@@ -178,7 +185,7 @@ definition {
 				fieldLabel = "Content");
 		}
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		SelectFrame(value1 = "relative=top");
 	}

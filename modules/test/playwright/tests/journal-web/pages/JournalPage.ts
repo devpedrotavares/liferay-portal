@@ -92,6 +92,7 @@ export class JournalPage {
 	}
 
 	async goToJournalArticleAction(action: string, title: string) {
+		await this.changeView('list');
 		await this.page.getByLabel(`Actions for ${title}`).waitFor();
 
 		await clickAndExpectToBeVisible({
@@ -113,6 +114,10 @@ export class JournalPage {
 		await this.goToJournalArticleAction('Permissions', title);
 
 		await this.assertPermissions(permissions);
+	}
+
+	async assertTitle(title: string) {
+		await expect(this.page.locator(`a[title='${title}']`)).toBeVisible();
 	}
 
 	async assertPermissions(

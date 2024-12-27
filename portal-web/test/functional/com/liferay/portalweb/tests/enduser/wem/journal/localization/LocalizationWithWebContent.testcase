@@ -83,7 +83,7 @@ definition {
 				webContentContent = "世界您好 Content",
 				webContentTitle = "世界您好 Title");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Then the site designer could view the translation after changing the user language to Chinese") {
@@ -291,7 +291,7 @@ definition {
 				locator1 = "WCEditWebContent#TEXT_INPUT",
 				value1 = "Este es un campo de texto");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Then the site designer could view the translated web content at edit mode") {
@@ -411,7 +411,7 @@ definition {
 
 			WebContent.editFriendlyURL(webContentFriendlyURL = "titulo-del-contenido-web");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Then the site designer could view the default user language of web content is es-ES") {
@@ -460,7 +460,7 @@ definition {
 		task ("When the site designer deletes the Spanish translation in the content field") {
 			WebContent.addCP(webContentContent = "");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Then the site designer could view the empty field for Spanish translation") {
@@ -522,7 +522,7 @@ definition {
 				webContentContent = "世界您好 Content",
 				webContentTitle = "世界您好 Title");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Then the site designer could view the translation after changing the user language to Chinese") {
@@ -589,7 +589,7 @@ definition {
 				webContentContent = "Web Content Content 3",
 				webContentTitle = "Web Content Title 3");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 	}
 
@@ -640,7 +640,7 @@ definition {
 					fieldLabel = "Text",
 					text = "这是一个文本");
 
-				PortletEntry.publish();
+				WebContent.publishWithPermissions();
 			}
 
 			task ("On any site, create a Display Page Template for that Web Content Structure and mark it as default") {
@@ -760,7 +760,7 @@ definition {
 					locator1 = "TextInput#TEXT_INPUT_ID",
 					value1 = "webcontentspanish");
 
-				PortletEntry.publish();
+				WebContent.publishWithPermissions();
 			}
 		}
 
@@ -829,7 +829,7 @@ definition {
 
 			WebContent.addCP(webContentTitle = "Título de contéudo web");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site designer changes to pt-BR in web content editor") {

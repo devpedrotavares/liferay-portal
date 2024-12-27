@@ -8,10 +8,23 @@ package com.liferay.headless.admin.site.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.admin.site.client.dto.v1_0.PageElement;
 import com.liferay.headless.admin.site.client.problem.Problem;
+import com.liferay.headless.admin.site.dto.v1_0.DefaultFragmentReference;
+import com.liferay.headless.admin.site.dto.v1_0.PageCollectionDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageCollectionItemDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageColumnDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageContainerDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageDropZoneDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageFormDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageFormStepContainerDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageFormStepDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageFragmentDropZoneDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageFragmentInstanceDefinition;
+import com.liferay.headless.admin.site.dto.v1_0.PageRowDefinition;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.layout.util.structure.LayoutStructure;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -40,6 +53,8 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 		super.setUp();
 
 		_layout = LayoutTestUtil.addTypeContentLayout(testGroup);
+
+		_draftLayout = _layout;
 	}
 
 	@Override
@@ -50,8 +65,6 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 		PageElement pageElement =
 			testPostSiteSiteByExternalReferenceCodePageExperiencePageElement_addPageElement(
 				randomPageElement());
-
-		_layout = _layoutLocalService.fetchLayout(_layout.getPlid());
 
 		LayoutStructure layoutStructure = _getLayoutStructure();
 
@@ -66,11 +79,11 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 
 		pageElementResource.deleteSiteSiteByExternalReferenceCodePageElement(
 			testGroup.getExternalReferenceCode(),
-			_layout.getExternalReferenceCode(),
+			_draftLayout.getExternalReferenceCode(),
 			segmentsExperience.getExternalReferenceCode(),
 			pageElement.getExternalReferenceCode());
 
-		_layout = _layoutLocalService.fetchLayout(_layout.getPlid());
+		_draftLayout = _layoutLocalService.fetchLayout(_draftLayout.getPlid());
 
 		layoutStructure = _getLayoutStructure();
 
@@ -82,7 +95,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 			pageElementResource.
 				deleteSiteSiteByExternalReferenceCodePageElement(
 					testGroup.getExternalReferenceCode(),
-					_layout.getExternalReferenceCode(),
+					_draftLayout.getExternalReferenceCode(),
 					segmentsExperience.getExternalReferenceCode(),
 					pageElement.getExternalReferenceCode());
 
@@ -113,7 +126,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 		PageElement getPageElement =
 			pageElementResource.getSiteSiteByExternalReferenceCodePageElement(
 				testGroup.getExternalReferenceCode(),
-				_layout.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
 				segmentsExperience.getExternalReferenceCode(),
 				postPageElement.getExternalReferenceCode());
 
@@ -123,7 +136,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 		try {
 			pageElementResource.getSiteSiteByExternalReferenceCodePageElement(
 				testGroup.getExternalReferenceCode(),
-				_layout.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
 				segmentsExperience.getExternalReferenceCode(),
 				RandomTestUtil.randomString());
 
@@ -137,13 +150,47 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 		}
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testPatchSiteSiteByExternalReferenceCodePageElement()
 		throws Exception {
 
-		super.testPatchSiteSiteByExternalReferenceCodePageElement();
+		PageElement postPageElement =
+			testPostSiteSiteByExternalReferenceCodePageExperiencePageElement_addPageElement(
+				randomPageElement());
+
+		postPageElement.setDefinition(() -> null);
+
+		SegmentsExperience segmentsExperience =
+			_segmentsExperienceLocalService.fetchSegmentsExperience(
+				testGroup.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				_layout.getPlid());
+
+		PageElement pathPageElement =
+			pageElementResource.patchSiteSiteByExternalReferenceCodePageElement(
+				testGroup.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
+				segmentsExperience.getExternalReferenceCode(),
+				postPageElement.getExternalReferenceCode(), postPageElement);
+
+		assertEquals(postPageElement, pathPageElement);
+		assertValid(pathPageElement);
+
+		try {
+			pageElementResource.patchSiteSiteByExternalReferenceCodePageElement(
+				testGroup.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
+				segmentsExperience.getExternalReferenceCode(),
+				RandomTestUtil.randomString(), randomPageElement());
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("NOT_FOUND", problem.getStatus());
+			Assert.assertNull(problem.getTitle());
+		}
 	}
 
 	@Ignore
@@ -159,10 +206,46 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 	@Ignore
 	@Override
 	@Test
+	public void testPostSiteSiteByExternalReferenceCodePageExperiencePageElement()
+		throws Exception {
+
+		super.
+			testPostSiteSiteByExternalReferenceCodePageExperiencePageElement();
+
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageCollectionDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageCollectionItemDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageColumnDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageContainerDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageDropZoneDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormStepDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormStepContainerDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFragmentDropZoneDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFragmentInstanceDefinition();
+		_testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageRowDefinition();
+	}
+
+	@Override
+	@Test
 	public void testPutSiteSiteByExternalReferenceCodePageElement()
 		throws Exception {
 
-		super.testPutSiteSiteByExternalReferenceCodePageElement();
+		PageElement pageElement = randomPageElement();
+
+		SegmentsExperience segmentsExperience =
+			_segmentsExperienceLocalService.fetchSegmentsExperience(
+				testGroup.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				_layout.getPlid());
+
+		PageElement putPageElement =
+			pageElementResource.putSiteSiteByExternalReferenceCodePageElement(
+				testGroup.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
+				segmentsExperience.getExternalReferenceCode(),
+				pageElement.getExternalReferenceCode(), pageElement);
+
+		assertEquals(pageElement, putPageElement);
+		assertValid(putPageElement);
 	}
 
 	@Override
@@ -175,17 +258,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 
 	@Override
 	protected PageElement randomPageElement() throws Exception {
-		LayoutStructure layoutStructure = _getLayoutStructure();
-
-		PageElement pageElement = super.randomPageElement();
-
-		pageElement.setType(PageElement.Type.CONTAINER);
-		pageElement.setPageElements(new PageElement[0]);
-		pageElement.setParentExternalReferenceCode(
-			layoutStructure.getMainItemId());
-		pageElement.setPosition(0);
-
-		return pageElement;
+		return _randomPageElement(PageElement.Type.CONTAINER);
 	}
 
 	@Override
@@ -200,7 +273,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				_layout.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				testGroup.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
 				_layout.getPlid());
 
 		return pageElementResource.
@@ -232,7 +305,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 			testGetSiteSiteByExternalReferenceCodePageElementPageElementsPage_getPageSpecificationExternalReferenceCode()
 		throws Exception {
 
-		return _layout.getExternalReferenceCode();
+		return _draftLayout.getExternalReferenceCode();
 	}
 
 	@Override
@@ -274,7 +347,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				_layout.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				testGroup.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
 				_layout.getPlid());
 
 		return segmentsExperience.getExternalReferenceCode();
@@ -285,7 +358,7 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 			testGetSiteSiteByExternalReferenceCodePageExperiencePageElementsPage_getPageSpecificationExternalReferenceCode()
 		throws Exception {
 
-		return _layout.getExternalReferenceCode();
+		return _draftLayout.getExternalReferenceCode();
 	}
 
 	@Override
@@ -304,26 +377,196 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				_layout.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
+				testGroup.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT,
 				_layout.getPlid());
 
 		return pageElementResource.
 			postSiteSiteByExternalReferenceCodePageExperiencePageElement(
 				testGroup.getExternalReferenceCode(),
-				_layout.getExternalReferenceCode(),
+				_draftLayout.getExternalReferenceCode(),
 				segmentsExperience.getExternalReferenceCode(), pageElement);
+	}
+
+	private void
+			_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+				PageElement pageElement)
+		throws Exception {
+
+		PageElement postPageElement =
+			testPostSiteSiteByExternalReferenceCodePageExperiencePageElement_addPageElement(
+				pageElement);
+
+		assertEquals(pageElement, postPageElement);
+		assertValid(postPageElement);
 	}
 
 	private LayoutStructure _getLayoutStructure() {
 		LayoutPageTemplateStructure layoutPageTemplateStructure =
 			_layoutPageTemplateStructureLocalService.
 				fetchLayoutPageTemplateStructure(
-					_layout.getGroupId(), _layout.getPlid());
+					testGroup.getGroupId(), _draftLayout.getPlid());
 
 		return LayoutStructure.of(
 			layoutPageTemplateStructure.getDefaultSegmentsExperienceData());
 	}
 
+	private PageElement _randomPageElement(PageElement.Type type)
+		throws Exception {
+
+		PageElement pageElement = super.randomPageElement();
+
+		pageElement.setPageElements(new PageElement[0]);
+		pageElement.setParentExternalReferenceCode(StringPool.BLANK);
+		pageElement.setPosition(_position++);
+		pageElement.setType(type);
+
+		return pageElement;
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageCollectionDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.COLLECTION);
+
+		randomPageElement.setDefinition(new PageCollectionDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageCollectionItemDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.COLLECTION_ITEM);
+
+		randomPageElement.setDefinition(new PageCollectionItemDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageColumnDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.COLUMN);
+
+		randomPageElement.setDefinition(new PageColumnDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageContainerDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.CONTAINER);
+
+		randomPageElement.setDefinition(new PageContainerDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageDropZoneDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.DROP_ZONE);
+
+		randomPageElement.setDefinition(new PageDropZoneDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.FORM);
+
+		randomPageElement.setDefinition(new PageFormDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormStepContainerDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.FORM_STEP_CONTAINER);
+
+		randomPageElement.setDefinition(new PageFormStepContainerDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFormStepDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.FORM_STEP);
+
+		randomPageElement.setDefinition(new PageFormStepDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFragmentDropZoneDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.FRAGMENT_DROP_ZONE);
+
+		randomPageElement.setDefinition(new PageFragmentDropZoneDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageFragmentInstanceDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.FRAGMENT);
+
+		randomPageElement.setDefinition(
+			new PageFragmentInstanceDefinition() {
+				{
+					setFragmentReference(
+						new DefaultFragmentReference() {
+							{
+								setDefaultFragmentKey(
+									() -> "BASIC_COMPONENT-heading");
+							}
+						});
+				}
+			});
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private void _testPostSiteSiteByExternalReferenceCodePageExperiencePageElementPageRowDefinition()
+		throws Exception {
+
+		PageElement randomPageElement = _randomPageElement(
+			PageElement.Type.ROW);
+
+		randomPageElement.setDefinition(new PageRowDefinition());
+
+		_assertPostSiteSiteByExternalReferenceCodePageExperiencePageElement(
+			randomPageElement);
+	}
+
+	private Layout _draftLayout;
 	private Layout _layout;
 
 	@Inject
@@ -332,6 +575,8 @@ public class PageElementResourceTest extends BasePageElementResourceTestCase {
 	@Inject
 	private LayoutPageTemplateStructureLocalService
 		_layoutPageTemplateStructureLocalService;
+
+	private int _position;
 
 	@Inject
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;

@@ -7,6 +7,9 @@ package com.liferay.headless.commerce.admin.payment.internal.resource.v1_0;
 
 import com.liferay.commerce.constants.CommerceOrderPaymentConstants;
 import com.liferay.commerce.constants.CommercePaymentEntryConstants;
+import com.liferay.commerce.currency.exception.NoSuchCurrencyException;
+import com.liferay.commerce.currency.model.CommerceCurrency;
+import com.liferay.commerce.currency.service.CommerceCurrencyLocalService;
 import com.liferay.commerce.payment.constants.CommercePaymentEntryActionKeys;
 import com.liferay.commerce.payment.exception.NoSuchPaymentEntryException;
 import com.liferay.commerce.payment.gateway.CommercePaymentGateway;
@@ -15,8 +18,11 @@ import com.liferay.commerce.payment.service.CommercePaymentEntryService;
 import com.liferay.headless.commerce.admin.payment.dto.v1_0.Payment;
 import com.liferay.headless.commerce.admin.payment.internal.odata.entity.v1_0.PaymentEntityModel;
 import com.liferay.headless.commerce.admin.payment.resource.v1_0.PaymentResource;
+import com.liferay.headless.commerce.core.util.ActionUtil;
+import com.liferay.headless.commerce.core.util.CommerceCurrencyUtil;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -36,17 +42,12 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
 import java.math.BigDecimal;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -282,7 +283,7 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 	private Map<String, String> _addAction(
 			Class<?> clazz, CommercePaymentEntry commercePaymentEntry,
 			String methodName, UriInfo uriInfo)
-		throws NoSuchMethodException, PortalException {
+		throws Exception {
 
 		if (!_portletResourcePermission.contains(
 				PermissionThreadLocal.getPermissionChecker(),
@@ -302,13 +303,15 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 				UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
 
 				return uriBuilder.path(
-					_getVersion(uriInfo)
+					ActionUtil.getVersion(uriInfo)
 				).path(
 					clazz.getSuperclass(), methodName
 				).toTemplate();
 			}
 		).put(
-			"method", _getHttpMethodName(clazz, _getMethod(clazz, methodName))
+			"method",
+			ActionUtil.getHttpMethodName(
+				clazz, ActionUtil.getMethod(clazz, methodName))
 		).build();
 	}
 
@@ -316,7 +319,7 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 			String actionId, Class<?> clazz,
 			CommercePaymentEntry commercePaymentEntry, String methodName,
 			UriInfo uriInfo)
-		throws NoSuchMethodException, PortalException {
+		throws Exception {
 
 		if (!_commercePaymentEntryModelResourcePermission.contains(
 				PermissionThreadLocal.getPermissionChecker(),
@@ -333,19 +336,27 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 				UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
 
 				return uriBuilder.path(
-					_getVersion(uriInfo)
+					ActionUtil.getVersion(uriInfo)
 				).path(
 					clazz.getSuperclass(), methodName
 				).toTemplate();
 			}
 		).put(
-			"method", _getHttpMethodName(clazz, _getMethod(clazz, methodName))
+			"method",
+			ActionUtil.getHttpMethodName(
+				clazz, ActionUtil.getMethod(clazz, methodName))
 		).build();
 	}
 
 	private CommercePaymentEntry _addOrUpdatePayment(
 			String externalReferenceCode, Payment payment)
 		throws Exception {
+
+		CommerceCurrency commerceCurrency =
+			CommerceCurrencyUtil.getCommerceCurrency(
+				contextCompany.getCompanyId(), payment.getCurrencyCode(),
+				payment.getCurrencyExternalReferenceCode(),
+				GetterUtil.getLong(payment.getCurrencyId()));
 
 		return _commercePaymentEntryService.addOrUpdateCommercePaymentEntry(
 			externalReferenceCode,
@@ -355,7 +366,7 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 			GetterUtil.getLong(payment.getRelatedItemId()),
 			GetterUtil.getLong(payment.getChannelId()), payment.getAmount(),
 			payment.getCallbackURL(), payment.getCancelURL(),
-			payment.getCurrencyCode(), payment.getErrorMessages(),
+			commerceCurrency.getCode(), payment.getErrorMessages(),
 			payment.getLanguageId(), payment.getComment(), payment.getPayload(),
 			payment.getPaymentIntegrationKey(),
 			GetterUtil.getInteger(payment.getPaymentStatus()),
@@ -371,7 +382,7 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 
 	private Map<String, Map<String, String>> _getActions(
 			CommercePaymentEntry commercePaymentEntry)
-		throws NoSuchMethodException, PortalException {
+		throws Exception {
 
 		if (contextUriInfo == null) {
 			return Collections.emptyMap();
@@ -399,51 +410,6 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 		).build();
 	}
 
-	private String _getHttpMethodName(Class<?> clazz, Method method)
-		throws NoSuchMethodException {
-
-		Class<?> superClass = clazz.getSuperclass();
-
-		Method superMethod = superClass.getMethod(
-			method.getName(), method.getParameterTypes());
-
-		for (Annotation annotation : superMethod.getAnnotations()) {
-			Class<? extends Annotation> annotationType =
-				annotation.annotationType();
-
-			Annotation[] annotations = annotationType.getAnnotationsByType(
-				HttpMethod.class);
-
-			if (annotations.length > 0) {
-				HttpMethod httpMethod = (HttpMethod)annotations[0];
-
-				return httpMethod.value();
-			}
-		}
-
-		return null;
-	}
-
-	private Method _getMethod(Class<?> clazz, String methodName) {
-		for (Method method : clazz.getMethods()) {
-			if (methodName.equals(method.getName())) {
-				return method;
-			}
-		}
-
-		return null;
-	}
-
-	private String _getVersion(UriInfo uriInfo) {
-		List<String> matchedURIs = uriInfo.getMatchedURIs();
-
-		if (matchedURIs.isEmpty()) {
-			return "";
-		}
-
-		return matchedURIs.get(matchedURIs.size() - 1);
-	}
-
 	private Payment _toPayment(
 			long commercePaymentEntryId, Locale locale,
 			boolean acceptAllLanguages, User contextUser,
@@ -460,6 +426,23 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 			CommercePaymentEntry commercePaymentEntry, Payment payment)
 		throws Exception {
 
+		CommerceCurrency commerceCurrency =
+			_commerceCurrencyLocalService.getCommerceCurrency(
+				contextCompany.getCompanyId(),
+				commercePaymentEntry.getCurrencyCode());
+
+		try {
+			commerceCurrency = CommerceCurrencyUtil.getCommerceCurrency(
+				contextCompany.getCompanyId(), payment.getCurrencyCode(),
+				payment.getCurrencyExternalReferenceCode(),
+				GetterUtil.getLong(payment.getCurrencyId()));
+		}
+		catch (NoSuchCurrencyException noSuchCurrencyException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchCurrencyException);
+			}
+		}
+
 		return _commercePaymentEntryService.updateCommercePaymentEntry(
 			GetterUtil.getString(
 				payment.getExternalReferenceCode(),
@@ -475,9 +458,7 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 				commercePaymentEntry.getCallbackURL()),
 			GetterUtil.getString(
 				payment.getCancelURL(), commercePaymentEntry.getCancelURL()),
-			GetterUtil.getString(
-				payment.getCurrencyCode(),
-				commercePaymentEntry.getCurrencyCode()),
+			commerceCurrency.getCode(),
 			GetterUtil.getString(
 				payment.getErrorMessages(),
 				commercePaymentEntry.getErrorMessages()),
@@ -508,10 +489,16 @@ public class PaymentResourceImpl extends BasePaymentResourceImpl {
 				payment.getType(), commercePaymentEntry.getType()));
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		PaymentResourceImpl.class);
+
 	private static final EntityModel _entityModel = new PaymentEntityModel();
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private CommerceCurrencyLocalService _commerceCurrencyLocalService;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.commerce.payment.model.CommercePaymentEntry)"

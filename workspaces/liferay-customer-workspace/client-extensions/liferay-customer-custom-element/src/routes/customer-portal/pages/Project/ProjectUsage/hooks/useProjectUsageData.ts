@@ -11,6 +11,7 @@ import {useCustomerPortal} from '~/routes/customer-portal/context';
 
 interface IAddOn {
 	infoText?: string;
+	name: string;
 	title: string;
 }
 
@@ -40,6 +41,11 @@ export enum SiteAndUserDataEnum {
 	STORAGE_CAPACITY_DOCUMENT_LIBRARY = 'storageCapacityDocumentLibrary',
 }
 
+enum ADD_ON_NAMES {
+	DEDICATED_RESOURCES = 'Dedicated Resources',
+	PRIVATE_CLUSTER = 'Private Cluster',
+}
+
 const DEFAULT_USAGE_DATA_VALUES = {
 	resourceUsage: [
 		{
@@ -67,11 +73,17 @@ const DEFAULT_USAGE_DATA_VALUES = {
 
 const ADD_ONS_CARDS = [
 	{
-		infoText: i18n.translate('dedicated-resources'),
+		infoText: i18n.translate(
+			'dedicated-resources-provide-customers-with-a-private-liferay-installation'
+		),
+		name: ADD_ON_NAMES.DEDICATED_RESOURCES,
 		title: i18n.translate('dedicated-resources'),
 	},
 	{
-		infoText: i18n.translate('private-cluster'),
+		infoText: i18n.translate(
+			'a-private-cluster-separates-all-infrastructure-resources-and-allows-for-site-to-site-vpn-configuration'
+		),
+		name: ADD_ON_NAMES.PRIVATE_CLUSTER,
 		title: i18n.translate('private-cluster'),
 	},
 ];
@@ -92,7 +104,7 @@ const useProjectUsageData = () => {
 
 	const [{project}] = useCustomerPortal();
 
-	const {data} = useGetAccountSubscriptions({
+	const {data: subscriptionsData} = useGetAccountSubscriptions({
 		filter: `name in (${formatedSubscriptions()}) and accountSubscriptionGroupERC eq '${
 			project?.accountKey
 		}_liferay-saas'`,
@@ -100,32 +112,31 @@ const useProjectUsageData = () => {
 
 	const displayUsage = useMemo(
 		() =>
-			!!data?.c?.accountSubscriptions?.items.filter(
+			!!subscriptionsData?.c?.accountSubscriptions?.items.filter(
 				({name}: {name: string}) =>
 					ACCEPTED_SUBSCRIPTIONS.includes(name)
-			).length,
-		[data]
+			).length || false,
+		[subscriptionsData]
 	);
 
 	const addOns = useMemo<IAddOn[]>(() => {
-		const filteredAddOns = data?.c?.accountSubscriptions?.items?.filter(
-			({name}: {name: string}) => ADD_ONS.includes(name)
-		);
+		const filteredAddOns =
+			subscriptionsData?.c?.accountSubscriptions?.items?.filter(
+				({name}: {name: string}) => ADD_ONS.includes(name)
+			);
 
 		return ADD_ONS_CARDS.filter(
 			(card) =>
 				!filteredAddOns?.some(
-					({name}: {name: string}) => card.title === name
+					({name}: {name: string}) => card.name === name
 				)
 		);
-	}, [data]);
+	}, [subscriptionsData]);
 
 	const getSiteAndUsers = useCallback(async () => {
 		if (project?.externalReferenceCode) {
 			if (!displayUsage) {
-				setIsLoading(false);
-
-				return;
+				return setIsLoading(false);
 			}
 
 			const response =
@@ -136,64 +147,77 @@ const useProjectUsageData = () => {
 					.then((response) => response.json())
 					.catch(console.error);
 
-			if (!response) {
-				setIsLoading(false);
+			if (response) {
+				const formatedData = {
+					resourceUsage: [
+						{
+							...response[
+								SiteAndUserDataEnum
+									.CLIENT_EXTENSIONS_CAPACITY_RAM
+							],
+							dataSizeUnits: 'GB',
+							infoText: i18n.translate(
+								'amount-of-ram-allocated-across-all-extension-environments'
+							),
+							maxCountText: i18n.translate('total-ram'),
+							title: i18n.translate('extension-capacity-ram'),
+						},
+						{
+							...response[
+								SiteAndUserDataEnum
+									.CLIENT_EXTENSIONS_CAPACITY_CPU
+							],
+							infoText: i18n.translate(
+								'amount-of-virtual-cpus-allocated-across-all-extension-environments'
+							),
+							maxCountText: i18n.translate('total-vcpu'),
+							title: i18n.translate('extension-capacity-vcpu'),
+						},
+						{
+							...response[
+								SiteAndUserDataEnum
+									.STORAGE_CAPACITY_DOCUMENT_LIBRARY
+							],
+							dataSizeUnits: 'GB',
+							infoText: i18n.translate(
+								'amount-of-storage-space-available-for-your-projects'
+							),
+							maxCountText: i18n.translate('total-storage'),
+							title: i18n.translate('storage-capacity'),
+						},
+					],
+					siteAndUsers: [
+						{
+							...response[SiteAndUserDataEnum.SITES],
+							infoText: i18n.translate(
+								'total-number-of-unique-liferay-dxp-sites-each-comprising-a-set-of-pages-and-their-related-content'
+							),
+							title: i18n.translate('number-of-sites'),
+						},
+						{
+							...response[
+								SiteAndUserDataEnum
+									.MONTHLY_ACTIVE_LOGGED_IN_USERS
+							],
+							infoText: i18n.translate(
+								'total-unique-authenticated-users-who-visited-sites-on-this-account-at-least-once-per-month'
+							),
+							title: i18n.translate('authenticated-logins-malus'),
+						},
+						{
+							...response[
+								SiteAndUserDataEnum.ANONYMOUS_PAGE_VIEWS
+							],
+							infoText: i18n.translate(
+								'total-count-of-anonymous-page-views-on-all-customer-sites'
+							),
+							title: i18n.translate('anonymous-page-views-apv'),
+						},
+					],
+				};
 
-				return;
+				setUsageData(formatedData);
 			}
-
-			const formatedData = {
-				resourceUsage: [
-					{
-						...response[
-							SiteAndUserDataEnum.CLIENT_EXTENSIONS_CAPACITY_RAM
-						],
-						dataSizeUnits: 'GB',
-						infoText: i18n.translate('extension-capacity-ram'),
-						maxCountText: 'RAM',
-						title: i18n.translate('extension-capacity-ram'),
-					},
-					{
-						...response[
-							SiteAndUserDataEnum.CLIENT_EXTENSIONS_CAPACITY_CPU
-						],
-						infoText: i18n.translate('extension-capacity-vcpu'),
-						maxCountText: 'vCPU',
-						title: i18n.translate('extension-capacity-vcpu'),
-					},
-					{
-						...response[
-							SiteAndUserDataEnum
-								.STORAGE_CAPACITY_DOCUMENT_LIBRARY
-						],
-						dataSizeUnits: 'GB',
-						infoText: i18n.translate('storage-capacity'),
-						maxCountText: 'Storage',
-						title: i18n.translate('storage-capacity'),
-					},
-				],
-				siteAndUsers: [
-					{
-						...response[SiteAndUserDataEnum.SITES],
-						infoText: i18n.translate('number-of-sites'),
-						title: i18n.translate('number-of-sites'),
-					},
-					{
-						...response[
-							SiteAndUserDataEnum.MONTHLY_ACTIVE_LOGGED_IN_USERS
-						],
-						infoText: i18n.translate('authenticated-logins-malus'),
-						title: i18n.translate('authenticated-logins-malus'),
-					},
-					{
-						...response[SiteAndUserDataEnum.ANONYMOUS_PAGE_VIEWS],
-						infoText: i18n.translate('anonymous-page-views-apv'),
-						title: i18n.translate('anonymous-page-views-apv'),
-					},
-				],
-			};
-
-			setUsageData(formatedData);
 
 			setIsLoading(false);
 		}

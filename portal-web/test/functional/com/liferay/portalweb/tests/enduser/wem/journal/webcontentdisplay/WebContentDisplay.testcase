@@ -185,7 +185,7 @@ definition {
 
 			CKEditor.addSourceContent(content = '''<p><span><a href="${portalURL}/web/test-site-name/test-page-name/-/com_liferay_site_navigation_language_web_portlet_SiteNavigationLanguagePortlet">text</a></span></p>''');
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content title is shown") {
@@ -430,7 +430,7 @@ Welcome to Liferay Community Edition Portal 7.4.0 CE GA1''';
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Add a widget page") {
@@ -522,7 +522,7 @@ Welcome to Liferay Community Edition Portal 7.4.0 CE GA1''';
 				dmDocumentURL = ${dmDocumentURL},
 				navTab = "URL");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Select the web content article in Web Content Display") {
@@ -566,7 +566,7 @@ Welcome to Liferay Community Edition Portal 7.4.0 CE GA1''';
 				navTab = "Documents and Media",
 				uploadFileName = "Document_3.png");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Select the web content article in Web Content Display") {
@@ -617,7 +617,7 @@ Welcome to Liferay Community Edition Portal 7.4.0 CE GA1''';
 				navTab = "Documents and Media",
 				videoShortcutTitle = "Liferay Digital Experience Platform");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Select the web content article in Web Content Display") {
@@ -661,7 +661,7 @@ Welcome to Liferay Community Edition Portal 7.4.0 CE GA1''';
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Select the web content in Web Content Display") {
@@ -1141,7 +1141,7 @@ ${company.getKeyObj()}
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Select the web content in Web Content Display") {
@@ -1208,7 +1208,7 @@ ${runtimeInstance}
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Select the web content in Web Content Display") {
@@ -1323,7 +1323,7 @@ ${runtimeInstance}
 				webContentContent = "Web Contenido Contenido 1",
 				webContentTitle = "Web Contenido Título 1");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("View web content title is shown") {
@@ -1336,6 +1336,7 @@ ${runtimeInstance}
 			WebContent.addExistingRelatedAssetCP(
 				assetTitle = "Web Content Title 2",
 				assetType = "Basic Web Content",
+				edit = "true",
 				siteName = "Test Site Name");
 		}
 
@@ -1673,7 +1674,7 @@ ${httpUtil.URLtoString(request.getAttribute("CTX").getResource(".").toURI().crea
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Select the web content in Web Content Display") {
@@ -1732,6 +1733,7 @@ ${httpUtil.URLtoString(request.getAttribute("CTX").getResource(".").toURI().crea
 			WebContent.addExistingRelatedAssetCP(
 				assetTitle = "Web Content Title 5",
 				assetType = "Basic Web Content",
+				edit = "true",
 				siteName = "Test Site Name");
 		}
 

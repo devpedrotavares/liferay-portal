@@ -14,7 +14,6 @@ import {
 	customerPerformLogout,
 	customerPerformUserSwitch,
 } from '../../../utils/customerLogin';
-import {mockOktaApiSession} from '../../../utils/oktaUtil';
 import {mockProvisioningApiAssignUser} from '../../../utils/provisioningUtil';
 
 export const test = mergeTests(
@@ -52,7 +51,6 @@ test.afterEach(async ({apiHelpers, page}) => {
 test.beforeEach(async ({apiHelpers, page}) => {
 	await customerPerformLogin(page, 'test@liferay.com');
 
-	await mockOktaApiSession(page);
 	await mockProvisioningApiAssignUser(page);
 
 	const account =
@@ -119,9 +117,11 @@ test.describe('Project User Permission', () => {
 
 		await projectTeamMembersPage.roleSelect.click({force: true});
 
-		await projectTeamMembersPage.userRoleOption.click({force: true});
+		await projectTeamMembersPage.roleOption.click({force: true});
 
-		await projectTeamMembersPage.applyButton.click({force: true});
+		await expect(projectTeamMembersPage.roleButton).toBeEnabled();
+
+		await projectTeamMembersPage.roleButton.click({force: true});
 
 		await projectTeamMembersPage.sendInvitationsButton.click({force: true});
 
@@ -162,7 +162,7 @@ test.describe('Project User Permission', () => {
 
 		await expect(
 			page.getByRole('button', {name: 'Product Activation'})
-		).toBeDisabled();
+		).not.toBeVisible();
 
 		await projectAttachmentsPage.goto(accountExternalReferenceCode);
 

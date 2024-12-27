@@ -86,7 +86,7 @@ function KeyboardMovementProvider({
 	const [target, setTarget] = useState<MovementTarget>(null);
 	const screenReaderAnnouncerRef = useRef<any>();
 
-	const setText = useCallback((text) => {
+	const setText = useCallback((text: any) => {
 		const ref = screenReaderAnnouncerRef;
 
 		if (ref.current) {
@@ -127,6 +127,7 @@ function KeyboardMovementProvider({
 
 				if (targetItem && onMove) {
 					onMove(sources, targetItem, target.position);
+
 					setMovementText({
 						isFinalPosition: true,
 						items,
@@ -135,8 +136,6 @@ function KeyboardMovementProvider({
 						target,
 					});
 				}
-
-				disableMovement();
 			}
 			else if (key === 'Escape') {
 				disableMovement();
@@ -293,7 +292,7 @@ function getNextTarget({
 			candidate = {
 				columnIndex: columnIndex - 1,
 				itemIndex: 0,
-				position: 'top',
+				position: 'bottom',
 			};
 		}
 	}
@@ -305,7 +304,7 @@ function getNextTarget({
 			candidate = {
 				columnIndex: columnIndex + 1,
 				itemIndex: 0,
-				position: 'top',
+				position: 'bottom',
 			};
 		}
 	}
@@ -329,6 +328,7 @@ function getNextTarget({
 		isValidMovement({
 			allowSelfTarget: key === 'ArrowLeft' || key === 'ArrowRight',
 			dropPosition: candidate.position,
+			items,
 			sources,
 			target: candidateItem,
 		})
@@ -380,30 +380,36 @@ function setMovementText({
 			)
 		);
 	}
-
-	message.push(
-		isFinalPosition
-			? sub(Liferay.Language.get('page-x-placed'), sources[0].title)
-			: sub(Liferay.Language.get('move-page-x'), sources[0].title)
-	);
-
-	const targetTitle = targetItem?.title || '';
-
-	if (target?.position === 'top') {
+	else {
 		message.push(
-			sub(Liferay.Language.get('at-the-top-of-the-page-x'), targetTitle)
+			isFinalPosition
+				? sub(Liferay.Language.get('page-x-placed'), sources[0].title)
+				: sub(Liferay.Language.get('move-page-x'), sources[0].title)
 		);
-	}
-	else if (target?.position === 'middle') {
-		message.push(sub(Liferay.Language.get('inside-page-x'), targetTitle));
-	}
-	else if (target?.position === 'bottom') {
-		message.push(
-			sub(
-				Liferay.Language.get('at-the-bottom-of-the-page-x'),
-				targetTitle
-			)
-		);
+
+		const targetTitle = targetItem?.title || '';
+
+		if (target?.position === 'top') {
+			message.push(
+				sub(
+					Liferay.Language.get('at-the-top-of-the-page-x'),
+					targetTitle
+				)
+			);
+		}
+		else if (target?.position === 'middle') {
+			message.push(
+				sub(Liferay.Language.get('inside-page-x'), targetTitle)
+			);
+		}
+		else if (target?.position === 'bottom') {
+			message.push(
+				sub(
+					Liferay.Language.get('at-the-bottom-of-the-page-x'),
+					targetTitle
+				)
+			);
+		}
 	}
 
 	setText(message.join(' '));

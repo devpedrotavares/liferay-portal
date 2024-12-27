@@ -13,8 +13,10 @@ import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
+import com.liferay.object.field.setting.builder.ObjectFieldSettingBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -77,11 +79,36 @@ public class OpenAPIResourceTest {
 	public void setUp() throws Exception {
 		_objectDefinition = ObjectDefinitionTestUtil.publishObjectDefinition(
 			"Object1",
-			Collections.singletonList(
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT,
+					ObjectFieldConstants.DB_TYPE_LONG, true, true, null,
+					"field1", "field1",
+					Arrays.asList(
+						new ObjectFieldSettingBuilder(
+						).name(
+							ObjectFieldSettingConstants.
+								NAME_ACCEPTED_FILE_EXTENSIONS
+						).value(
+							"txt"
+						).build(),
+						new ObjectFieldSettingBuilder(
+						).name(
+							ObjectFieldSettingConstants.NAME_FILE_SOURCE
+						).value(
+							ObjectFieldSettingConstants.VALUE_DOCS_AND_MEDIA
+						).build(),
+						new ObjectFieldSettingBuilder(
+						).name(
+							ObjectFieldSettingConstants.NAME_MAX_FILE_SIZE
+						).value(
+							String.valueOf(1)
+						).build()),
+					false),
 				ObjectFieldUtil.createObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 					ObjectFieldConstants.DB_TYPE_STRING, true, true, null,
-					"field1", "field1", false)),
+					"field2", "field2", false)),
 			ObjectDefinitionConstants.SCOPE_COMPANY);
 	}
 
@@ -204,48 +231,57 @@ public class OpenAPIResourceTest {
 			"headless-portal-instances/v1.0/portal-instances",
 			Http.Method.POST);
 
-		HTTPTestUtil.customize(
-		).withBaseURL(
-			"http://www.able.com:8080"
-		).withCredentials(
-			"test@able.com", PropsValues.DEFAULT_ADMIN_PASSWORD
-		).apply(
-			() -> {
-				User user = UserTestUtil.addUser(
-					_companyLocalService.getCompany(
-						jsonObject.getLong("companyId")));
+		long companyId = jsonObject.getLong("companyId");
 
-				ObjectDefinition companyObjectDefinition =
-					ObjectDefinitionTestUtil.publishObjectDefinition(
-						"Object1",
-						Collections.singletonList(
-							ObjectFieldUtil.createObjectField(
-								ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-								ObjectFieldConstants.DB_TYPE_STRING, true, true,
-								null, "field", "field", false)),
-						ObjectDefinitionConstants.SCOPE_COMPANY,
-						user.getUserId());
+		try {
+			HTTPTestUtil.customize(
+			).withBaseURL(
+				"http://www.able.com:8080"
+			).withCredentials(
+				"test@able.com", PropsValues.DEFAULT_ADMIN_PASSWORD
+			).apply(
+				() -> {
+					User user = UserTestUtil.addUser(
+						_companyLocalService.getCompany(companyId));
 
-				Assert.assertEquals(
-					200,
-					HTTPTestUtil.invokeToHttpCode(
-						null, companyObjectDefinition.getRESTContextPath(),
-						Http.Method.GET));
+					ObjectDefinition companyObjectDefinition =
+						ObjectDefinitionTestUtil.publishObjectDefinition(
+							"Object1",
+							Collections.singletonList(
+								ObjectFieldUtil.createObjectField(
+									ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+									ObjectFieldConstants.DB_TYPE_STRING, true,
+									true, null, "field", "field", false)),
+							ObjectDefinitionConstants.SCOPE_COMPANY,
+							user.getUserId());
 
-				JSONObject openAPIJSONObject = HTTPTestUtil.invokeToJSONObject(
-					null, "/openapi", Http.Method.GET);
+					Assert.assertEquals(
+						200,
+						HTTPTestUtil.invokeToHttpCode(
+							null, companyObjectDefinition.getRESTContextPath(),
+							Http.Method.GET));
 
-				JSONArray jsonArray = openAPIJSONObject.getJSONArray(
-					companyObjectDefinition.getRESTContextPath());
+					JSONObject openAPIJSONObject =
+						HTTPTestUtil.invokeToJSONObject(
+							null, "/openapi", Http.Method.GET);
 
-				Assert.assertEquals(1, jsonArray.length());
-				Assert.assertEquals(
-					"http://www.able.com:8080/o" +
-						companyObjectDefinition.getRESTContextPath() +
-							"/openapi.yaml",
-					jsonArray.get(0));
+					JSONArray jsonArray = openAPIJSONObject.getJSONArray(
+						companyObjectDefinition.getRESTContextPath());
+
+					Assert.assertEquals(1, jsonArray.length());
+					Assert.assertEquals(
+						"http://www.able.com:8080/o" +
+							companyObjectDefinition.getRESTContextPath() +
+								"/openapi.yaml",
+						jsonArray.get(0));
+				}
+			);
+		}
+		finally {
+			if (companyId != 0) {
+				_companyLocalService.deleteCompany(companyId);
 			}
-		);
+		}
 	}
 
 	@FeatureFlags("LPS-180090")
@@ -282,6 +318,7 @@ public class OpenAPIResourceTest {
 
 		_userSystemObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				userSystemObjectDefinitionManager.getName());
 
 		JaxRsApplicationDescriptor jaxRsApplicationDescriptor =

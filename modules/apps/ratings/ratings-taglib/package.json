@@ -1,15 +1,15 @@
 {
 	"dependencies": {
 		"@clayui/button": "3.116.0",
-		"@clayui/drop-down": "3.123.1",
+		"@clayui/drop-down": "3.124.0",
 		"@clayui/icon": "3.111.0",
 		"@clayui/layout": "3.111.0",
 		"@liferay/frontend-js-react-web": "*",
 		"classnames": "2.3.1",
 		"frontend-js-web": "*",
 		"prop-types": "15.7.2",
-		"react": "16.12.0",
-		"react-dom": "16.12.0"
+		"react": "18.2.0",
+		"react-dom": "18.2.0"
 	},
 	"jest": {
 		"testPathIgnorePatterns": [

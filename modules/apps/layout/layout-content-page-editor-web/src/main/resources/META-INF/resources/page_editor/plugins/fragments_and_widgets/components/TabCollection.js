@@ -5,7 +5,7 @@
 
 import ClayIcon from '@clayui/icon';
 import classNames from 'classnames';
-import {useSessionState} from 'frontend-js-components-web';
+import {FeatureIndicator, useSessionState} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
 import React, {useRef, useState} from 'react';
 
@@ -51,6 +51,7 @@ export default function TabCollection({
 	return (
 		<TabCollectionCollapse
 			collapseRef={collapseRef}
+			deprecated={collection.deprecated}
 			isSearchResult={isSearchResult}
 			open={open}
 			setOpen={setOpen}
@@ -131,6 +132,7 @@ TabPortletItems.proptypes = {
 function TabCollectionCollapse({
 	children,
 	collapseRef,
+	deprecated,
 	isSearchResult,
 	open,
 	setOpen,
@@ -167,8 +169,10 @@ function TabCollectionCollapse({
 				tabIndex={isTarget ? 0 : -1}
 				type="button"
 			>
-				<span className="panel-title text-truncate">
-					{title}
+				<span className="panel-title">
+					<span className="c-mr-2">{title}</span>
+
+					{deprecated ? <FeatureIndicator type="deprecated" /> : null}
 
 					<span
 						className={`text-secondary collapse-icon-${

@@ -216,6 +216,14 @@ public class DBPartitionUtil {
 		}
 	}
 
+	public static String getPartitionKey(Object key) {
+		if (!DBPartition.isPartitionEnabled()) {
+			return key.toString();
+		}
+
+		return key + StringPool.AT + CompanyThreadLocal.getNonsystemCompanyId();
+	}
+
 	public static String getPartitionName(long companyId) {
 		if ((companyId == CompanyConstants.SYSTEM) ||
 			(companyId == _defaultCompanyId)) {
@@ -523,11 +531,48 @@ public class DBPartitionUtil {
 								"companyId = ", fromCompanyId));
 					}
 
+					if (fromTableName.startsWith("Object") &&
+						dbInspector.hasColumn(fromTableName, "dbTableName")) {
+
+						statement.executeUpdate(
+							StringBundler.concat(
+								"update ", partitionTableName, " set ",
+								"dbTableName = REPLACE(dbTableName, ",
+								fromCompanyId, ", ", toCompanyId,
+								") where dbTableName like '%", fromCompanyId,
+								"%'"));
+					}
+
 					if (StringUtil.equalsIgnoreCase(fromTableName, "Group_")) {
 						statement.executeUpdate(
 							StringBundler.concat(
 								"update ", partitionTableName, " set classPK ",
 								"= ", toCompanyId, " where classPK = ",
+								fromCompanyId));
+						statement.executeUpdate(
+							StringBundler.concat(
+								"update ", partitionTableName, " set groupKey ",
+								"= '", toCompanyId, "' where groupKey = '",
+								fromCompanyId, "'"));
+					}
+
+					if (StringUtil.equalsIgnoreCase(
+							fromTableName, "PortalPreferences")) {
+
+						statement.executeUpdate(
+							StringBundler.concat(
+								"update ", partitionTableName, " set ownerId ",
+								"= ", toCompanyId, " where ownerId = ",
+								fromCompanyId));
+					}
+
+					if (StringUtil.equalsIgnoreCase(
+							fromTableName, "PortletPreferences")) {
+
+						statement.executeUpdate(
+							StringBundler.concat(
+								"update ", partitionTableName, " set ownerId ",
+								"= ", toCompanyId, " where ownerId = ",
 								fromCompanyId));
 					}
 

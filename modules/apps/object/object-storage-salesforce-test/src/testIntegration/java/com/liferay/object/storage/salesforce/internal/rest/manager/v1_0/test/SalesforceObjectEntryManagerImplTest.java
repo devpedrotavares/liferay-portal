@@ -53,6 +53,7 @@ import java.text.DateFormat;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -327,6 +328,8 @@ public class SalesforceObjectEntryManagerImplTest
 			"queued", date, false, null, title1);
 
 		LocalDateTime localDateTime1 = LocalDateTime.now();
+
+		localDateTime1 = localDateTime1.truncatedTo(ChronoUnit.MILLIS);
 
 		ObjectEntry objectEntry2 = _addObjectEntry(
 			"started", new Date(date.getTime() - Time.DAY), true,

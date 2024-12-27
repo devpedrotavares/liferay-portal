@@ -33,13 +33,13 @@ public class FileEntryDisplayContextHelper {
 	}
 
 	public DLFileEntryType getDLFileEntryType() throws PortalException {
-		if (isDLFileEntry()) {
-			DLFileEntry dlFileEntry = (DLFileEntry)_fileEntry.getModel();
-
-			return dlFileEntry.getDLFileEntryType();
+		if (!isDLFileEntry()) {
+			return null;
 		}
 
-		return null;
+		DLFileEntry dlFileEntry = (DLFileEntry)_fileEntry.getModel();
+
+		return dlFileEntry.getDLFileEntryType();
 	}
 
 	public FileEntry getFileEntry() {
@@ -215,11 +215,7 @@ public class FileEntryDisplayContextHelper {
 	}
 
 	public boolean isLockedByMe() {
-		if (hasLock()) {
-			return true;
-		}
-
-		return false;
+		return hasLock();
 	}
 
 	public boolean isMoveActionAvailable() throws PortalException {

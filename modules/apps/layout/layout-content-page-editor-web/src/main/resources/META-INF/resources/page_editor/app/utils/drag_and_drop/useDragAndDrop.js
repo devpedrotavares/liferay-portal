@@ -415,6 +415,7 @@ function computeDrop({
 			onInvalid: () => dispatch(initialDragDrop.state),
 			sources,
 			targetId,
+			type: 'drop',
 		})
 	) {
 		return;
@@ -434,7 +435,12 @@ function computeDrop({
 			});
 		}
 		else {
-			onDragEnd(targetId, position);
+			onDragEnd(
+				targetId,
+				position,
+				dropTarget.collectionItemIndex !== null &&
+					dropTarget.toControlsId
+			);
 		}
 	}
 

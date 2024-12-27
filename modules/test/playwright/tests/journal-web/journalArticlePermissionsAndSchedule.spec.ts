@@ -5,7 +5,6 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {workflowPagesTest} from '../../fixtures/workflowPagesTest';
@@ -15,9 +14,6 @@ import {waitForAlert} from '../../utils/waitForAlert';
 import {journalPagesTest} from './fixtures/journalPagesTest';
 
 const scheduleTest = mergeTests(
-	featureFlagsTest({
-		'LPD-15596': true,
-	}),
 	isolatedSiteTest,
 	journalPagesTest,
 	loginTest(),

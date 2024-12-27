@@ -18,7 +18,13 @@ import {clickAndExpectToBeHidden} from '../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getGlobalSiteId from '../../utils/getGlobalSiteId';
 import getRandomString from '../../utils/getRandomString';
+import {
+	disableSystemFeatureFlag,
+	enableSystemFeatureFlag,
+} from '../../utils/systemFeatureFlag';
+import {getTempDir} from '../../utils/temp';
 import {waitForAlert} from '../../utils/waitForAlert';
+import {zipFolder} from '../../utils/zip';
 import getFormContainerDefinition from '../layout-content-page-editor-web/utils/getFormContainerDefinition';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
@@ -538,14 +544,6 @@ test(
 
 		await expect(
 			page.getByRole('link').filter({hasText: 'Button'})
-		).toBeVisible();
-
-		// Go to Basic Components fragment set
-
-		await fragmentsPage.gotoFragmentSet('Featured Content');
-
-		await expect(
-			page.getByRole('link').filter({hasText: 'Banner Slider'})
 		).toBeVisible();
 	}
 );
@@ -1175,6 +1173,364 @@ test(
 );
 
 test(
+	'Export Import multiple fragment collections',
+	{
+		tag: ['@LPS-98501', '@LPS-120957', '@LPS-175242'],
+	},
+	async ({apiHelpers, fragmentsPage, page, site}) => {
+
+		// Create two global fragment set
+
+		const globalSiteId = await getGlobalSiteId(apiHelpers);
+
+		const globalFragmentCollectionName1 = getRandomString();
+
+		const globalFragmentCollection1 =
+			await apiHelpers.jsonWebServicesFragmentCollection.addFragmentCollection(
+				{
+					groupId: globalSiteId,
+					name: globalFragmentCollectionName1,
+				}
+			);
+
+		const globalFragmentCollectionName2 = getRandomString();
+
+		const globalFragmentCollection2 =
+			await apiHelpers.jsonWebServicesFragmentCollection.addFragmentCollection(
+				{
+					groupId: globalSiteId,
+					name: globalFragmentCollectionName2,
+				}
+			);
+
+		// Create global fragment for each fragment set
+
+		const fragmentEntryName1 = getRandomString();
+
+		await apiHelpers.jsonWebServicesFragmentEntry.addFragmentEntry({
+			fragmentCollectionId:
+				globalFragmentCollection1.fragmentCollectionId,
+			groupId: globalSiteId,
+			html: '<div class="fragment-name">Fragment Entry 1</div>',
+			name: fragmentEntryName1,
+		});
+
+		const fragmentEntryName2 = getRandomString();
+
+		await apiHelpers.jsonWebServicesFragmentEntry.addFragmentEntry({
+			fragmentCollectionId:
+				globalFragmentCollection2.fragmentCollectionId,
+			groupId: globalSiteId,
+			html: '<div class="fragment-name">Fragment Entry 2</div>',
+			name: fragmentEntryName2,
+		});
+
+		// Go to global site and export fragment sets
+
+		await fragmentsPage.goto('/global');
+
+		const downloadPromise = page.waitForEvent('download');
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Export'}),
+			trigger: page.getByTitle('Fragment Sets Options'),
+		});
+
+		const iframe = page.frameLocator('iframe[title="Export Fragment Set"]');
+
+		await iframe
+			.getByLabel('Select All Items on the Page')
+			.check({trial: true});
+
+		await iframe.getByLabel('Select All Items on the Page').check();
+
+		await page.getByRole('button', {exact: true, name: 'Export'}).click();
+
+		await waitForAlert(
+			page,
+			'Success:Your request processed successfully.'
+		);
+
+		const download = await downloadPromise;
+
+		const filePath = getTempDir() + download.suggestedFilename();
+
+		await download.saveAs(filePath);
+
+		// Delete global fragment sets
+
+		await apiHelpers.jsonWebServicesFragmentCollection.deleteFragmentCollection(
+			globalFragmentCollection1.fragmentCollectionId
+		);
+
+		await apiHelpers.jsonWebServicesFragmentCollection.deleteFragmentCollection(
+			globalFragmentCollection2.fragmentCollectionId
+		);
+
+		// Go to site and import fragment sets
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Import'}),
+			trigger: page.getByTitle('Fragment Sets Options'),
+		});
+
+		await fragmentsPage.importFile(download.suggestedFilename(), filePath);
+
+		await expect(
+			page.getByRole('button', {name: '2 items were imported.'})
+		).toBeVisible();
+
+		// Assert imported entries
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await fragmentsPage.gotoFragmentSet(globalFragmentCollectionName1);
+
+		await expect(
+			page.getByRole('link', {name: fragmentEntryName1})
+		).toBeVisible();
+
+		await fragmentsPage.gotoFragmentSet(globalFragmentCollectionName2);
+
+		await expect(
+			page.getByRole('link', {name: fragmentEntryName2})
+		).toBeVisible();
+	}
+);
+
+test(
+	'Export Import global fragment collection',
+	{
+		tag: '@LPS-98501',
+	},
+	async ({apiHelpers, fragmentsPage, page}) => {
+
+		// Create global fragment set
+
+		const globalSiteId = await getGlobalSiteId(apiHelpers);
+
+		const globalFragmentCollectionName = getRandomString();
+
+		const globalFragmentCollection =
+			await apiHelpers.jsonWebServicesFragmentCollection.addFragmentCollection(
+				{
+					groupId: globalSiteId,
+					name: globalFragmentCollectionName,
+				}
+			);
+
+		// Create global fragment
+
+		const fragmentEntryName = getRandomString();
+
+		await apiHelpers.jsonWebServicesFragmentEntry.addFragmentEntry({
+			fragmentCollectionId: globalFragmentCollection.fragmentCollectionId,
+			groupId: globalSiteId,
+			html: '<div class="fragment-name">Fragment Entry 1</div>',
+			name: fragmentEntryName,
+		});
+
+		// Go to global site and export fragment set
+
+		await fragmentsPage.goto('/global');
+
+		await fragmentsPage.gotoFragmentSet(globalFragmentCollectionName);
+
+		const downloadPromise = page.waitForEvent('download');
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Export'}),
+			trigger: page.locator('.sheet-title').getByLabel('Show Actions'),
+		});
+
+		const download = await downloadPromise;
+
+		const filePath = getTempDir() + download.suggestedFilename();
+
+		await download.saveAs(filePath);
+
+		// Delete fragment set
+
+		await fragmentsPage.deleteFragmentSet(globalFragmentCollectionName);
+
+		// Go to site and import fragment sets
+
+		await fragmentsPage.goto('/global');
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Import'}),
+			trigger: page.getByLabel('Show Actions'),
+		});
+
+		await fragmentsPage.importFile(download.suggestedFilename(), filePath);
+
+		await expect(
+			page.getByRole('button', {name: '1 item was imported.'})
+		).toBeVisible();
+
+		// Assert imported entries
+
+		await fragmentsPage.goto('/global');
+
+		await fragmentsPage.gotoFragmentSet(globalFragmentCollectionName);
+
+		await expect(
+			page.getByRole('link', {name: fragmentEntryName})
+		).toBeVisible();
+
+		// Delete global fragment set
+
+		await fragmentsPage.deleteFragmentSet(globalFragmentCollectionName);
+	}
+);
+
+test(
+	'Import fragments',
+	{
+		tag: '@LPS-188478',
+	},
+	async ({fragmentsPage, page, site}) => {
+
+		// Go to fragments administration
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		// Open import view
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Import'}),
+			trigger: page.getByTitle('Fragment Sets Options'),
+		});
+
+		// Import fragments
+
+		await expect(
+			page.getByRole('heading', {name: 'Import File'})
+		).toBeVisible();
+
+		await fragmentsPage.importFile(
+			'react-fragment-example.zip',
+			await zipFolder(
+				path.join(__dirname, '/dependencies/react-fragment-example.zip')
+			)
+		);
+
+		// Assert import message
+
+		await expect(
+			page.getByRole('button', {name: '1 item was imported.'})
+		).toBeVisible();
+
+		// Upload another file
+
+		await page.getByRole('button', {name: 'Upload Another File'}).click();
+
+		await fragmentsPage.importFile(
+			'basic-fragment-example.zip',
+			await zipFolder(
+				path.join(__dirname, '/dependencies/basic-fragment-example.zip')
+			)
+		);
+
+		await expect(
+			page.getByRole('button', {name: '1 item was imported.'})
+		).toBeVisible();
+
+		// Assert imported entries
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await expect(
+			page.getByRole('menuitem', {name: 'Collection Name'})
+		).toBeVisible();
+
+		await expect(
+			page.getByRole('menuitem', {name: 'Sample'})
+		).toBeVisible();
+	}
+);
+
+test(
+	'Import form fragment without field type',
+	{
+		tag: ['@LPS-151157', '@LPS-175242'],
+	},
+	async ({fragmentsPage, page, site}) => {
+
+		// Go to fragments administration
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		// Open import view
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Import'}),
+			trigger: page.getByTitle('Fragment Sets Options'),
+		});
+
+		// Import fragments
+
+		await expect(
+			page.getByRole('heading', {name: 'Import File'})
+		).toBeVisible();
+
+		await fragmentsPage.importFile(
+			'form-fragment-without-field-type.zip',
+			await zipFolder(
+				path.join(
+					__dirname,
+					'/dependencies/form-fragment-without-field-type.zip'
+				)
+			)
+		);
+
+		await expect(
+			page.locator('.panel', {
+				hasText: '1 item was imported with warnings.',
+			})
+		).toBeVisible();
+
+		await expect(
+			page.getByText(
+				'Fragment type input must have at least one field type'
+			)
+		).toBeVisible();
+
+		// Assert imported entries
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await fragmentsPage.gotoFragmentSet('Form Fragments');
+
+		const fragmentCard = page.locator('.card-type-asset', {
+			hasText: 'Fragment Example',
+		});
+
+		await expect(
+			fragmentCard.locator('.label-warning', {hasText: 'Warnings'})
+		).toBeVisible();
+
+		await fragmentsPage.clickAction('Edit', 'Fragment Example');
+
+		// Go to configuration tab
+
+		await page.getByRole('tab', {name: 'Configuration'}).click();
+
+		await expect(
+			page.getByText('No field type is defined for this fragment.')
+		).toBeVisible();
+	}
+);
+
+test(
 	'View site usages and propagate changes of global fragments',
 	{
 		tag: '@LPS-100540',
@@ -1316,5 +1672,48 @@ test(
 			'fragmentCollectionId',
 			globalFragmentCollection.fragmentCollectionId
 		);
+	}
+);
+
+test(
+	'The deprecated label and button exist for the contributed Featured Content Fragment Set',
+	{
+		tag: '@LPD-42061',
+	},
+	async ({fragmentsPage, page, site}) => {
+
+		// Enable feature flag
+
+		await enableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
+
+		// Go to fragment administration and look for the label
+
+		await fragmentsPage.goto(site.friendlyUrlPath);
+
+		await expect(
+			page.getByRole('menuitem', {name: 'Featured Content Deprecated'})
+		).toBeVisible();
+
+		// Go to fragment set and look for the button
+
+		await fragmentsPage.gotoFragmentSet('Featured Content Deprecated');
+
+		await page.getByRole('button', {name: 'Deprecated'}).click();
+
+		await expect(
+			page.getByText('This feature is deprecated.')
+		).toBeVisible();
+
+		// Disable feature flag
+
+		await disableSystemFeatureFlag({
+			page,
+			title: 'Featured Content Fragment Set',
+			type: 'Deprecation',
+		});
 	}
 );

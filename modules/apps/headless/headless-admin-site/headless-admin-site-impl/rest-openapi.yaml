@@ -1444,6 +1444,7 @@ components:
                     enum: [
                         None,
                         Numeric,
+                        Regular,
                         Simple]
                     type: string
                 templateKey:
@@ -1540,7 +1541,7 @@ components:
                         The page section's html properties
                     properties:
                         htmlTag:
-                            enum: [Article, Aside, Div, Footer, Header, Main, Nav, Section]
+                            enum: [Article, Aside, Div, Footer, Header, Nav, Section]
                             type: string
                     type: object
                 indexed:
@@ -1633,6 +1634,8 @@ components:
                         - $ref: "#/components/schemas/PageContainerDefinition"
                         - $ref: "#/components/schemas/PageDropZoneDefinition"
                         - $ref: "#/components/schemas/PageFormDefinition"
+                        - $ref: "#/components/schemas/PageFormStepContainerDefinition"
+                        - $ref: "#/components/schemas/PageFormStepDefinition"
                         - $ref: "#/components/schemas/PageFragmentCompositionInstanceDefinition"
                         - $ref: "#/components/schemas/PageFragmentDropZoneDefinition"
                         - $ref: "#/components/schemas/PageFragmentInstanceDefinition"
@@ -1663,9 +1666,10 @@ components:
                 type:
                     # @review
                     description:
-                        The page element's type (collection, collection item, column, container, drop zone, form,
-                        fragment, fragment composition, fragment drop zone, row, widget or widget section).
-                    enum: [Collection, CollectionItem, Column, Container, DropZone, Form, Fragment, FragmentComposition, FragmentDropZone, Row, Widget]
+                        The page element's type (collection, collection item, column, container, drop zone, form, form
+                        step, form step container, fragment, fragment composition, fragment drop zone, row, widget or
+                        widget section).
+                    enum: [Collection, CollectionItem, Column, Container, DropZone, Form, FormStep, FormStepContainer, Fragment, FragmentComposition, FragmentDropZone, Row, Widget]
                     type: string
         PageExperience:
             description:
@@ -1765,6 +1769,14 @@ components:
                                 - $ref: "#/components/schemas/SitePageFormSubmissionResult"
                                 - $ref: "#/components/schemas/URLFormSubmissionResult"
                             type: object
+                        formType:
+                            enum: [Multistep, Simple]
+                            type: string
+                        numberOfSteps:
+                            # @review
+                            description:
+                                The page form's number of steps.
+                            type: integer
                     type: object
                 fragmentStyle:
                     $ref: "#/components/schemas/FragmentStyle"
@@ -1812,6 +1824,83 @@ components:
                     description:
                         The custom name of of a page form.
                     type: string
+            type: object
+        PageFormStepContainerDefinition:
+            # @review
+            description:
+                The definition of a page form step container.
+            properties:
+                cssClasses:
+                    # @review
+                    description:
+                        A list of CSS classes that are applied to the page element.
+                    items:
+                        type: string
+                    type: array
+                customCSS:
+                    # @review
+                    description:
+                        Custom CSS that is applied on the page element.
+                    type: string
+                customCSSViewports:
+                    # @review
+                    description:
+                        The custom CSS viewports of the page form.
+                    items:
+                        $ref: "#/components/schemas/CustomCSSViewport"
+                    type: array
+                fragmentStyle:
+                    $ref: "#/components/schemas/FragmentStyle"
+                    # @review
+                    description:
+                        The fragment style of a page form.
+                fragmentViewports:
+                    # @review
+                    description:
+                        A list of fragment viewports of a page form.
+                    items:
+                        $ref: "#/components/schemas/FragmentViewport"
+                    type: array
+                layout:
+                    # @review
+                    description:
+                        The page form's layout.
+                    properties:
+                        align:
+                            enum: [Baseline, Center, End, None, Start, Stretch]
+                            type: string
+                        contentDisplay:
+                            enum: [Block, FlexColumn, FlexRow]
+                            type: string
+                        flexWrap:
+                            enum: [NoWrap, Wrap, WrapReverse]
+                            type: string
+                        justify:
+                            enum: [Center, End, None, SpaceAround, SpaceBetween, Start]
+                            type: string
+                        widthType:
+                            # @review
+                            description:
+                                The width's type (fixed or fluid).
+                            enum: [Fixed, Fluid]
+                            type: string
+                    type: object
+                name:
+                    # @review
+                    description:
+                        The custom name of of a page form.
+                    type: string
+            type: object
+        PageFormStepDefinition:
+            # @review
+            description:
+                The definition of a page form step.
+            properties:
+                formStepConfig:
+                    # @review
+                    description:
+                        The page form step's configuration.
+                    type: object
             type: object
         PageFragmentCompositionInstanceDefinition:
             # @review
@@ -2703,12 +2792,6 @@ components:
                     description:
                         The parent page external reference code or null if it is a top level page.
                     type: string
-                siteExternalReferenceCode:
-                    # @review
-                    description:
-                        The external reference code of the site to which this page is scoped.
-                    readOnly: true
-                    type: string
                 taxonomyCategories:
                     # @review
                     description:
@@ -3422,7 +3505,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.site.client', and version '1.0.4'."
+        'com.liferay.headless.admin.site.client', and version '1.0.5'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html

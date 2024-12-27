@@ -589,6 +589,15 @@ public class ObjectRelationshipLocalServiceWrapper
 		return _objectRelationshipLocalService.getObjectRelationshipsCount();
 	}
 
+	@Override
+	public java.util.Map
+		<Long, java.util.List<com.liferay.object.model.ObjectRelationship>>
+			getObjectRelationshipsMap(long companyId) {
+
+		return _objectRelationshipLocalService.getObjectRelationshipsMap(
+			companyId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -613,11 +622,14 @@ public class ObjectRelationshipLocalServiceWrapper
 	@Override
 	public void registerObjectRelationshipsRelatedInfoCollectionProviders(
 		com.liferay.object.model.ObjectDefinition objectDefinition1,
-		ObjectDefinitionLocalService objectDefinitionLocalService) {
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		java.util.List<com.liferay.object.model.ObjectRelationship>
+			objectRelationships) {
 
 		_objectRelationshipLocalService.
 			registerObjectRelationshipsRelatedInfoCollectionProviders(
-				objectDefinition1, objectDefinitionLocalService);
+				objectDefinition1, objectDefinitionLocalService,
+				objectRelationships);
 	}
 
 	/**

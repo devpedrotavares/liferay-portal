@@ -190,7 +190,7 @@ definition {
 
 			WebContent.addWithStructureCP(webContentTitle = "WC Titel");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Review changes of the Web Content") {
@@ -394,7 +394,7 @@ definition {
 			webContentText = "This is a Text field",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		JSONPublications.addPublication(publicationName = "Publication Name");
 
@@ -406,7 +406,9 @@ definition {
 
 		WebContent.addWithStructureCP(webContentText = "This is a edited Text field");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
+
+		PublicationsNavigator.openPublicationsAdmin();
 
 		PublicationsNavigator.gotoPublish(
 			gotoPublicationsAdmin = "true",
@@ -608,7 +610,7 @@ definition {
 			webContentTitle = "WC WebContent Title",
 			webContentUpload = "DM Document Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		AssertElementPresent(
 			key_webContentTitle = "WC WebContent Title",
@@ -695,7 +697,7 @@ definition {
 			pageName = "Test Page",
 			pageType = "Pages");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		var portalURL = PropsUtil.get("portal.url");
 
@@ -773,13 +775,13 @@ definition {
 			webContentText = "WC Web Content Text",
 			webContentTitle = "WC Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC Web Content Title");
 
 		WebContent.addCP(webContentDescription = "Web Content Description");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		PublicationsNavigator.gotoReviewChanges();
 

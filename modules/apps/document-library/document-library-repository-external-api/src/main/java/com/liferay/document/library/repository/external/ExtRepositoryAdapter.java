@@ -131,15 +131,15 @@ public class ExtRepositoryAdapter extends BaseRepositoryImpl {
 		ExtRepositoryFileVersion extRepositoryFileVersion =
 			_extRepository.cancelCheckOut(extRepositoryFileEntryKey);
 
-		if (extRepositoryFileVersion != null) {
-			ExtRepositoryFileEntryAdapter extRepositoryFileEntryAdapter =
-				getFileEntry(fileEntryId);
-
-			return _toExtRepositoryFileVersionAdapter(
-				extRepositoryFileEntryAdapter, extRepositoryFileVersion);
+		if (extRepositoryFileVersion == null) {
+			return null;
 		}
 
-		return null;
+		ExtRepositoryFileEntryAdapter extRepositoryFileEntryAdapter =
+			getFileEntry(fileEntryId);
+
+		return _toExtRepositoryFileVersionAdapter(
+			extRepositoryFileEntryAdapter, extRepositoryFileVersion);
 	}
 
 	@Override
@@ -1186,11 +1186,7 @@ public class ExtRepositoryAdapter extends BaseRepositoryImpl {
 	protected boolean isCheckedOut(
 		ExtRepositoryFileEntry extRepositoryFileEntry) {
 
-		if (Validator.isNull(extRepositoryFileEntry.getCheckedOutBy())) {
-			return false;
-		}
-
-		return true;
+		return Validator.isNotNull(extRepositoryFileEntry.getCheckedOutBy());
 	}
 
 	private void _checkAssetEntry(

@@ -1894,7 +1894,7 @@
 					"label": {
 						"en_US": "P2S3 Quiz Question to P2S3 Quiz Answers"
 					},
-				"name": "p2s3QuizQuestionToP2S3QuizAnswers",
+					"name": "p2s3QuizQuestionToP2S3QuizAnswers",
 					"objectDefinitionExternalReferenceCode1": "P2S3_QUIZ_QUESTION",
 					"objectDefinitionExternalReferenceCode2": "P2S3_QUIZ_ANSWER",
 					"type": "oneToMany"

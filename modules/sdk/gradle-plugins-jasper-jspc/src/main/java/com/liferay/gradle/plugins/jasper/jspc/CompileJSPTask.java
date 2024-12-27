@@ -7,18 +7,34 @@ package com.liferay.gradle.plugins.jasper.jspc;
 
 import com.liferay.gradle.util.FileUtil;
 import com.liferay.gradle.util.GradleUtil;
+import com.liferay.gradle.util.Validator;
 
 import java.io.File;
 
+import java.net.URL;
+
+import java.nio.file.Path;
+
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.jasper.JspC;
+import org.apache.jasper.servlet.JspCServletContext;
+import org.apache.jasper.servlet.TldScanner;
+import org.apache.tomcat.JarScanType;
+import org.apache.tomcat.JarScanner;
+import org.apache.tomcat.JarScannerCallback;
+import org.apache.tomcat.util.scan.StandardJarScanner;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
@@ -41,7 +57,58 @@ public class CompileJSPTask extends DefaultTask {
 	public void compileJSP() {
 		FileCollection jspCClasspath = getJspCClasspath();
 
-		JspC jspC = new JspC();
+		JspC jspC = new JspC() {
+
+			@Override
+			public String getCompilerClassName() {
+				return _getCompilerClassName();
+			}
+
+			@Override
+			protected TldScanner newTldScanner(
+				JspCServletContext jspCServletContext, boolean namespaceAware,
+				boolean validate, boolean blockExternal) {
+
+				return new TldScanner(
+					jspCServletContext, namespaceAware, validate,
+					blockExternal) {
+
+					@Override
+					public void scanJars() {
+						jspCServletContext.setAttribute(
+							JarScanner.class.getName(),
+							new StandardJarScanner() {
+
+								protected void processURLs(
+									JarScanType scanType,
+									JarScannerCallback callback,
+									Set<URL> processedURLs, boolean webApp,
+									Deque<URL> classPathUrlsToProcess) {
+
+									if (!webApp) {
+										classPathUrlsToProcess.clear();
+
+										return;
+									}
+
+									super.processURLs(
+										scanType, callback, processedURLs,
+										webApp, classPathUrlsToProcess);
+								}
+
+							});
+
+						super.scanJars();
+					}
+
+				};
+			}
+
+		};
+
+		Logger logger = Logger.getLogger("org.apache.tomcat");
+
+		logger.setLevel(Level.INFO);
 
 		try {
 			jspC.setArgs(_getCompleteArgs());
@@ -104,10 +171,45 @@ public class CompileJSPTask extends DefaultTask {
 		_webAppDir = webAppDir;
 	}
 
+	private String _getCompilerClassName() {
+		JavaVersion javaVersion = JavaVersion.current();
+
+		if (!Boolean.getBoolean("build.jakarta.transformer.enabled") ||
+			(javaVersion.compareTo(JavaVersion.VERSION_17) < 0)) {
+
+			return null;
+		}
+
+		String dirNames = System.getProperty(
+			"build.jakarta.transformer.include.dirs");
+
+		if (Validator.isNull(dirNames)) {
+			return null;
+		}
+
+		Project project = getProject();
+
+		File portalModulesDir = project.getRootDir();
+
+		Path portalModulesPath = portalModulesDir.toPath();
+
+		File projectDir = project.getProjectDir();
+
+		Path projectPath = projectDir.toPath();
+
+		for (String dirName : dirNames.split(",")) {
+			if (projectPath.startsWith(portalModulesPath.resolve(dirName))) {
+				return JakartaTransformerJDTCompiler.class.getName();
+			}
+		}
+
+		return null;
+	}
+
 	private String[] _getCompleteArgs() {
 		return new String[] {
 			"-d", FileUtil.getAbsolutePath(getDestinationDir()),
-			"-disablePooling", "-webapp",
+			"-no-strictQuoteEscaping", "-webapp",
 			FileUtil.getAbsolutePath(getWebAppDir())
 		};
 	}

@@ -55,6 +55,11 @@
 			<finder-column name="companyId" />
 			<finder-column name="objectDefinitionId" />
 		</finder>
+		<finder name="C_A_OATK" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="active" />
+			<finder-column name="objectActionTriggerKey" />
+		</finder>
 		<finder name="O_A_OATK" return-type="Collection">
 			<finder-column name="objectDefinitionId" />
 			<finder-column name="active" />
@@ -297,6 +302,9 @@
 
 		<!-- Finder methods -->
 
+		<finder name="CompanyId" return-type="Collection">
+			<finder-column name="companyId" />
+		</finder>
 		<finder name="ListTypeDefinitionId" return-type="Collection">
 			<finder-column name="listTypeDefinitionId" />
 		</finder>
@@ -491,6 +499,10 @@
 		<finder name="ObjectDefinitionId" return-type="Collection">
 			<finder-column name="objectDefinitionId" />
 		</finder>
+		<finder name="C_DOL" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="defaultObjectLayout" />
+		</finder>
 		<finder name="ODI_DOL" return-type="Collection">
 			<finder-column name="objectDefinitionId" />
 			<finder-column name="defaultObjectLayout" />
@@ -644,6 +656,9 @@
 
 		<!-- Finder methods -->
 
+		<finder name="CompanyId" return-type="Collection">
+			<finder-column name="companyId" />
+		</finder>
 		<finder name="ObjectDefinitionId1" return-type="Collection">
 			<finder-column name="objectDefinitionId1" />
 		</finder>

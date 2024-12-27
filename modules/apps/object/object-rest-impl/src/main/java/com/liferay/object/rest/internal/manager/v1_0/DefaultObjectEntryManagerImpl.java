@@ -15,6 +15,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.entry.util.ObjectEntryDTOConverterUtil;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.field.attachment.AttachmentManager;
+import com.liferay.object.field.business.type.ObjectFieldBusinessType;
 import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectAction;
@@ -54,6 +55,7 @@ import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -84,6 +86,7 @@ import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -109,7 +112,10 @@ import com.liferay.portal.vulcan.util.ActionUtil;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
+import java.io.IOException;
 import java.io.Serializable;
+
+import java.net.URL;
 
 import java.text.ParseException;
 
@@ -751,6 +757,9 @@ public class DefaultObjectEntryManagerImpl
 			serviceBuilderObjectEntry.getExternalReferenceCode(),
 			objectDefinition, objectEntry);
 
+		String scopeKey = String.valueOf(
+			serviceBuilderObjectEntry.getGroupId());
+
 		ServiceContext serviceContext = _createServiceContext(
 			dtoConverterContext, objectDefinition, objectEntry);
 
@@ -758,8 +767,7 @@ public class DefaultObjectEntryManagerImpl
 			objectEntryId,
 			_toObjectValues(
 				dtoConverterContext.getLocale(), objectDefinition, objectEntry,
-				String.valueOf(serviceBuilderObjectEntry.getGroupId()),
-				serviceContext),
+				scopeKey, serviceContext),
 			serviceContext);
 
 		return _toObjectEntry(
@@ -767,7 +775,7 @@ public class DefaultObjectEntryManagerImpl
 			_addOrUpdateNestedObjectEntries(
 				dtoConverterContext, objectDefinition, objectEntry,
 				_getObjectRelationships(objectDefinition, objectEntry),
-				serviceBuilderObjectEntry, objectEntry.getScopeKey()));
+				serviceBuilderObjectEntry, scopeKey));
 	}
 
 	@Override
@@ -967,7 +975,7 @@ public class DefaultObjectEntryManagerImpl
 			}
 
 			if (properties.containsKey(entry.getKey())) {
-				NestedFieldsSupplier.addFieldName(entry.getKey());
+				NestedFieldsSupplier.addNestedField(entry.getKey());
 			}
 		}
 
@@ -1314,6 +1322,18 @@ public class DefaultObjectEntryManagerImpl
 				objectEntryId, null));
 	}
 
+	private Serializable _getValue(
+		Locale locale, ObjectField objectField, Object value) {
+
+		if (Objects.equals(
+				objectField.getDBType(), ObjectFieldConstants.DB_TYPE_DATE)) {
+
+			return _toDate(locale, String.valueOf(value));
+		}
+
+		return (Serializable)value;
+	}
+
 	private boolean _isManyToOneObjectRelationship(
 		ObjectDefinition objectDefinition,
 		ObjectRelationship objectRelationship,
@@ -1361,7 +1381,8 @@ public class DefaultObjectEntryManagerImpl
 
 		if ((fileEntry == null) ||
 			((fileEntry.getExternalReferenceCode() == null) &&
-			 (fileEntry.getFileBase64() == null))) {
+			 (fileEntry.getFileBase64() == null) &&
+			 (fileEntry.getFileURL() == null))) {
 
 			return;
 		}
@@ -1378,14 +1399,52 @@ public class DefaultObjectEntryManagerImpl
 				"File source " + fileSource + " is not supported");
 		}
 
-		com.liferay.portal.kernel.repository.model.FileEntry
-			serviceBuilderFileEntry = null;
-
 		byte[] fileContent = {};
 
 		if (fileEntry.getFileBase64() != null) {
 			fileContent = _decode(fileEntry.getFileBase64());
 		}
+		else if ((fileEntry.getFileURL() != null) &&
+				 FeatureFlagManagerUtil.isEnabled("LPD-39967")) {
+
+			try {
+				URL url = new URL(fileEntry.getFileURL());
+
+				if (Objects.equals(url.getProtocol(), "file")) {
+					throw new UnsupportedOperationException(
+						StringBundler.concat(
+							"Unable to download file from ",
+							fileEntry.getFileURL(), ", unsupported protocol: ",
+							url.getProtocol()));
+				}
+
+				Http.Options options = new Http.Options();
+
+				options.setLocation(url.toString());
+
+				fileContent = _http.URLtoByteArray(options);
+
+				Http.Response response = options.getResponse();
+
+				if (response.getResponseCode() != 200) {
+					throw new IllegalArgumentException(
+						StringBundler.concat(
+							"Unable to download file from ",
+							fileEntry.getFileURL(), ", unexpected HTTP code: ",
+							response.getResponseCode()));
+				}
+			}
+			catch (IOException ioException) {
+				_log.error(ioException);
+
+				throw new IllegalArgumentException(
+					"Unable to download file from " + fileEntry.getFileURL(),
+					ioException);
+			}
+		}
+
+		com.liferay.portal.kernel.repository.model.FileEntry
+			serviceBuilderFileEntry = null;
 
 		String groupExternalReferenceCode = null;
 
@@ -1432,6 +1491,7 @@ public class DefaultObjectEntryManagerImpl
 		}
 
 		fileEntry.setFileBase64(() -> (String)null);
+		fileEntry.setFileURL(() -> (String)null);
 		fileEntry.setId(serviceBuilderFileEntry::getFileEntryId);
 
 		Map<String, Object> properties = objectEntry.getProperties();
@@ -1707,32 +1767,28 @@ public class DefaultObjectEntryManagerImpl
 			}
 
 			if (objectField.isLocalized()) {
-				Object localizedValue = objectEntry.getPropertyValue(
-					objectField.getI18nObjectFieldName());
+				ObjectFieldBusinessType objectFieldBusinessType =
+					_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
+						objectField.getBusinessType());
 
-				if (localizedValue != null) {
+				Map<Locale, Object> localizedValues =
+					objectFieldBusinessType.getLocalizedValues(
+						objectField, serviceContext.getUserId(),
+						objectEntry.getProperties());
+
+				if (localizedValues != null) {
 					values.put(
 						objectField.getI18nObjectFieldName(),
-						(Serializable)localizedValue);
+						(Serializable)localizedValues);
 				}
 				else if (value != null) {
 					values.put(
 						objectField.getI18nObjectFieldName(),
 						HashMapBuilder.put(
-							_language.getLanguageId(locale), value
+							_language.getLanguageId(locale),
+							_getValue(locale, objectField, value)
 						).build());
 				}
-
-				continue;
-			}
-
-			if (Objects.equals(
-					objectField.getDBType(),
-					ObjectFieldConstants.DB_TYPE_DATE)) {
-
-				values.put(
-					objectField.getName(),
-					_toDate(locale, String.valueOf(value)));
 
 				continue;
 			}
@@ -1747,7 +1803,8 @@ public class DefaultObjectEntryManagerImpl
 				continue;
 			}
 
-			values.put(objectField.getName(), (Serializable)value);
+			values.put(
+				objectField.getName(), _getValue(locale, objectField, value));
 		}
 
 		return values;
@@ -1772,6 +1829,9 @@ public class DefaultObjectEntryManagerImpl
 		target = "(filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT + ")"
 	)
 	private FilterFactory<Predicate> _filterFactory;
+
+	@Reference
+	private Http _http;
 
 	@Reference
 	private JSONFactory _jsonFactory;

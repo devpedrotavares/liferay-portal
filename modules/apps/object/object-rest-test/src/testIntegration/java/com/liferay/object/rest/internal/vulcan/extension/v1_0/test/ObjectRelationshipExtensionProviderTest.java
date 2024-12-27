@@ -80,6 +80,7 @@ public class ObjectRelationshipExtensionProviderTest {
 
 		ObjectDefinition userSystemObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 
 		_user = TestPropsValues.getUser();
@@ -210,7 +211,7 @@ public class ObjectRelationshipExtensionProviderTest {
 		String nestedFieldName) {
 
 		return new NestedFieldsContext(
-			1, Collections.singletonList(nestedFieldName), null, null, null,
+			1, null, Collections.singletonList(nestedFieldName), null, null,
 			null);
 	}
 

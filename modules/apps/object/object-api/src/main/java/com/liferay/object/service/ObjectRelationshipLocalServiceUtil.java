@@ -507,6 +507,12 @@ public class ObjectRelationshipLocalServiceUtil {
 		return getService().getObjectRelationshipsCount();
 	}
 
+	public static Map<Long, List<ObjectRelationship>> getObjectRelationshipsMap(
+		long companyId) {
+
+		return getService().getObjectRelationshipsMap(companyId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -528,10 +534,12 @@ public class ObjectRelationshipLocalServiceUtil {
 	public static void
 		registerObjectRelationshipsRelatedInfoCollectionProviders(
 			com.liferay.object.model.ObjectDefinition objectDefinition1,
-			ObjectDefinitionLocalService objectDefinitionLocalService) {
+			ObjectDefinitionLocalService objectDefinitionLocalService,
+			List<ObjectRelationship> objectRelationships) {
 
 		getService().registerObjectRelationshipsRelatedInfoCollectionProviders(
-			objectDefinition1, objectDefinitionLocalService);
+			objectDefinition1, objectDefinitionLocalService,
+			objectRelationships);
 	}
 
 	/**

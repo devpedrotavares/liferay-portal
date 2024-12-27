@@ -144,7 +144,7 @@ definition {
 			webContentText = "WC WebContent Text",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title");
 
@@ -219,7 +219,7 @@ definition {
 
 			WebContent.addWithStructureCP(webContentText = "Edited Text Field");
 
-			PortletEntry.save();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Add a new user") {
@@ -271,7 +271,7 @@ definition {
 		}
 
 		task ("View web content is shown in web content admin after published") {
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "Web Content Title");
 		}
@@ -442,7 +442,7 @@ definition {
 				webContentImage = "Document_2.jpeg",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewWithStructureCP(
 				webContentImage = "Document_2.jpeg",

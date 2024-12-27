@@ -1067,7 +1067,7 @@ definition {
 			webContentText = "WC WebContent Text",
 			webContentTitle = "WC WebContent Title 1");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		PublicationsNavigator.gotoReviewChanges();
 
@@ -1655,11 +1655,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		WebContent.editDisplayDate(
-			displayDate = "01/01/2050",
-			displayTime = "12:30 AM");
-
-		PortletEntry.publish();
+		WebContent.scheduleExistingWCArticleWithPermissions(displayDate = "01/01/2050");
 
 		Publications.publishPublication(
 			gotoPublicationsAdmin = "true",

@@ -1579,7 +1579,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging DM Page",
@@ -1927,7 +1927,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging DM Page",
@@ -2285,7 +2285,7 @@ definition {
 				webContentImage = "Document_2.jpg",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		Navigator.gotoStagedSitePage(
@@ -2385,7 +2385,7 @@ definition {
 				webContentImage = "Document_2.jpg",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		Navigator.gotoStagedSitePage(

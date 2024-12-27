@@ -66,10 +66,12 @@
 
 		List<KeyValuePair> leftList = new ArrayList<>();
 
-		String[] currentLanguageIds = PrefsPropsUtil.getStringArray(company.getCompanyId(), PropsKeys.LOCALES, StringPool.COMMA, PropsValues.LOCALES_ENABLED);
+		String[] currentLanguageIds = ArrayUtil.unique(PrefsPropsUtil.getStringArray(company.getCompanyId(), PropsKeys.LOCALES, StringPool.COMMA, PropsValues.LOCALES_ENABLED));
 
-		for (Locale currentLocale : LocaleUtil.fromLanguageIds(currentLanguageIds)) {
-			leftList.add(new KeyValuePair(LanguageUtil.getLanguageId(currentLocale), currentLocale.getDisplayName(locale)));
+		for (String currentLanguageId : currentLanguageIds) {
+			Locale currentLocale = LocaleUtil.fromLanguageId(currentLanguageId);
+
+			leftList.add(new KeyValuePair(currentLanguageId, currentLocale.getDisplayName(locale)));
 		}
 
 		// Right list

@@ -835,15 +835,17 @@ public class FriendlyURLServlet extends HttpServlet {
 				group.getGroupId(), _private, friendlyURL);
 
 		if (layoutFriendlyURL == null) {
-			if (group.isUser()) {
-				List<Layout> layouts = layoutLocalService.getLayouts(
-					group.getGroupId(), _private,
-					LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
+			if (!group.isUser()) {
+				return null;
+			}
 
-				for (Layout layout : layouts) {
-					if (layout.matches(httpServletRequest, friendlyURL)) {
-						return layout;
-					}
+			List<Layout> layouts = layoutLocalService.getLayouts(
+				group.getGroupId(), _private,
+				LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
+
+			for (Layout layout : layouts) {
+				if (layout.matches(httpServletRequest, friendlyURL)) {
+					return layout;
 				}
 			}
 
@@ -861,8 +863,9 @@ public class FriendlyURLServlet extends HttpServlet {
 	}
 
 	private String _getLocalizedFriendlyURL(
-		HttpServletRequest httpServletRequest, Layout layout, Locale locale,
-		Locale originalLocale) {
+			HttpServletRequest httpServletRequest, Layout layout, Locale locale,
+			Locale originalLocale)
+		throws PortalException {
 
 		String requestURI = _getRequestURI(httpServletRequest);
 
@@ -937,9 +940,19 @@ public class FriendlyURLServlet extends HttpServlet {
 			portal.getCompanyId(httpServletRequest),
 			PropsKeys.LOCALE_PREPEND_FRIENDLY_URL_STYLE);
 
-		if ((localePrependFriendlyURLStyle == 0) ||
-			((localePrependFriendlyURLStyle == 1) &&
-			 locale.equals(LocaleUtil.getDefault()))) {
+		User user = _getUser(httpServletRequest);
+
+		Locale userLocale = user.getLocale();
+
+		if (!user.isGuestUser() && (localePrependFriendlyURLStyle == 3) &&
+			locale.equals(userLocale)) {
+
+			appendI18nPath = false;
+		}
+		else if ((localePrependFriendlyURLStyle == 0) ||
+				 (((localePrependFriendlyURLStyle == 1) ||
+				   (localePrependFriendlyURLStyle == 3)) &&
+				  locale.equals(LocaleUtil.getDefault()))) {
 
 			appendI18nPath = false;
 		}
@@ -1132,8 +1145,9 @@ public class FriendlyURLServlet extends HttpServlet {
 	}
 
 	private Locale _setAlternativeLayoutFriendlyURL(
-		long companyId, HttpServletRequest httpServletRequest, Layout layout,
-		String friendlyURL, SiteFriendlyURL siteFriendlyURL) {
+			long companyId, HttpServletRequest httpServletRequest,
+			Layout layout, String friendlyURL, SiteFriendlyURL siteFriendlyURL)
+		throws PortalException {
 
 		List<LayoutFriendlyURL> layoutFriendlyURLs =
 			layoutFriendlyURLLocalService.getLayoutFriendlyURLs(

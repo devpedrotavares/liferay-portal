@@ -72,6 +72,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -533,6 +534,23 @@ public class ObjectFieldLocalServiceImpl
 	}
 
 	@Override
+	public Map<Long, List<ObjectField>> getObjectFieldsMap(long companyId) {
+		Map<Long, List<ObjectField>> objectFieldsMap = new HashMap<>();
+
+		for (ObjectField objectField :
+				objectFieldPersistence.findByCompanyId(companyId)) {
+
+			List<ObjectField> objectFields = objectFieldsMap.computeIfAbsent(
+				objectField.getObjectDefinitionId(),
+				objectDefinitionId -> new ArrayList<>());
+
+			objectFields.add(objectField);
+		}
+
+		return objectFieldsMap;
+	}
+
+	@Override
 	public Table getTable(long objectDefinitionId, String name)
 		throws PortalException {
 
@@ -817,7 +835,6 @@ public class ObjectFieldLocalServiceImpl
 		_validateIndexed(
 			businessType, dbType, indexed, indexedAsKeyword, indexedLanguageId);
 		_validateLabel(labelMap, null);
-		_validateLocalized(businessType, localized, objectDefinition, required);
 		_validateName(0, objectDefinition, name, system);
 		validateReadOnlyAndReadOnlyConditionExpression(
 			businessType, readOnly, readOnlyConditionExpression, required);
@@ -831,6 +848,13 @@ public class ObjectFieldLocalServiceImpl
 		objectField.setExternalReferenceCode(externalReferenceCode);
 
 		_setBusinessTypeAndDBType(businessType, dbType, objectField);
+
+		ObjectFieldBusinessType objectFieldBusinessType =
+			_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
+				objectField.getBusinessType());
+
+		_validateLocalized(
+			localized, objectDefinition, objectFieldBusinessType, required);
 
 		User user = _userLocalService.getUser(userId);
 
@@ -872,7 +896,8 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		_addOrUpdateObjectFieldSettings(
-			objectDefinition, objectField, null, objectFieldSettings);
+			objectField, objectDefinition, objectFieldBusinessType,
+			objectFieldSettings, null);
 
 		if (!objectDefinition.isApproved()) {
 			return objectField;
@@ -913,14 +938,11 @@ public class ObjectFieldLocalServiceImpl
 	}
 
 	private void _addOrUpdateObjectFieldSettings(
-			ObjectDefinition objectDefinition, ObjectField newObjectField,
-			ObjectField oldObjectField,
-			List<ObjectFieldSetting> objectFieldSettings)
+			ObjectField newObjectField, ObjectDefinition objectDefinition,
+			ObjectFieldBusinessType objectFieldBusinessType,
+			List<ObjectFieldSetting> objectFieldSettings,
+			ObjectField oldObjectField)
 		throws PortalException {
-
-		ObjectFieldBusinessType objectFieldBusinessType =
-			_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
-				newObjectField.getBusinessType());
 
 		objectFieldBusinessType.validateObjectFieldSettings(
 			newObjectField, objectFieldSettings);
@@ -1328,9 +1350,14 @@ public class ObjectFieldLocalServiceImpl
 		_validateIndexed(
 			businessType, dbType, indexed, indexedAsKeyword, indexedLanguageId);
 		_validateLabel(labelMap, newObjectField);
+
+		ObjectFieldBusinessType objectFieldBusinessType =
+			_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
+				businessType);
+
 		_validateLocalized(
-			businessType, localized, oldObjectField.getObjectDefinition(),
-			required);
+			localized, oldObjectField.getObjectDefinition(),
+			objectFieldBusinessType, required);
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(
@@ -1390,8 +1417,8 @@ public class ObjectFieldLocalServiceImpl
 			newObjectField = objectFieldPersistence.update(newObjectField);
 
 			_addOrUpdateObjectFieldSettings(
-				objectDefinition, newObjectField, oldObjectField,
-				objectFieldSettings);
+				newObjectField, objectDefinition, objectFieldBusinessType,
+				objectFieldSettings, oldObjectField);
 
 			return newObjectField;
 		}
@@ -1416,8 +1443,8 @@ public class ObjectFieldLocalServiceImpl
 		newObjectField = objectFieldPersistence.update(newObjectField);
 
 		_addOrUpdateObjectFieldSettings(
-			objectDefinition, newObjectField, oldObjectField,
-			objectFieldSettings);
+			newObjectField, objectDefinition, objectFieldBusinessType,
+			objectFieldSettings, oldObjectField);
 
 		return newObjectField;
 	}
@@ -1571,19 +1598,57 @@ public class ObjectFieldLocalServiceImpl
 	}
 
 	private void _validateLocalized(
-			String businessType, boolean localized,
-			ObjectDefinition objectDefinition, boolean required)
+			boolean localized, ObjectDefinition objectDefinition,
+			ObjectFieldBusinessType objectFieldBusinessType, boolean required)
 		throws PortalException {
 
 		if (!localized) {
 			return;
 		}
 
-		if (!businessType.equals(
-				ObjectFieldConstants.BUSINESS_TYPE_LONG_TEXT) &&
-			!businessType.equals(
-				ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT) &&
-			!businessType.equals(ObjectFieldConstants.BUSINESS_TYPE_TEXT)) {
+		String objectFieldBusinessTypeName = objectFieldBusinessType.getName();
+
+		if ((!FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-32050") &&
+			 !objectFieldBusinessTypeName.equals(
+				 ObjectFieldConstants.BUSINESS_TYPE_LONG_TEXT) &&
+			 !objectFieldBusinessTypeName.equals(
+				 ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT) &&
+			 !objectFieldBusinessTypeName.equals(
+				 ObjectFieldConstants.BUSINESS_TYPE_TEXT)) ||
+			(FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-32050") &&
+			 !objectFieldBusinessType.isLocalizable())) {
+
+			if (FeatureFlagManagerUtil.isEnabled(
+					objectDefinition.getCompanyId(), "LPD-32050")) {
+
+				throw new ObjectFieldLocalizedException(
+					StringBundler.concat(
+						"Only ", ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_DATE,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_DECIMAL,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_INTEGER,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_LONG_TEXT,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_PRECISION_DECIMAL,
+						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT, " and ",
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						" business types support localization"));
+			}
 
 			throw new ObjectFieldLocalizedException(
 				StringBundler.concat(

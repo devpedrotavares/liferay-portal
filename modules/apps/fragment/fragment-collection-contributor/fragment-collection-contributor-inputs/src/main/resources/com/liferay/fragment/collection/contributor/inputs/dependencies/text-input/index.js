@@ -9,6 +9,7 @@ const lengthWarning = document.getElementById(
 const lengthWarningText = document.getElementById(
 	`${fragmentNamespace}-length-warning-text`
 );
+
 const inputElement = document.getElementById(`${fragmentNamespace}-text-input`);
 
 function enableLengthWarning() {
@@ -65,7 +66,7 @@ function main() {
 
 		inputElement.addEventListener('keyup', onInputKeyup);
 
-		if (input.attributes.localizable) {
+		if (input.localizable) {
 			Liferay.on('localizationSelect:localeChanged', (event) => {
 				currentLanguageId = event.languageId;
 
@@ -74,6 +75,39 @@ function main() {
 
 				if (translationInput.getAttribute('value') !== null) {
 					inputElement.value = translationInput.value;
+				}
+				else {
+					inputElement.value = getDefaultLanguageValue();
+				}
+
+				if (Liferay.FeatureFlags['LPD-37927'] && !input.localizable) {
+					if (
+						currentLanguageId ===
+						themeDisplay.getDefaultLanguageId()
+					) {
+						const unlocalizedInfo = document.getElementById(
+							`${fragmentNamespace}-unlocalized-info`
+						);
+
+						unlocalizedInfo.classList.add('d-none');
+					}
+					else {
+						if (
+							input.attributes.unlocalizedFieldsState ===
+							'disabled'
+						) {
+							inputElement.setAttribute('disabled', '');
+						}
+						else {
+							inputElement.setAttribute('readonly', '');
+						}
+
+						const unlocalizedInfo = document.getElementById(
+							`${fragmentNamespace}-unlocalized-info`
+						);
+
+						unlocalizedInfo.classList.remove('d-none');
+					}
 				}
 			});
 
@@ -91,8 +125,57 @@ function main() {
 					languageId: currentLanguageId,
 				});
 			});
+
+			if (input.valueI18n) {
+				Object.entries(input.valueI18n).forEach(
+					([languageId, value]) => {
+						const translationInput =
+							getOrCreateTranslationInput(languageId);
+
+						translationInput.value = value;
+					}
+				);
+			}
+		}
+		else if (Liferay.FeatureFlags['LPD-37927']) {
+			Liferay.on('localizationSelect:localeChanged', (event) => {
+				const isDefaultLanguage =
+					event.languageId === themeDisplay.getDefaultLanguageId();
+
+				const unlocalizedInfo = document.getElementById(
+					`${fragmentNamespace}-unlocalized-info`
+				);
+
+				if (isDefaultLanguage) {
+					inputElement.removeAttribute(
+						input.attributes.unlocalizedFieldsState === 'disabled'
+							? 'disabled'
+							: 'readonly'
+					);
+
+					unlocalizedInfo?.classList.add('d-none');
+				}
+				else {
+					inputElement.setAttribute(
+						input.attributes.unlocalizedFieldsState === 'disabled'
+							? 'disabled'
+							: 'readonly',
+						''
+					);
+
+					unlocalizedInfo?.classList.remove('d-none');
+				}
+			});
 		}
 	}
+}
+
+function getDefaultLanguageValue() {
+	const defaultLanguageInput = getOrCreateTranslationInput(
+		themeDisplay.getDefaultLanguageId()
+	);
+
+	return defaultLanguageInput.value;
 }
 
 function getOrCreateTranslationInput(languageId) {
@@ -104,7 +187,7 @@ function getOrCreateTranslationInput(languageId) {
 		translationInput = document.createElement('input');
 		translationInput.type = 'hidden';
 		translationInput.id = inputId;
-		translationInput.name = `${input.name}_${currentLanguageId}`;
+		translationInput.name = `${input.name}_${languageId}`;
 		inputElement.parentNode.appendChild(translationInput);
 	}
 

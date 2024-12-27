@@ -144,7 +144,7 @@ definition {
 
 		AssertElementPresent(locator1 = "WCD#WEB_CONTENT_TRANSLATION_SPAN_LANGUAGE_ENGLISH");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title");
 
@@ -193,7 +193,7 @@ definition {
 
 		WebContent.addCP(webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -278,7 +278,7 @@ definition {
 
 		WebContent.addCP(webContentTitle = "Web Content Title pt-BR");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -311,7 +311,7 @@ definition {
 	@description = "This test ensures add fields, translate, edit fieldset, check propagation, translate from different language."
 	@priority = 5
 	test CreateEditAndDeleteLocalizedFieldset {
-		property custom.properties = "feature.flag.LPD-11228=true${line.separator}feature.flag.LPD-15596=true";
+		property custom.properties = "feature.flag.LPD-11228=true";
 		property portal.acceptance = "true";
 
 		var newStructureName = "WC Structure Name";
@@ -530,7 +530,7 @@ definition {
 
 		PortletEntry.inputTitle(title = "测试标题");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title");
 
@@ -588,7 +588,7 @@ definition {
 
 		WebContent.addCP(webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -641,7 +641,7 @@ definition {
 			locale = "pt-BR",
 			translated = "true");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title");
 
@@ -914,7 +914,7 @@ definition {
 
 		WebContent.addCP(webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1028,7 +1028,7 @@ definition {
 			fieldLabel = "Text",
 			text = "This is a text in ES");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title");
 

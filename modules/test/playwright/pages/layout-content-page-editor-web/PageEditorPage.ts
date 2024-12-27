@@ -100,6 +100,10 @@ export class PageEditorPage {
 	async addFragment(setName: string, name: string, dropTarget?: Locator) {
 		await this.goToSidebarTab('Fragments and Widgets');
 
+		await this.page
+			.getByRole('tab', {exact: true, name: 'Fragments'})
+			.click();
+
 		const header = this.page.getByRole('menuitem', {
 			exact: true,
 			name: setName,
@@ -436,7 +440,7 @@ export class PageEditorPage {
 		await this.page.getByRole('button', {name: 'Save'}).click();
 	}
 
-	async clickPageContentContentAction(
+	async clickPageContentAction(
 		action: string,
 		name: string,
 		subMenuAction?: string
@@ -685,7 +689,7 @@ export class PageEditorPage {
 
 		// Enable editor
 
-		await editable.dblclick();
+		await editable.click();
 
 		// Set the content using codemirror API and save
 
@@ -893,22 +897,7 @@ export class PageEditorPage {
 	}
 
 	async goToWidgetConfiguration(widgetId: string) {
-		if (await this.page.evaluate(() => Liferay.FeatureFlags['32075'])) {
-			await this.clickFragmentOption(widgetId, 'Configuration');
-		}
-		else {
-			const topper = this.getTopper(widgetId);
-
-			await topper.hover();
-
-			await expect(topper.locator('.portlet-options')).toBeVisible();
-
-			await topper.locator('.portlet-options').click();
-
-			await this.page
-				.getByRole('menuitem', {exact: true, name: 'Configuration'})
-				.click();
-		}
+		await this.clickFragmentOption(widgetId, 'Configuration');
 	}
 
 	async hideFragment(fragmentId: string, isDesktop = true) {
@@ -929,7 +918,10 @@ export class PageEditorPage {
 			.getByRole('button', {name: 'Options'})
 			.click();
 
-		await this.page.locator('.dropdown-menu.show').getByText(name).click();
+		await this.page
+			.locator('.dropdown-menu.show')
+			.getByText(name, {exact: true})
+			.click();
 	}
 
 	async isActive(fragmentId: string, isDesktop = true) {
@@ -956,7 +948,14 @@ export class PageEditorPage {
 		);
 	}
 
-	async mapFormFragment(fragmentId: string, type: string, fields?: string[]) {
+	async mapFormFragment(
+		fragmentId: string,
+		type: string,
+		fields?: string[] | 'all',
+		options?: {
+			addLocalizationSelect?: boolean;
+		}
+	) {
 		const fragment = this.getFragment(fragmentId);
 
 		await fragment.getByLabel('Content Type').selectOption(type);
@@ -969,7 +968,7 @@ export class PageEditorPage {
 			.getByLabel('Select All Items on the Page')
 			.check({trial: true});
 
-		if (!fields) {
+		if (!fields || fields === 'all') {
 			await fieldsModal
 				.getByLabel('Select All Items on the Page')
 				.check();
@@ -992,8 +991,26 @@ export class PageEditorPage {
 
 		await waitForAlert(
 			this.page,
-			'Success:Your form has been successfully loaded.'
+			'Success:Your form has been successfully loaded.',
+			{autoClose: false}
 		);
+
+		const addLocalizationSelectDialog = this.page.getByRole('dialog', {
+			name: 'Add Localization Select',
+		});
+
+		if (await addLocalizationSelectDialog.isVisible()) {
+			if (options?.addLocalizationSelect) {
+				await addLocalizationSelectDialog
+					.getByRole('button', {name: 'Add Localization Select'})
+					.click();
+			}
+			else {
+				await addLocalizationSelectDialog
+					.getByRole('button', {name: 'Cancel'})
+					.click();
+			}
+		}
 	}
 
 	async mapEditableLink({
@@ -1116,6 +1133,23 @@ export class PageEditorPage {
 
 			await expect(treeNode).toHaveClass(/focus/);
 		}
+	}
+
+	async selectDirectImage(fileName: string, imageId: string) {
+		await this.selectEditable(imageId, 'image-square');
+
+		await this.page.getByTitle('Select Image').click();
+
+		const articleCard = this.page
+			.frameLocator('iframe[title="Select"]')
+			.getByText(fileName, {exact: false});
+
+		await clickAndExpectToBeHidden({
+			target: this.page.locator('.modal-dialog'),
+			trigger: articleCard,
+		});
+
+		await this.waitForChangesSaved();
 	}
 
 	async selectEditable(

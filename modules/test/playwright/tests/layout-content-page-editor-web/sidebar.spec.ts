@@ -38,7 +38,6 @@ const test = mergeTests(
 	applicationsMenuPageTest,
 	collectionsPagesTest,
 	featureFlagsTest({
-		'LPD-15596': true,
 		'LPD-18221': true,
 		'LPS-169837': true,
 		'LPS-178052': true,
@@ -488,9 +487,14 @@ test.describe('Fragments Panel', () => {
 
 			await highlightedSet.waitFor();
 
-			const favoriteButton = page.getByTitle(
-				'Mark Reports Display as Favorite'
+			await expandSection(
+				page.getByRole('menuitem', {
+					exact: true,
+					name: 'Collaboration',
+				})
 			);
+
+			const favoriteButton = page.getByTitle('Mark Blogs as Favorite');
 
 			// If the widget is already marked as favorite, unmark it
 
@@ -504,7 +508,7 @@ test.describe('Fragments Panel', () => {
 
 			// Check that the widget is inside Highlighted set
 
-			await expect(highlightedSet).toContainText('Reports Display');
+			await expect(highlightedSet).toContainText('Blogs');
 
 			// Create a Widget page and check that the widget is also inside Highlighted set in a widget page
 
@@ -520,7 +524,7 @@ test.describe('Fragments Panel', () => {
 
 			highlightedSet = page.locator('.panel', {hasText: 'Highlighted'});
 
-			await expect(highlightedSet).toContainText('Reports Display');
+			await expect(highlightedSet).toContainText('Blogs');
 
 			// Check that a new user with update permissions cannot see the changes
 
@@ -547,7 +551,7 @@ test.describe('Fragments Panel', () => {
 
 			await widgetPagePage.openAddPanel();
 
-			await expect(highlightedSet).not.toContainText('Reports Display');
+			await expect(highlightedSet).not.toContainText('Blogs');
 		}
 	);
 
@@ -694,20 +698,7 @@ test.describe('Fragments Panel', () => {
 
 		await widgetPagePage.openAddPanel();
 
-		[
-			'Accounts',
-			'Business Intelligence & Reporting',
-			'Collaboration',
-			'Commerce',
-			'Community',
-			'Content Management',
-			'News',
-			'Object',
-			'Sample',
-			'Search',
-		].forEach(async (set, index) => {
-			await expect(widgetSets.nth(index)).toContainText(set);
-		});
+		await expect(widgetSets.nth(0)).toContainText(firstWidgetSet);
 	});
 
 	test(
@@ -1049,10 +1040,14 @@ test.describe('Page Contents Panel', () => {
 					})
 					.click();
 
+				await page.waitForURL(
+					/com_liferay_journal_web_portlet_JournalPortlet/
+				);
+
 				await expect(
 					page.locator('.article-content-content')
 				).toBeVisible({
-					timeout: 500,
+					timeout: 1000,
 				});
 			}).toPass();
 
@@ -1141,7 +1136,7 @@ test.describe('Page Contents Panel', () => {
 
 			// Go to page contents panel and click in edit
 
-			await pageEditorPage.clickPageContentContentAction(
+			await pageEditorPage.clickPageContentAction(
 				'Edit',
 				ANIMALS_COLLECTION_NAME
 			);
@@ -1154,7 +1149,7 @@ test.describe('Page Contents Panel', () => {
 
 			// Go to page contents panel and click in view items
 
-			await pageEditorPage.clickPageContentContentAction(
+			await pageEditorPage.clickPageContentAction(
 				'View Items',
 				ANIMALS_COLLECTION_NAME
 			);
@@ -1192,7 +1187,7 @@ test.describe('Page Contents Panel', () => {
 
 			// Go to page contents panel, click in add items and add a new item
 
-			await pageEditorPage.clickPageContentContentAction(
+			await pageEditorPage.clickPageContentAction(
 				'Add Items',
 				ANIMALS_COLLECTION_NAME,
 				'Animal'
@@ -1207,7 +1202,7 @@ test.describe('Page Contents Panel', () => {
 
 			// Go to page contents panel and click in permissions
 
-			await pageEditorPage.clickPageContentContentAction(
+			await pageEditorPage.clickPageContentAction(
 				'Permissions',
 				ANIMALS_COLLECTION_NAME
 			);
@@ -1829,7 +1824,33 @@ test.describe('Rules Panel', () => {
 
 			await modal.getByLabel('Rule Name').fill(ruleName);
 
-			// Condition
+			// Check empty rules are not allowed
+
+			await modal
+				.getByRole('button', {exact: true, name: 'Save'})
+				.click();
+
+			await expect(
+				modal.getByText('The rule is incomplete')
+			).toBeVisible();
+
+			// Start adding a condition
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'User'}),
+				trigger: page.getByLabel('Select Item for the Condition'),
+			});
+
+			// Check we can delete the condition
+
+			await page.getByLabel('Delete Condition').click();
+
+			await expect(
+				page.getByLabel('Select Item for the Condition')
+			).not.toHaveText('User');
+
+			// Continue adding the condition
 
 			await clickAndExpectToBeVisible({
 				autoClick: true,
@@ -1932,6 +1953,129 @@ test.describe('Rules Panel', () => {
 			await expect(
 				page.getByText('Fortunately, it is very easy to add new ones.')
 			).toBeVisible();
+		}
+	);
+
+	test(
+		'Apply a page rule with Has the Role Of condition',
+		{
+			tag: ['@LPS-200332'],
+		},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create content page with a heading and a button fragment and go to edit mode
+
+			const buttonDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-button',
+			});
+
+			const headingDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-heading',
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					buttonDefinition,
+					headingDefinition,
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Create a rule to hide button for Guest Users
+
+			await pageEditorPage.goToSidebarTab('Page Rules');
+
+			const modal = page.locator('.modal-dialog');
+
+			await clickAndExpectToBeVisible({
+				target: modal.getByRole('heading', {name: 'New Rule'}),
+				trigger: page.getByRole('button', {name: 'New Rule'}),
+			});
+
+			// Create new rule
+
+			const ruleName = getRandomString();
+
+			await modal.getByLabel('Rule Name').fill(ruleName);
+
+			// Add condition
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'User'}),
+				trigger: page.getByLabel('Select Item for the Condition'),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'Has the Role Of'}),
+				trigger: page.getByLabel('Select Condition'),
+			});
+
+			await page.getByLabel('Select Role').click();
+
+			await expect(async () => {
+				await page.keyboard.press('ArrowDown');
+
+				await expect(
+					page.getByRole('option', {
+						exact: true,
+						name: 'User',
+					})
+				).toHaveClass(/focus/, {timeout: 250});
+			}).toPass();
+
+			await page.keyboard.press('Enter');
+
+			await expect(page.getByLabel('Select Role')).toHaveText('User');
+
+			// Action
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'Hide'}),
+				trigger: page.getByLabel('Select Action'),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'Fragment'}),
+				trigger: page.getByLabel('Select Item for the Action'),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {name: 'Button'}),
+				trigger: page.getByLabel('Select Fragment'),
+			});
+
+			await modal
+				.getByRole('button', {exact: true, name: 'Save'})
+				.click();
+
+			await waitForAlert(
+				page,
+				'Success:The rule was created successfully.'
+			);
+
+			// Publish the page
+
+			await pageEditorPage.publishPage();
+
+			// Assert rule works
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await expect(page.getByText('Heading Example')).toBeVisible();
+
+			await expect(page.getByText('Go Somewhere')).not.toBeVisible();
 		}
 	);
 

@@ -17,6 +17,7 @@ import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import fillAndClickOutside from '../../utils/fillAndClickOutside';
 import getRandomString from '../../utils/getRandomString';
 import {openFieldset} from '../../utils/openFieldset';
+import {nextPage, setItemsPerPage} from '../../utils/pagination';
 import addApprovedStructuredContent from '../../utils/structured-content/addApprovedStructuredContent';
 import getBasicWebContentStructureId from '../../utils/structured-content/getBasicWebContentStructureId';
 import {waitForAlert} from '../../utils/waitForAlert';
@@ -75,18 +76,12 @@ const assetPublisherDeprecationTest = mergeTests(
 
 const keepTitlesUntranslated = mergeTests(baseTest);
 
-const prefixUrlTest = mergeTests(
-	baseTest,
-	featureFlagsTest({
-		'LPD-11147': true,
-	})
-);
+const prefixUrlTest = mergeTests(baseTest);
 
 const translationAndAutosaveTest = mergeTests(
 	baseTest,
 	featureFlagsTest({
 		'LPD-11228': true,
-		'LPD-15596': true,
 	})
 );
 
@@ -132,8 +127,7 @@ baseTest(
 
 		await journalEditArticlePage.fillTitle(title);
 		await journalEditArticlePage.fillFriendlyURL(title + '/' || 'test');
-		await journalEditArticlePage.publishButton.waitFor();
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await expect(
 			journalEditArticlePage.alertErrorMessage.getByText(
@@ -159,7 +153,7 @@ baseTest(
 
 		await journalEditArticlePage.fillTitle(title);
 
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await journalEditArticlePage.editArticle(title);
 
@@ -208,6 +202,74 @@ baseTest(
 		templateName = page.getByLabel('Template Name');
 
 		await expect(templateName).toHaveValue('Basic Web Content');
+	}
+);
+
+baseTest(
+	'Web Content Schedule Publication Feature Flag is only in UTC and wrong time is displayed after scheduled',
+	{
+		tag: '@LPD-31427',
+	},
+	async ({journalEditArticlePage, page, site}) => {
+		page.on('dialog', (dialog) => dialog.accept());
+
+		await journalEditArticlePage.goto({siteUrl: site.friendlyUrlPath});
+
+		const title = getRandomString();
+
+		await journalEditArticlePage.content.waitFor();
+
+		await journalEditArticlePage.fillTitle(title);
+
+		await expect(async () => {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {
+					name: 'Schedule Publication',
+				}),
+				trigger: page.getByRole('button', {
+					name: /select and confirm publish settings|sélectionnez et confirmez les/i,
+				}),
+			});
+
+			await expect(page.getByLabel('Date and Time')).toBeVisible({
+				timeout: 2000,
+			});
+		}).toPass();
+
+		const currentDate = new Date();
+
+		currentDate.setMinutes(currentDate.getMinutes() - 5);
+
+		const beforeCurrentDateUTC = new Date(
+			currentDate.toLocaleString('en-US', {timeZone: 'UTC'})
+		);
+
+		await page
+			.getByPlaceholder('YYYY-MM-DD HH:mm')
+			.fill(
+				`${beforeCurrentDateUTC.getFullYear()}-${String(beforeCurrentDateUTC.getMonth() + 1).padStart(2, '0')}-${String(beforeCurrentDateUTC.getDate()).padStart(2, '0')} ${String(beforeCurrentDateUTC.getHours()).padStart(2, '0')}:${String(beforeCurrentDateUTC.getMinutes()).padStart(2, '0')}`
+			);
+
+		await expect(
+			page.getByText('Error: The date entered is in the past.')
+		).toBeVisible();
+
+		currentDate.setMinutes(currentDate.getMinutes() + 10);
+
+		const afterCurrentDateUTC = new Date(
+			currentDate.toLocaleString('en-US', {timeZone: 'UTC'})
+		);
+
+		await page
+			.getByPlaceholder('YYYY-MM-DD HH:mm')
+			.fill(
+				`${afterCurrentDateUTC.getFullYear()}-${String(afterCurrentDateUTC.getMonth() + 1).padStart(2, '0')}-${String(afterCurrentDateUTC.getDate()).padStart(2, '0')} ${String(afterCurrentDateUTC.getHours()).padStart(2, '0')}:${String(afterCurrentDateUTC.getMinutes()).padStart(2, '0')}`
+			);
+
+		await expect(
+			page.getByText('Error: The date entered is in the past.')
+		).not.toBeVisible();
 	}
 );
 
@@ -311,7 +373,7 @@ baseTest(
 
 		await journalEditArticlePage.fillTitle(getRandomString());
 
-		await page.getByRole('button', {name: 'Publish'}).click();
+		await journalEditArticlePage.publishArticle();
 
 		await page.getByLabel('Select View, Currently').click();
 
@@ -429,14 +491,12 @@ baseTest(
 
 		await journalPage.goto(site.friendlyUrlPath);
 
-		await page.getByLabel('Items per Page').click();
-
-		await page.getByRole('option', {name: '4 Entries per Page'}).click();
+		await setItemsPerPage(page, 4);
 
 		await page.getByTestId('row').nth(0).getByRole('checkbox').check();
 		await page.getByTestId('row').nth(1).getByRole('checkbox').check();
 
-		await page.getByRole('link', {name: 'Page 2'}).click();
+		await nextPage(page);
 
 		await expect(
 			page.getByText('Showing 5 to 8 of 10 entries.')
@@ -445,7 +505,7 @@ baseTest(
 		await page.getByTestId('row').nth(0).getByRole('checkbox').check();
 		await page.getByTestId('row').nth(1).getByRole('checkbox').check();
 
-		await page.getByRole('link', {name: 'Page 3'}).click();
+		await nextPage(page);
 
 		await expect(
 			page.getByText('Showing 9 to 10 of 10 entries.')
@@ -669,7 +729,6 @@ prefixUrlTest(
 		await friendlyUrlInstanceSettingsPage.resetSeparator(
 			'Web Content URL Separator'
 		);
-
 		expect(
 			await page.request.get(
 				'/group' + site.friendlyUrlPath + '/w/' + articleTitle
@@ -711,7 +770,7 @@ baseTest(
 			});
 		}
 
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await waitForAlert(page, `Success:${title} was created successfully.`);
 
@@ -1170,7 +1229,7 @@ baseTest(
 
 		await journalEditArticlePage.fillContent(catalanContent);
 
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await waitForAlert(page, `Success:${title} was created successfully.`);
 
@@ -1381,7 +1440,7 @@ baseTest(
 			});
 		}).toPass();
 
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await waitForAlert(page, `Success:${title} was created successfully.`);
 
@@ -1569,6 +1628,7 @@ assetPublisherDeprecationTest(
 		tag: '@LPD-35348',
 	},
 	async ({
+		apiHelpers,
 		journalEditArticlePage,
 		journalPage,
 		page,
@@ -1586,17 +1646,18 @@ assetPublisherDeprecationTest(
 
 		await journalEditArticlePage.fillContent('page1 @page_break@ page2');
 
-		await journalEditArticlePage.publishButton.click();
+		await journalEditArticlePage.publishArticle();
 
 		await waitForAlert(page, `Success:${title} was created successfully.`);
 
 		await pagesAdminPage.goto(site.friendlyUrlPath);
 
-		const name = getRandomString();
-		await pagesAdminPage.addWidgetPage({name});
+		const widgetLayout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			title: getRandomString(),
+		});
 
-		await pagesAdminPage.goto(site.friendlyUrlPath);
-		await page.getByLabel(name, {exact: true}).click();
+		await widgetPagePage.goto(widgetLayout, site.friendlyUrlPath);
 
 		await widgetPagePage.addPortlet('Asset Publisher');
 		await page
@@ -1625,8 +1686,7 @@ assetPublisherDeprecationTest(
 		await configurationFrame.getByRole('button', {name: 'Save'}).click();
 		await page.getByLabel('close', {exact: true}).click();
 
-		await pagesAdminPage.goto(site.friendlyUrlPath);
-		await page.getByLabel(name, {exact: true}).click();
+		await widgetPagePage.goto(widgetLayout, site.friendlyUrlPath);
 
 		await page.getByLabel('Go to page, 2').click();
 
@@ -1635,7 +1695,7 @@ assetPublisherDeprecationTest(
 );
 
 translationAndAutosaveTest(
-	'Web Content is published when Feature Flags LPD-11228 and LPD-15596 are active',
+	'Web Content is published when Feature Flags LPD-11228 is are active',
 	{
 		tag: '@LPD-33570',
 	},

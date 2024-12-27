@@ -24,6 +24,8 @@ import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import dragAndDropElement from '../../utils/dragAndDropElement';
 import getGlobalSiteId from '../../utils/getGlobalSiteId';
 import getRandomString from '../../utils/getRandomString';
+import {hoverAndExpectToBeVisible} from '../../utils/hoverAndExpectToBeVisible';
+import {performLogout} from '../../utils/performLogin';
 import getBasicWebContentStructureId, {
 	getWebContentStructureId,
 } from '../../utils/structured-content/getBasicWebContentStructureId';
@@ -56,6 +58,15 @@ const test = mergeTests(
 	objectPagesTest,
 	pageEditorPagesTest,
 	pageManagementSiteTest
+);
+
+const testWithPrivatePages = mergeTests(
+	test,
+	featureFlagsTest({
+		'LPD-38869': true,
+		'LPD-39304': true,
+		'LPS-178052': true,
+	})
 );
 
 const ENTER_KEY = 'Enter';
@@ -99,24 +110,34 @@ test.describe('Content Display Fragment', () => {
 	test('Does not show alert when accessing a page with a web content display mapped to a restricted web content', async ({
 		apiHelpers,
 		browser,
+		journalEditArticlePage,
 		journalPage,
 		page,
 		pageEditorPage,
 		site,
 	}) => {
 
-		// Create a web content restricted to site members
+		// Create a web content
 
 		await journalPage.goto(site.friendlyUrlPath);
 		await journalPage.goToCreateArticle();
 
-		await journalPage.setArticleViewableBy('Site Members');
+		// Wait for editor to be loaded
+
+		await page.getByLabel('Select a language').waitFor();
+
+		await page
+			.locator('.sheet-subtitle', {hasText: 'Basic Information'})
+			.waitFor();
+
+		// Fill article data and publish for Site Members
 
 		const articleTitle = getRandomString();
 		const articleContent = 'My article';
 
 		await journalPage.fillArticleData(articleTitle, articleContent);
-		await journalPage.publishArticle();
+
+		await journalEditArticlePage.publishArticle(false, 'Site Members');
 
 		await expect(
 			page.getByLabel('Not Visible to Guest Users')
@@ -490,11 +511,19 @@ test.describe('Related Asset Fragment', () => {
 
 			await journalEditArticlePage.editArticle(journalArticleTitle1);
 
-			await journalEditArticlePage.openRelatedAsset('Basic Web Content');
-
 			const row = page
 				.frameLocator('iframe[title="Select Basic Web Content"]')
 				.locator('.list-group-item', {hasText: journalArticleTitle2});
+
+			await expect(async () => {
+				await journalEditArticlePage.openRelatedAsset(
+					'Basic Web Content'
+				);
+
+				await expect(
+					page.getByText('Select Basic Web Content')
+				).toBeVisible({timeout: 3000});
+			}).toPass();
 
 			await row.getByRole('checkbox').check({trial: true});
 
@@ -505,11 +534,7 @@ test.describe('Related Asset Fragment', () => {
 				trigger: page.getByRole('button', {name: 'Done'}),
 			});
 
-			await page
-				.getByRole('button', {exact: true, name: 'Publish'})
-				.click();
-
-			await waitForAlert(page, `was updated successfully.`);
+			await journalEditArticlePage.publishArticle(true);
 
 			// Create a display page template for Basic Web Content
 
@@ -1193,20 +1218,7 @@ test.describe('Image Fragment', () => {
 
 			// Select the image directly
 
-			await pageEditorPage.selectEditable(imageId, 'image-square');
-
-			await page.getByTitle('Select Image').click();
-
-			const imageCard = page
-				.frameLocator('iframe[title="Select"]')
-				.getByText('poodle.jpg');
-
-			await clickAndExpectToBeHidden({
-				target: page.locator('.modal-dialog'),
-				trigger: imageCard,
-			});
-
-			await pageEditorPage.waitForChangesSaved();
+			await pageEditorPage.selectDirectImage('poodle.jpg', imageId);
 
 			expect(
 				await page
@@ -1218,65 +1230,295 @@ test.describe('Image Fragment', () => {
 	);
 });
 
-test.describe('Localization Select Fragment', () => {
-	test('Allow selecting a language', async ({apiHelpers, page, site}) => {
+testWithPrivatePages.describe('Menu Display Fragment', () => {
+	async function changeSource(
+		menuDisplayId: string,
+		name: string,
+		page: Page,
+		pageEditorPage: PageEditorPage
+	) {
+		await pageEditorPage.selectFragment(menuDisplayId);
 
-		// Create a page with a localization select fragment
-
-		const layout = await apiHelpers.headlessDelivery.createSitePage({
-			pageDefinition: getPageDefinition([
-				getFragmentDefinition({
-					id: getRandomString(),
-					key: 'localization-select',
-				}),
-			]),
-			siteId: site.id,
-			title: getRandomString(),
-		});
-
-		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
-
-		await page.exposeFunction('checkLanguageUpdate', (id) => {
-			expect(id).toBe('es-ES111');
-		});
-
-		// Check the language select is visible
-
-		const languageSelect = page.getByLabel(
-			'Select a language, current language: English (United States).'
-		);
-
-		// Click an option and checkt the langue select is updated and the event is fired
-
-		await expect(languageSelect).toBeVisible();
-
-		await page.evaluate(() => {
-			Liferay.on('localizationSelect:localeChanged', (event) => {
-				(window as any).TEST_LANGUAGE_SELECTED = event.languageId;
-			});
-		});
+		const iframe = page.frameLocator('iframe[title="Select"]');
 
 		await clickAndExpectToBeVisible({
 			autoClick: true,
-			target: page.getByRole('option', {name: 'es-ES'}),
-			trigger: languageSelect,
+			target: iframe.getByText(name),
+			timeout: 3000,
+			trigger: page.getByLabel('Change Source'),
 		});
 
-		const response = await page.waitForFunction(
-			() => {
-				return (window as any).TEST_LANGUAGE_SELECTED;
-			},
-			{timeout: 1000 * 60}
-		);
+		await iframe.getByRole('button', {name: 'Select This Level'}).click();
 
-		expect(await response.jsonValue()).toBe('es_ES');
+		await pageEditorPage.waitForChangesSaved();
+	}
 
-		await expect(
-			page.getByLabel(
-				'Select a language, current language: Spanish (Spain).'
-			)
-		).toBeVisible();
-	});
+	testWithPrivatePages(
+		'Can configure sublevels, display style, selected item color and hovered item color',
+		{
+			tag: ['@LPS-120091', '@LPS-140988'],
+		},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Add layouts
+
+			const parentLayoutTitle = getRandomString();
+
+			const parentLayout =
+				await apiHelpers.jsonWebServicesLayout.addLayout({
+					groupId: site.id,
+					title: parentLayoutTitle,
+				});
+
+			const childLayoutTitle = getRandomString();
+
+			const childLayout =
+				await apiHelpers.jsonWebServicesLayout.addLayout({
+					groupId: site.id,
+					parentLayoutId: parentLayout.layoutId,
+					title: childLayoutTitle,
+				});
+
+			const grandChildLayoutLayoutTitle = getRandomString();
+
+			await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				parentLayoutId: childLayout.layoutId,
+				title: grandChildLayoutLayoutTitle,
+			});
+
+			// Add layout with menu display fragment and go to edit mode
+
+			const menuDisplayId = getRandomString();
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getFragmentDefinition({
+						fragmentConfig: {
+							sublevels: -1,
+						},
+						id: menuDisplayId,
+						key: 'com.liferay.fragment.renderer.menu.display.internal.MenuDisplayFragmentRenderer',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Assert layouts in menu display fragment
+
+			const menuDisplay = page.locator(
+				'.lfr-layout-structure-item-com-liferay-fragment-renderer-menu-display-internal-menudisplayfragmentrenderer'
+			);
+
+			await expect(
+				menuDisplay.getByText(parentLayoutTitle)
+			).toBeVisible();
+
+			await hoverAndExpectToBeVisible({
+				autoClick: false,
+				target: menuDisplay.getByText(childLayoutTitle),
+				trigger: menuDisplay.locator('.nav-link', {
+					hasText: parentLayoutTitle,
+				}),
+			});
+
+			await expect(
+				menuDisplay.getByText(grandChildLayoutLayoutTitle)
+			).toBeVisible();
+
+			// Configure levels
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Sublevels',
+				fragmentId: menuDisplayId,
+				tab: 'General',
+				value: '1',
+			});
+
+			// Assert layouts in menu display fragment
+
+			await hoverAndExpectToBeVisible({
+				autoClick: false,
+				target: menuDisplay.getByText(childLayoutTitle),
+				trigger: menuDisplay.locator('.nav-link', {
+					hasText: parentLayoutTitle,
+				}),
+			});
+
+			await expect(
+				menuDisplay.getByText(grandChildLayoutLayoutTitle)
+			).not.toBeVisible();
+
+			// Change displayStyle
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Display Style',
+				fragmentId: menuDisplayId,
+				tab: 'General',
+				value: 'Stacked',
+			});
+
+			// Assert layouts in menu display fragment
+
+			await expect(
+				menuDisplay.getByText(parentLayoutTitle)
+			).toBeVisible();
+
+			await expect(menuDisplay.getByText(childLayoutTitle)).toBeVisible();
+
+			await expect(
+				menuDisplay.getByText(grandChildLayoutLayoutTitle)
+			).not.toBeVisible();
+
+			// Change color style
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Selected Item Color',
+				fragmentId: menuDisplayId,
+				tab: 'Styles',
+				value: 'Success',
+				valueFromStylebook: true,
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Hovered Item Color',
+				fragmentId: menuDisplayId,
+				tab: 'Styles',
+				value: 'Warning',
+				valueFromStylebook: true,
+			});
+
+			// Assert color style in edit mode
+
+			await menuDisplay.getByText(parentLayoutTitle).hover();
+
+			await expect(menuDisplay.getByText(parentLayoutTitle)).toHaveCSS(
+				'color',
+				'rgb(185, 80, 0)'
+			);
+
+			// Publish page
+
+			await pageEditorPage.publishPage();
+
+			// logout and assert guest user can see menu fragment
+
+			await performLogout(page);
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await expect(
+				menuDisplay.getByText(parentLayoutTitle)
+			).toBeVisible();
+
+			// Assert color style in view mode
+
+			await expect(menuDisplay.getByText(parentLayoutTitle)).toHaveCSS(
+				'color',
+				'rgb(28, 28, 36)'
+			);
+		}
+	);
+
+	testWithPrivatePages(
+		'Can select a navigation menu from existing ones',
+		{
+			tag: '@LPS-120091',
+		},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Add public and private layouts
+
+			const publicLayoutTitle = getRandomString();
+
+			await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				title: publicLayoutTitle,
+			});
+
+			const privateLayoutTitle = getRandomString();
+
+			await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				privateLayout: 'true',
+				title: privateLayoutTitle,
+			});
+
+			// Add navigation menu
+
+			const siteNavigationMenuName = getRandomString();
+
+			await apiHelpers.jsonWebServicesSiteNavigationMenu.addSiteNavigationMenu(
+				site.id,
+				siteNavigationMenuName
+			);
+
+			// Add layout with menu display fragment and go to edit mode
+
+			const menuDisplayId = getRandomString();
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getFragmentDefinition({
+						fragmentConfig: {
+							sublevels: -1,
+						},
+						id: menuDisplayId,
+						key: 'com.liferay.fragment.renderer.menu.display.internal.MenuDisplayFragmentRenderer',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Assert public page
+
+			const menuDisplay = page.locator(
+				'.lfr-layout-structure-item-com-liferay-fragment-renderer-menu-display-internal-menudisplayfragmentrenderer'
+			);
+
+			await expect(
+				menuDisplay.getByText(publicLayoutTitle)
+			).toBeVisible();
+
+			// Select private pages hierarchy
+
+			await changeSource(
+				menuDisplayId,
+				'Private Pages Hierarchy',
+				page,
+				pageEditorPage
+			);
+
+			// Assert private page
+
+			await expect(
+				menuDisplay.getByText(privateLayoutTitle)
+			).toBeVisible();
+
+			// Select navigation menu
+
+			await changeSource(
+				menuDisplayId,
+				siteNavigationMenuName,
+				page,
+				pageEditorPage
+			);
+
+			// Assert navigation item
+
+			await expect(
+				menuDisplay.getByText('There are no menu items to display')
+			).toBeVisible();
+		}
+	);
 });
 
 test.describe('Multiselect Fragment', () => {
@@ -1935,7 +2177,7 @@ test.describe('Tags Fragment', () => {
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 		);
 
-		await page.getByLabel('Lemon Size').fill('Tags test');
+		await page.getByLabel('Lemon Size', {exact: true}).fill('Tags test');
 
 		await page.getByRole('combobox').first().click();
 		await page.getByRole('option', {exact: true, name: 'Dogs'}).click();

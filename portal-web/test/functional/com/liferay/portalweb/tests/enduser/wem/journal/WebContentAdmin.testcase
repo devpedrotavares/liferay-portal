@@ -40,7 +40,7 @@ definition {
 			webContentContent = "WC WebContent Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title");
 
@@ -91,7 +91,7 @@ definition {
 			webContentContent = "WC WebContent Content 1",
 			webContentTitle = "WC WebContent Title 1");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title 1");
 
@@ -101,7 +101,7 @@ definition {
 			webContentContent = "WC WebContent Content 2",
 			webContentTitle = "WC WebContent Title 2");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title 2");
 
@@ -111,7 +111,7 @@ definition {
 			webContentContent = "WC WebContent Content 3",
 			webContentTitle = "WC WebContent Title 3");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title 3");
 
@@ -683,7 +683,7 @@ definition {
 			webContentContent = "WC Contenido de la web Contenido",
 			webContentTitle = "WC Contenido de la web Titulo");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
@@ -833,7 +833,7 @@ definition {
 				webContentText = "LXC",
 				webContentTitle = "LXC");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site administrator navigates to the configuration page") {
@@ -921,7 +921,7 @@ definition {
 				webContentText = "LXC",
 				webContentTitle = "LXC");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site administrator navigates to the configuration page") {
@@ -1272,7 +1272,7 @@ definition {
 				webContentText = "Liferay Commerce",
 				webContentTitle = "Liferay Commerce");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site administrator navigates to the Content Library sheet") {
@@ -1327,7 +1327,7 @@ definition {
 				webContentText = "Liferay Commerce",
 				webContentTitle = "Liferay Commerce");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site administrator navigates to the highlighted structure sheet") {
@@ -1731,7 +1731,7 @@ definition {
 				webContentText = "LXC",
 				webContentTitle = "LXC");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the site administrator navigates to the highlighted structure sheet") {
@@ -2080,7 +2080,7 @@ definition {
 				webContentText = "LXC",
 				webContentTitle = "LXC");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Name");
 
@@ -2088,7 +2088,7 @@ definition {
 				webContentText = "Commerce",
 				webContentTitle = "Commerce");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.moveToFolderCP(
 				folderName = "WC Folder Name",

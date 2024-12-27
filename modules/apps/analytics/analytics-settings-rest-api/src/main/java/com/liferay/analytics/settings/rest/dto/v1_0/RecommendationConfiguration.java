@@ -28,6 +28,8 @@ import java.util.function.Supplier;
 
 import javax.annotation.Generated;
 
+import javax.validation.Valid;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -51,35 +53,35 @@ public class RecommendationConfiguration implements Serializable {
 	}
 
 	@Schema
-	public Boolean getContentRecommenderMostPopularItemsEnabled() {
-		if (_contentRecommenderMostPopularItemsEnabledSupplier != null) {
-			contentRecommenderMostPopularItemsEnabled =
-				_contentRecommenderMostPopularItemsEnabledSupplier.get();
+	@Valid
+	public RecommendationItem getContentRecommenderMostPopularItems() {
+		if (_contentRecommenderMostPopularItemsSupplier != null) {
+			contentRecommenderMostPopularItems =
+				_contentRecommenderMostPopularItemsSupplier.get();
 
-			_contentRecommenderMostPopularItemsEnabledSupplier = null;
+			_contentRecommenderMostPopularItemsSupplier = null;
 		}
 
-		return contentRecommenderMostPopularItemsEnabled;
+		return contentRecommenderMostPopularItems;
 	}
 
-	public void setContentRecommenderMostPopularItemsEnabled(
-		Boolean contentRecommenderMostPopularItemsEnabled) {
+	public void setContentRecommenderMostPopularItems(
+		RecommendationItem contentRecommenderMostPopularItems) {
 
-		this.contentRecommenderMostPopularItemsEnabled =
-			contentRecommenderMostPopularItemsEnabled;
+		this.contentRecommenderMostPopularItems =
+			contentRecommenderMostPopularItems;
 
-		_contentRecommenderMostPopularItemsEnabledSupplier = null;
+		_contentRecommenderMostPopularItemsSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setContentRecommenderMostPopularItemsEnabled(
-		UnsafeSupplier<Boolean, Exception>
-			contentRecommenderMostPopularItemsEnabledUnsafeSupplier) {
+	public void setContentRecommenderMostPopularItems(
+		UnsafeSupplier<RecommendationItem, Exception>
+			contentRecommenderMostPopularItemsUnsafeSupplier) {
 
-		_contentRecommenderMostPopularItemsEnabledSupplier = () -> {
+		_contentRecommenderMostPopularItemsSupplier = () -> {
 			try {
-				return contentRecommenderMostPopularItemsEnabledUnsafeSupplier.
-					get();
+				return contentRecommenderMostPopularItemsUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -92,41 +94,42 @@ public class RecommendationConfiguration implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Boolean contentRecommenderMostPopularItemsEnabled;
+	protected RecommendationItem contentRecommenderMostPopularItems;
 
 	@JsonIgnore
-	private Supplier<Boolean>
-		_contentRecommenderMostPopularItemsEnabledSupplier;
+	private Supplier<RecommendationItem>
+		_contentRecommenderMostPopularItemsSupplier;
 
 	@Schema
-	public Boolean getContentRecommenderUserPersonalizationEnabled() {
-		if (_contentRecommenderUserPersonalizationEnabledSupplier != null) {
-			contentRecommenderUserPersonalizationEnabled =
-				_contentRecommenderUserPersonalizationEnabledSupplier.get();
+	@Valid
+	public RecommendationItem getContentRecommenderUserPersonalization() {
+		if (_contentRecommenderUserPersonalizationSupplier != null) {
+			contentRecommenderUserPersonalization =
+				_contentRecommenderUserPersonalizationSupplier.get();
 
-			_contentRecommenderUserPersonalizationEnabledSupplier = null;
+			_contentRecommenderUserPersonalizationSupplier = null;
 		}
 
-		return contentRecommenderUserPersonalizationEnabled;
+		return contentRecommenderUserPersonalization;
 	}
 
-	public void setContentRecommenderUserPersonalizationEnabled(
-		Boolean contentRecommenderUserPersonalizationEnabled) {
+	public void setContentRecommenderUserPersonalization(
+		RecommendationItem contentRecommenderUserPersonalization) {
 
-		this.contentRecommenderUserPersonalizationEnabled =
-			contentRecommenderUserPersonalizationEnabled;
+		this.contentRecommenderUserPersonalization =
+			contentRecommenderUserPersonalization;
 
-		_contentRecommenderUserPersonalizationEnabledSupplier = null;
+		_contentRecommenderUserPersonalizationSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setContentRecommenderUserPersonalizationEnabled(
-		UnsafeSupplier<Boolean, Exception>
-			contentRecommenderUserPersonalizationEnabledUnsafeSupplier) {
+	public void setContentRecommenderUserPersonalization(
+		UnsafeSupplier<RecommendationItem, Exception>
+			contentRecommenderUserPersonalizationUnsafeSupplier) {
 
-		_contentRecommenderUserPersonalizationEnabledSupplier = () -> {
+		_contentRecommenderUserPersonalizationSupplier = () -> {
 			try {
-				return contentRecommenderUserPersonalizationEnabledUnsafeSupplier.
+				return contentRecommenderUserPersonalizationUnsafeSupplier.
 					get();
 			}
 			catch (RuntimeException runtimeException) {
@@ -140,11 +143,11 @@ public class RecommendationConfiguration implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Boolean contentRecommenderUserPersonalizationEnabled;
+	protected RecommendationItem contentRecommenderUserPersonalization;
 
 	@JsonIgnore
-	private Supplier<Boolean>
-		_contentRecommenderUserPersonalizationEnabledSupplier;
+	private Supplier<RecommendationItem>
+		_contentRecommenderUserPersonalizationSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -175,30 +178,30 @@ public class RecommendationConfiguration implements Serializable {
 
 		sb.append("{");
 
-		Boolean contentRecommenderMostPopularItemsEnabled =
-			getContentRecommenderMostPopularItemsEnabled();
+		RecommendationItem contentRecommenderMostPopularItems =
+			getContentRecommenderMostPopularItems();
 
-		if (contentRecommenderMostPopularItemsEnabled != null) {
+		if (contentRecommenderMostPopularItems != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"contentRecommenderMostPopularItemsEnabled\": ");
+			sb.append("\"contentRecommenderMostPopularItems\": ");
 
-			sb.append(contentRecommenderMostPopularItemsEnabled);
+			sb.append(String.valueOf(contentRecommenderMostPopularItems));
 		}
 
-		Boolean contentRecommenderUserPersonalizationEnabled =
-			getContentRecommenderUserPersonalizationEnabled();
+		RecommendationItem contentRecommenderUserPersonalization =
+			getContentRecommenderUserPersonalization();
 
-		if (contentRecommenderUserPersonalizationEnabled != null) {
+		if (contentRecommenderUserPersonalization != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"contentRecommenderUserPersonalizationEnabled\": ");
+			sb.append("\"contentRecommenderUserPersonalization\": ");
 
-			sb.append(contentRecommenderUserPersonalizationEnabled);
+			sb.append(String.valueOf(contentRecommenderUserPersonalization));
 		}
 
 		sb.append("}");

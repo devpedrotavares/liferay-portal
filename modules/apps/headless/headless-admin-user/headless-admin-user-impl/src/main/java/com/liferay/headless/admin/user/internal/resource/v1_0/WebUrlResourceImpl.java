@@ -29,6 +29,8 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.util.DTOConverterUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 
+import java.util.List;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -44,7 +46,13 @@ public class WebUrlResourceImpl extends BaseWebUrlResourceImpl {
 
 	@Override
 	public void deleteWebUrl(Long websiteId) throws Exception {
+		Website website = _websiteService.getWebsite(websiteId);
+
 		_websiteService.deleteWebsite(websiteId);
+
+		if (website.isPrimary()) {
+			_updatePrimaryWebsite(website.getClassName(), website.getClassPK());
+		}
 	}
 
 	@Override
@@ -163,6 +171,11 @@ public class WebUrlResourceImpl extends BaseWebUrlResourceImpl {
 	public WebUrl patchWebUrl(Long webUrlId, WebUrl webUrl) throws Exception {
 		Website website = _websiteService.getWebsite(webUrlId);
 
+		boolean oldPrimary = website.isPrimary();
+
+		boolean newPrimary = GetterUtil.getBoolean(
+			webUrl.getPrimary(), oldPrimary);
+
 		website = _websiteService.updateWebsite(
 			GetterUtil.getString(
 				webUrl.getExternalReferenceCode(),
@@ -171,7 +184,25 @@ public class WebUrlResourceImpl extends BaseWebUrlResourceImpl {
 			GetterUtil.getLong(
 				_getListTypeId(website.getClassName(), webUrl.getUrlType()),
 				website.getListTypeId()),
-			GetterUtil.getBoolean(webUrl.getPrimary(), website.isPrimary()));
+			newPrimary);
+
+		if (!newPrimary && oldPrimary) {
+			List<Website> websites = _websiteService.getWebsites(
+				website.getClassName(), website.getClassPK());
+
+			for (Website currentWebsite : websites) {
+				if ((websites.size() == 1) ||
+					(currentWebsite.getWebsiteId() != website.getWebsiteId())) {
+
+					_websiteService.updateWebsite(
+						currentWebsite.getExternalReferenceCode(),
+						currentWebsite.getWebsiteId(), currentWebsite.getUrl(),
+						currentWebsite.getListTypeId(), true);
+
+					break;
+				}
+			}
+		}
 
 		return WebUrlUtil.toWebUrl(website);
 	}
@@ -203,6 +234,23 @@ public class WebUrlResourceImpl extends BaseWebUrlResourceImpl {
 		}
 
 		return listType.getListTypeId();
+	}
+
+	private void _updatePrimaryWebsite(String className, long contactId)
+		throws Exception {
+
+		List<Website> websites = _websiteService.getWebsites(
+			className, contactId);
+
+		if (websites.isEmpty()) {
+			return;
+		}
+
+		Website website = websites.get(0);
+
+		_websiteService.updateWebsite(
+			website.getExternalReferenceCode(), website.getWebsiteId(),
+			website.getUrl(), website.getListTypeId(), true);
 	}
 
 	@Reference

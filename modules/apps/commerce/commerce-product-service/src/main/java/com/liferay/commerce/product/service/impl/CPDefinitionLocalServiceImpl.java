@@ -44,6 +44,7 @@ import com.liferay.commerce.product.model.CommerceChannelRel;
 import com.liferay.commerce.product.model.impl.CPDefinitionImpl;
 import com.liferay.commerce.product.model.impl.CPDefinitionModelImpl;
 import com.liferay.commerce.product.service.CPAttachmentFileEntryLocalService;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
 import com.liferay.commerce.product.service.CPDefinitionLinkLocalService;
 import com.liferay.commerce.product.service.CPDefinitionOptionRelLocalService;
 import com.liferay.commerce.product.service.CPDefinitionSpecificationOptionValueLocalService;
@@ -1406,6 +1407,12 @@ public class CPDefinitionLocalServiceImpl
 			companyGroup.getGroupId(), CProduct.class,
 			cpDefinition.getCProductId());
 
+		// Commerce product configuration entries
+
+		_cpConfigurationEntryLocalService.deleteCPConfigurationEntries(
+			_portal.getClassNameId(CPDefinition.class),
+			cpDefinition.getCPDefinitionId());
+
 		// Commerce product display layouts
 
 		_cpDisplayLayoutLocalService.deleteCPDisplayLayouts(
@@ -1542,19 +1549,11 @@ public class CPDefinitionLocalServiceImpl
 	public List<String> getCPDefinitionLocalizationLanguageIds(
 		long cpDefinitionId) {
 
-		List<CPDefinitionLocalization> cpDefinitionLocalizationList =
+		return TransformUtil.transform(
 			cpDefinitionLocalizationPersistence.findByCPDefinitionId(
-				cpDefinitionId);
-
-		List<String> availableLanguageIds = new ArrayList<>();
-
-		for (CPDefinitionLocalization cpDefinitionLocalization :
-				cpDefinitionLocalizationList) {
-
-			availableLanguageIds.add(cpDefinitionLocalization.getLanguageId());
-		}
-
-		return availableLanguageIds;
+				cpDefinitionId),
+			cpDefinitionLocalization ->
+				cpDefinitionLocalization.getLanguageId());
 	}
 
 	@Override
@@ -3230,13 +3229,13 @@ public class CPDefinitionLocalServiceImpl
 			_cpSubscriptionTypeRegistry.getCPSubscriptionType(
 				deliverySubscriptionType);
 
-		if (deliveryCPSubscriptionType != null) {
-			return deliveryCPSubscriptionType.
-				getDeliverySubscriptionTypeSettingsUnicodeProperties(
-					deliverySubscriptionTypeSettingsUnicodeProperties);
+		if (deliveryCPSubscriptionType == null) {
+			return null;
 		}
 
-		return null;
+		return deliveryCPSubscriptionType.
+			getDeliverySubscriptionTypeSettingsUnicodeProperties(
+				deliverySubscriptionTypeSettingsUnicodeProperties);
 	}
 
 	private void _validateSubscriptionCycles(
@@ -3282,13 +3281,12 @@ public class CPDefinitionLocalServiceImpl
 		CPSubscriptionType cpSubscriptionType =
 			_cpSubscriptionTypeRegistry.getCPSubscriptionType(subscriptionType);
 
-		if (cpSubscriptionType != null) {
-			return cpSubscriptionType.
-				getSubscriptionTypeSettingsUnicodeProperties(
-					subscriptionTypeSettingsUnicodeProperties);
+		if (cpSubscriptionType == null) {
+			return null;
 		}
 
-		return null;
+		return cpSubscriptionType.getSubscriptionTypeSettingsUnicodeProperties(
+			subscriptionTypeSettingsUnicodeProperties);
 	}
 
 	private static final String[] _SELECTED_FIELD_NAMES = {
@@ -3331,6 +3329,9 @@ public class CPDefinitionLocalServiceImpl
 
 	@Reference
 	private CPAttachmentFileEntryPersistence _cpAttachmentFileEntryPersistence;
+
+	@Reference
+	private CPConfigurationEntryLocalService _cpConfigurationEntryLocalService;
 
 	@Reference
 	private CPDefinitionLinkLocalService _cpDefinitionLinkLocalService;

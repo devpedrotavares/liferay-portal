@@ -11,9 +11,11 @@ import {
 } from '@liferay/object-admin-rest-client-js';
 import {expect, mergeTests} from '@playwright/test';
 
+import {accountSettingsPagesTest} from '../../fixtures/accountSettingsPagesTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {collectionsPagesTest} from '../../fixtures/collectionsPagesTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
+import {editObjectDefinitionPagesTest} from '../../fixtures/editObjectDefinitionPagesTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
@@ -29,10 +31,12 @@ import evaluateKeepCheckingAfterFound from './utils/keepCheckingAfterFound';
 import {mockObjectFields} from './utils/mockObjectFields';
 
 export const test = mergeTests(
+	accountSettingsPagesTest,
 	applicationsMenuPageTest,
 	collectionsPagesTest,
 	dataApiHelpersTest,
 	isolatedSiteTest,
+	editObjectDefinitionPagesTest,
 	featureFlagsTest({
 		'LPS-178052': true,
 	}),
@@ -42,6 +46,16 @@ export const test = mergeTests(
 	pageEditorPagesTest,
 	workflowPagesTest
 );
+
+let siteLanguage = 'en';
+
+test.afterEach(async ({page}) => {
+	if (siteLanguage !== 'en') {
+		await page.goto('en');
+
+		siteLanguage = 'en';
+	}
+});
 
 test.describe('Manage object entries through Page Templates', () => {
 	test('can view all entries related to an object in the relationship field', async ({
@@ -99,11 +113,10 @@ test.describe('Manage object entries through Page Templates', () => {
 		});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition2.id,
@@ -157,6 +170,8 @@ test.describe('Manage object entries through Page Templates', () => {
 		}
 
 		await viewObjectEntriesPage.goto(objectDefinition2.className, 'pt');
+
+		siteLanguage = 'pt';
 
 		await viewObjectEntriesPage.clickAddObjectEntry();
 
@@ -323,7 +338,7 @@ test.describe('Manage object entries through Page Templates', () => {
 
 		await displayPageTemplatesPage.goto();
 
-		await displayPageTemplatesPage.deleteAllDisplayPageTemplates();
+		await displayPageTemplatesPage.deleteTemplate(objectDefinitionLabel);
 	});
 });
 
@@ -674,12 +689,11 @@ test.describe('Manage object entries through View Object Entries', () => {
 		viewObjectEntriesPage,
 	}) => {
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default',
-				'textField'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+				titleObjectFieldName: 'textField',
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -687,11 +701,10 @@ test.describe('Manage object entries through View Object Entries', () => {
 		});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition2.id,
@@ -754,16 +767,178 @@ test.describe('Manage object entries through View Object Entries', () => {
 		await expect(page.getByRole('menu')).toContainText('test 2');
 	});
 
+	test('can filter entries in a M:M relationship entries page using search container', async ({
+		apiHelpers,
+		objectLayoutsPage,
+		page,
+		viewObjectEntriesPage,
+	}) => {
+		const objectField = 'textField';
+
+		const objectDefinition1 =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				scope: 'company',
+				status: {code: 0},
+				titleObjectFieldName: objectField,
+			});
+
+		apiHelpers.data.push({
+			id: objectDefinition1.id,
+			type: 'objectDefinition',
+		});
+
+		const objectDefinition2 =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				scope: 'company',
+				status: {code: 0},
+				titleObjectFieldName: objectField,
+			});
+
+		apiHelpers.data.push({
+			id: objectDefinition2.id,
+			type: 'objectDefinition',
+		});
+
+		const objectRelationshipLabel =
+			'objectRelationshipLabel' + getRandomInt();
+		const objectRelationshipName =
+			'objectRelationshipName' + getRandomInt();
+
+		const objectRelationshipApiClient = await apiHelpers.buildRestClient(
+			ObjectRelationshipApi
+		);
+
+		const objectRelationshipData: Partial<ObjectRelationship> = {
+			label: {
+				en_US: objectRelationshipLabel,
+			},
+			name: objectRelationshipName,
+			objectDefinitionExternalReferenceCode1:
+				objectDefinition1.externalReferenceCode,
+			objectDefinitionExternalReferenceCode2:
+				objectDefinition2.externalReferenceCode,
+			objectDefinitionId1: objectDefinition1.id,
+			objectDefinitionId2: objectDefinition2.id,
+			objectDefinitionName2: objectDefinition2.name,
+			type: ObjectRelationship.TypeEnum.ManyToMany,
+		};
+
+		await objectRelationshipApiClient.postObjectDefinitionByExternalReferenceCodeObjectRelationship(
+			objectDefinition1.externalReferenceCode,
+			objectRelationshipData
+		);
+
+		const applicationName =
+			'c/' + objectDefinition1.name.toLowerCase() + 's';
+
+		await apiHelpers.objectEntry.postObjectEntry(
+			{textField: 'test 1'},
+			applicationName
+		);
+
+		await apiHelpers.objectEntry.postObjectEntry(
+			{textField: 'test 2'},
+			applicationName
+		);
+
+		const objectLayoutName = getRandomString();
+
+		const objectRelationshipTabName = getRandomString();
+
+		await objectLayoutsPage.goto(objectDefinition2.name);
+
+		await objectLayoutsPage.createObjectLayout(objectLayoutName);
+
+		await page.getByRole('link', {name: objectLayoutName}).click();
+
+		await objectLayoutsPage.markAsDefaultButton.check();
+
+		await objectLayoutsPage.layoutTab.click();
+
+		await objectLayoutsPage.createObjectLayoutTab(getRandomString());
+
+		await objectLayoutsPage.createObjectLayoutBlock(getRandomString());
+
+		await objectLayoutsPage.openObjectLayoutObjectField();
+
+		await objectLayoutsPage.iframeLocator
+			.getByRole('option', {name: objectField})
+			.click();
+
+		await objectLayoutsPage.saveAddFieldButton.click();
+
+		await objectLayoutsPage.createObjectRelationshipTab(
+			objectLayoutName,
+			objectRelationshipTabName,
+			objectRelationshipLabel
+		);
+
+		await viewObjectEntriesPage.goto(objectDefinition2.className);
+
+		await viewObjectEntriesPage.clickAddObjectEntry(
+			objectDefinition2.label['en_US']
+		);
+
+		await viewObjectEntriesPage.fillObjectEntry({
+			objectFieldBusinessType: ObjectField.BusinessTypeEnum.Text,
+			objectFieldLabel: objectField,
+			objectFieldValue: 'tests',
+		});
+
+		await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+		await page.getByRole('link', {name: objectRelationshipTabName}).click();
+
+		await viewObjectEntriesPage.addObjectEntryButton.click();
+
+		await expect(viewObjectEntriesPage.searchButton).toBeEnabled();
+		await viewObjectEntriesPage.searchBar.click();
+		await viewObjectEntriesPage.searchBar.fill('t 1');
+		await viewObjectEntriesPage.searchButton.click();
+		await expect(viewObjectEntriesPage.searchContainer).toContainText(
+			'test 1'
+		);
+		await expect(viewObjectEntriesPage.searchContainer).not.toContainText(
+			'test 2'
+		);
+
+		await expect(viewObjectEntriesPage.searchButton).toBeEnabled();
+		await viewObjectEntriesPage.searchBar.click();
+		await viewObjectEntriesPage.searchBar.fill('t 2');
+		await viewObjectEntriesPage.searchButton.click();
+		await expect(viewObjectEntriesPage.searchContainer).toContainText(
+			'test 2'
+		);
+		await expect(viewObjectEntriesPage.searchContainer).not.toContainText(
+			'test 1'
+		);
+
+		await expect(viewObjectEntriesPage.searchButton).toBeEnabled();
+		await viewObjectEntriesPage.searchBar.click();
+		await viewObjectEntriesPage.searchBar.fill('tes');
+		await viewObjectEntriesPage.searchButton.click();
+		await expect(viewObjectEntriesPage.searchContainer).toContainText(
+			'test 1'
+		);
+		await expect(viewObjectEntriesPage.searchContainer).toContainText(
+			'test 2'
+		);
+	});
+
 	test('can view success message entirely in arabic', async ({
 		apiHelpers,
 		viewObjectEntriesPage,
 	}) => {
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				[mockedObjectFields.attachmentFieldDocumentsAndMedia],
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFields: [
+					mockedObjectFields.attachmentFieldDocumentsAndMedia,
+				],
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -793,12 +968,11 @@ test.describe('Manage object entries through Workflow', () => {
 		workflowTasksPage,
 	}) => {
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default',
-				'textField'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+				titleObjectFieldName: 'textField',
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -863,12 +1037,11 @@ test.describe('Manage object entries through Workflow', () => {
 		const assetType = 'Single Approver';
 
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default',
-				'textField'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+				titleObjectFieldName: 'textField',
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,

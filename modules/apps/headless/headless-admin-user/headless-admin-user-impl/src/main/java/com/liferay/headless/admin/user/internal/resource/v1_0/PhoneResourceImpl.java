@@ -26,6 +26,8 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.util.DTOConverterUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 
+import java.util.List;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -41,7 +43,14 @@ public class PhoneResourceImpl extends BasePhoneResourceImpl {
 
 	@Override
 	public void deletePhone(Long phoneId) throws Exception {
+		com.liferay.portal.kernel.model.Phone phone = _phoneService.getPhone(
+			phoneId);
+
 		_phoneService.deletePhone(phoneId);
+
+		if (phone.isPrimary()) {
+			_updatePrimaryPhone(phone.getClassName(), phone.getClassPK());
+		}
 	}
 
 	@Override
@@ -148,6 +157,11 @@ public class PhoneResourceImpl extends BasePhoneResourceImpl {
 		com.liferay.portal.kernel.model.Phone serviceBuilderPhone =
 			_phoneService.getPhone(phoneId);
 
+		boolean oldPrimary = serviceBuilderPhone.isPrimary();
+
+		boolean newPrimary = GetterUtil.getBoolean(
+			phone.getPrimary(), oldPrimary);
+
 		serviceBuilderPhone = _phoneService.updatePhone(
 			GetterUtil.getString(
 				phone.getExternalReferenceCode(),
@@ -161,8 +175,32 @@ public class PhoneResourceImpl extends BasePhoneResourceImpl {
 				_getListTypeId(
 					serviceBuilderPhone.getClassName(), phone.getPhoneType()),
 				serviceBuilderPhone.getListTypeId()),
-			GetterUtil.getBoolean(
-				phone.getPrimary(), serviceBuilderPhone.isPrimary()));
+			newPrimary);
+
+		if (!newPrimary && oldPrimary) {
+			List<com.liferay.portal.kernel.model.Phone> serviceBuilderPhones =
+				_phoneService.getPhones(
+					serviceBuilderPhone.getClassName(),
+					serviceBuilderPhone.getClassPK());
+
+			for (com.liferay.portal.kernel.model.Phone
+					currentServiceBuilderPhone : serviceBuilderPhones) {
+
+				if ((serviceBuilderPhones.size() == 1) ||
+					(currentServiceBuilderPhone.getPhoneId() !=
+						serviceBuilderPhone.getPhoneId())) {
+
+					_phoneService.updatePhone(
+						currentServiceBuilderPhone.getExternalReferenceCode(),
+						currentServiceBuilderPhone.getPhoneId(),
+						currentServiceBuilderPhone.getNumber(),
+						currentServiceBuilderPhone.getExtension(),
+						currentServiceBuilderPhone.getListTypeId(), true);
+
+					break;
+				}
+			}
+		}
 
 		return PhoneUtil.toPhone(serviceBuilderPhone);
 	}
@@ -189,6 +227,24 @@ public class PhoneResourceImpl extends BasePhoneResourceImpl {
 		}
 
 		return listType.getListTypeId();
+	}
+
+	private void _updatePrimaryPhone(String className, long contactId)
+		throws Exception {
+
+		List<com.liferay.portal.kernel.model.Phone> phones =
+			_phoneService.getPhones(className, contactId);
+
+		if (phones.isEmpty()) {
+			return;
+		}
+
+		com.liferay.portal.kernel.model.Phone phone = phones.get(0);
+
+		_phoneService.updatePhone(
+			phone.getExternalReferenceCode(), phone.getPhoneId(),
+			phone.getNumber(), phone.getExtension(), phone.getListTypeId(),
+			true);
 	}
 
 	@Reference

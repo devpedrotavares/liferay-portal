@@ -158,7 +158,7 @@ definition {
 				locator1 = "DDMField#MULTIPLE_LINES_2",
 				value1 = "Web Content Content 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown after selected in the Web Content Display") {
@@ -189,7 +189,7 @@ definition {
 				locator1 = "DDMField#MULTIPLE_LINES",
 				value1 = "Contenido web Contenido");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("View web content is shown in English") {
@@ -289,7 +289,7 @@ definition {
 				content = "Web Content Content",
 				fieldLabel = "Rich Text");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown in web content admin") {
@@ -360,7 +360,7 @@ definition {
 				webContentText = "Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "Web Content Title");
 		}
@@ -462,7 +462,7 @@ definition {
 				webContentColor = "FFFFFF",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web contnet is shown in web content admin") {
@@ -527,7 +527,7 @@ definition {
 				webContentImage = "Document_2.jpeg",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown in web content admin") {
@@ -603,7 +603,7 @@ definition {
 				webContentText = "Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View custom values are shown in web content") {
@@ -666,7 +666,7 @@ definition {
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Assert the web content article was added properly") {
@@ -767,7 +767,7 @@ definition {
 
 			SelectFrame(value1 = "relative=top");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Add a widget page") {
@@ -838,7 +838,7 @@ definition {
 				templateName = "WC Template Name",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View no error is thrown on console") {
@@ -888,7 +888,7 @@ definition {
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown in web content admin") {
@@ -945,7 +945,7 @@ definition {
 				webContentTitle = "Web Content Title 2",
 				webContentWebContent = "Web Content Title 1");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content and geolocation field are shown") {
@@ -1028,7 +1028,7 @@ definition {
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown in web content admin") {
@@ -1238,7 +1238,7 @@ definition {
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View second template is shown within web content") {
@@ -1254,7 +1254,7 @@ definition {
 				structureName = "WC Structure Name",
 				templateName = "WC Template Name 1");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("View first template is shown within web content") {
@@ -1289,7 +1289,7 @@ definition {
 
 			WebContent.addWithStructureCP(webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown") {
@@ -1523,7 +1523,7 @@ definition {
 				linkToPageContent = "Pages > Test Widget Page",
 				linkToPageFieldLabel = "Link to Page");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 	}
 
@@ -1584,7 +1584,7 @@ definition {
 				webContentUpload = "Document_1.doc",
 				webContentWebContent = "WC 1");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content") {
@@ -1878,7 +1878,7 @@ definition {
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Edit the web content") {
@@ -1929,7 +1929,7 @@ definition {
 				locator1 = "WCEditWebContent#IMAGE_DESCRIPTION",
 				value1 = "Spanish (Spain) Image Description");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("View no garbage data is shown") {
@@ -1967,7 +1967,7 @@ definition {
 				webContentContent = "Web Content Content",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("View web content is shown") {

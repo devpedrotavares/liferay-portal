@@ -331,7 +331,7 @@ export class HeadlessAdminUserApiHelper {
 			/user-accounts/by-email-address${
 				accountRoleIds ? `?accountRoleIds=${accountRoleIds}` : ''
 			}`,
-			{data: {emailAddresses}}
+			{data: emailAddresses}
 		);
 	}
 
@@ -472,6 +472,15 @@ export class HeadlessAdminUserApiHelper {
 	async getAccountRoles(accountId: number) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles`
+		);
+	}
+
+	async getAccountRolesByRoleName(
+		accountId: number,
+		accountRoleName: string
+	) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles?filter=name eq '${accountRoleName}'`
 		);
 	}
 

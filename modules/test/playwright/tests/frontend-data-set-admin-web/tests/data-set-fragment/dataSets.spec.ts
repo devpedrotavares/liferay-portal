@@ -11,6 +11,7 @@ import {isolatedLayoutTest} from '../../../../fixtures/isolatedLayoutTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../../utils/getRandomString';
+import performLogin, {performLogout} from '../../../../utils/performLogin';
 
 // Structured Content utilities
 
@@ -76,11 +77,13 @@ test.afterEach(async ({apiHelpers, dataSetManagerApiHelpers}) => {
 				article.articleId
 			);
 		});
+
+		article = null;
 	}
 });
 
 test(
-	'Assing a data set to the "Data Set" fragment, change and delete assignment',
+	'Assign a data set to the "Data Set" fragment, change and delete assignment',
 	{
 		tag: '@LPS-172403',
 	},
@@ -135,7 +138,7 @@ test(
 			await dataSetFragmentPage.selectDataSet(dataSetLabel1);
 		});
 
-		await test.step('Change assigment to second data set', async () => {
+		await test.step('Change assignment to second data set', async () => {
 			await dataSetFragmentPage.changeDataSetButton.click();
 
 			const selectionListContainer =
@@ -518,3 +521,66 @@ test(
 		});
 	}
 );
+
+test('An unauthorized user accessing a page with a data set fragment', async ({
+	dataSetFragmentPage,
+	dataSetManagerApiHelpers,
+	layout,
+	page,
+}) => {
+	const dataSetERC = getRandomString();
+	const dataSetLabel = getRandomString();
+
+	dataSetERCs.push(dataSetERC);
+
+	await test.step('Create data set', async () => {
+		await dataSetManagerApiHelpers.createDataSet({
+			erc: dataSetERC,
+			label: dataSetLabel,
+		});
+	});
+
+	await test.step('Create sample data for data sets', async () => {
+		await dataSetManagerApiHelpers.createDataSetTableSection({
+			dataSetERC,
+			fieldName: 'fieldName',
+			label_i18n: {en_US: 'Field Name'},
+		});
+	});
+
+	await test.step('Configure Data Set fragment', async () => {
+		await dataSetFragmentPage.configureDataSetFragment({
+			dataSetLabel,
+			layout,
+		});
+	});
+
+	await test.step('Log out', async () => {
+		await performLogout(page);
+
+		await expect(page.getByRole('button', {name: 'Sign In'})).toBeVisible();
+	});
+
+	try {
+		await test.step('Go to Data Set fragment page', async () => {
+			await dataSetFragmentPage.goToPage({layout});
+
+			await page
+				.locator('.data-set-content-wrapper')
+				.waitFor({state: 'visible'});
+		});
+
+		await test.step('Assert that no results are displayed', async () => {
+			await expect(
+				page
+					.locator('.data-set-content-wrapper')
+					.getByText('No Results Found')
+			).toBeVisible();
+		});
+	}
+	finally {
+		await test.step('Log back in as admin', async () => {
+			await performLogin(page, 'test');
+		});
+	}
+});

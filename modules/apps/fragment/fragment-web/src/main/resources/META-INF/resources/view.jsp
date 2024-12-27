@@ -163,7 +163,12 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 		<clay:col
 			lg="9"
 		>
-			<c:if test="<%= (fragmentEntriesDisplayContext.getFragmentCollection() != null) || (fragmentEntriesDisplayContext.getFragmentCollectionContributor() != null) %>">
+
+			<%
+			FragmentCollectionContributor fragmentCollectionContributor = fragmentEntriesDisplayContext.getFragmentCollectionContributor();
+			%>
+
+			<c:if test="<%= (fragmentEntriesDisplayContext.getFragmentCollection() != null) || (fragmentCollectionContributor != null) %>">
 				<clay:sheet
 					size="full"
 				>
@@ -174,6 +179,15 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 							<clay:content-col>
 								<%= fragmentEntriesDisplayContext.getFragmentCollectionName() %>
 							</clay:content-col>
+
+							<c:if test="<%= (fragmentCollectionContributor != null) && fragmentCollectionContributor.isDeprecated() %>">
+								<div class="c-ml-3">
+									<liferay-frontend:feature-indicator
+										interactive="<%= true %>"
+										type="deprecated"
+									/>
+								</div>
+							</c:if>
 
 							<c:if test="<%= fragmentEntriesDisplayContext.showFragmentCollectionActions() %>">
 								<clay:content-col

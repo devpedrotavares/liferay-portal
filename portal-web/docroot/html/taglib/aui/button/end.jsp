@@ -11,75 +11,77 @@
 	<div class="btn-group btn-group-item dropdown" id="<%= id %>BtnGroup">
 </c:if>
 
-<c:choose>
-	<c:when test='<%= Validator.isNotNull(escapedHREF) && !type.equals("cancel") %>'>
-		<a
-			class="<%= AUIUtil.buildCss(AUIUtil.BUTTON_PREFIX, disabled, false, false, cssClass) %>"
-			href="<%= escapedHREF %>"
-			id="<%= id %>"
+<liferay-ui:csp>
+	<c:choose>
+		<c:when test='<%= Validator.isNotNull(escapedHREF) && !type.equals("cancel") %>'>
+			<a
+				class="<%= AUIUtil.buildCss(AUIUtil.BUTTON_PREFIX, disabled, false, false, cssClass) %>"
+				href="<%= escapedHREF %>"
+				id="<%= id %>"
 
-			<c:if test="<%= Validator.isNotNull(onClick) %>">
-				onClick="<%= onClick %>"
-			</c:if>
-
-			role="button"
-
-			<%= AUIUtil.buildData(data) %>
-			<%= InlineUtil.buildDynamicAttributes(dynamicAttributes) %>
-		>
-	</c:when>
-	<c:otherwise>
-		<button
-			class="<%= AUIUtil.buildCss(AUIUtil.BUTTON_PREFIX, disabled, false, false, cssClass) %>"
-
-			<c:if test="<%= disabled %>">
-				disabled
-			</c:if>
-
-			id="<%= id %>"
-
-			<c:if test="<%= Validator.isNotNull(name) %>">
-				name="<%= namespace %><%= name %>"
-			</c:if>
-
-			<c:choose>
-				<c:when test="<%= Validator.isNotNull(onClick) %>">
+				<c:if test="<%= Validator.isNotNull(onClick) %>">
 					onClick="<%= onClick %>"
-				</c:when>
-				<c:when test="<%= Validator.isNotNull(escapedHREF) %>">
-					data-href="<%= escapedHREF %>"
-					onClick="Liferay.Util.navigate(this.dataset.href)"
-				</c:when>
-			</c:choose>
+				</c:if>
 
-			type="<%= type.equals("cancel") ? "button" : type %>"
+				role="button"
 
-			<%= AUIUtil.buildData(data) %>
-			<%= InlineUtil.buildDynamicAttributes(dynamicAttributes) %>
-		>
-	</c:otherwise>
-</c:choose>
+				<%= AUIUtil.buildData(data) %>
+				<%= InlineUtil.buildDynamicAttributes(dynamicAttributes) %>
+			>
+		</c:when>
+		<c:otherwise>
+			<button
+				class="<%= AUIUtil.buildCss(AUIUtil.BUTTON_PREFIX, disabled, false, false, cssClass) %>"
 
-<c:if test='<%= Validator.isNotNull(icon) && iconAlign.equals("left") %>'>
-	<i class="<%= icon %>"></i>
-</c:if>
+				<c:if test="<%= disabled %>">
+					disabled
+				</c:if>
 
-<c:if test="<%= Validator.isNotNull(value) %>">
-	<span class="lfr-btn-label"><liferay-ui:message key="<%= value %>" /></span>
-</c:if>
+				id="<%= id %>"
 
-<c:if test='<%= Validator.isNotNull(icon) && iconAlign.equals("right") %>'>
-	<i class="<%= icon %>"></i>
-</c:if>
+				<c:if test="<%= Validator.isNotNull(name) %>">
+					name="<%= namespace %><%= name %>"
+				</c:if>
 
-<c:choose>
-	<c:when test="<%= Validator.isNotNull(escapedHREF) %>">
-		</a>
-	</c:when>
-	<c:otherwise>
-		</button>
-	</c:otherwise>
-</c:choose>
+				<c:choose>
+					<c:when test="<%= Validator.isNotNull(onClick) %>">
+						onClick="<%= onClick %>"
+					</c:when>
+					<c:when test="<%= Validator.isNotNull(escapedHREF) %>">
+						data-href="<%= escapedHREF %>"
+						onClick="Liferay.Util.navigate(this.dataset.href)"
+					</c:when>
+				</c:choose>
+
+				type="<%= type.equals("cancel") ? "button" : type %>"
+
+				<%= AUIUtil.buildData(data) %>
+				<%= InlineUtil.buildDynamicAttributes(dynamicAttributes) %>
+			>
+		</c:otherwise>
+	</c:choose>
+
+	<c:if test='<%= Validator.isNotNull(icon) && iconAlign.equals("left") %>'>
+		<i class="<%= icon %>"></i>
+	</c:if>
+
+	<c:if test="<%= Validator.isNotNull(value) %>">
+		<span class="lfr-btn-label"><liferay-ui:message key="<%= value %>" /></span>
+	</c:if>
+
+	<c:if test='<%= Validator.isNotNull(icon) && iconAlign.equals("right") %>'>
+		<i class="<%= icon %>"></i>
+	</c:if>
+
+	<c:choose>
+		<c:when test="<%= Validator.isNotNull(escapedHREF) %>">
+			</a>
+		</c:when>
+		<c:otherwise>
+			</button>
+		</c:otherwise>
+	</c:choose>
+</liferay-ui:csp>
 
 <c:if test="<%= dropdown %>">
 	<button aria-expanded="false" aria-haspopup="true" class="btn btn-primary dropdown-toggle <%= cssClass %>" data-toggle="liferay-dropdown" <%= disabled ? "disabled" : StringPool.BLANK %> id="<%= id %>Toggle" type="button">

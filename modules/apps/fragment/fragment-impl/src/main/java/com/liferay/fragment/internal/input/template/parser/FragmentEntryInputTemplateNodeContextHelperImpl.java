@@ -80,6 +80,7 @@ import java.time.temporal.TemporalAccessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -225,7 +226,7 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 			return new InputTemplateNode(
 				errorMessage, inputHelpText, inputLabel, localizable, name,
 				readOnly, required, inputShowHelpText, inputShowLabel, "type",
-				StringPool.BLANK);
+				StringPool.BLANK, Collections.emptyMap());
 		}
 
 		InfoFieldType infoFieldType = infoField.getInfoFieldType();
@@ -274,13 +275,29 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 			}
 		}
 
-		Map<String, String> infoFormParameterMap =
-			(Map<String, String>)SessionMessages.get(
+		Map<Locale, String> valueI18n = new HashMap<>();
+
+		Map<String, Object> infoFormParameterMap =
+			(Map<String, Object>)SessionMessages.get(
 				httpServletRequest, "infoFormParameterMap");
 
 		if (infoFormParameterMap != null) {
-			label = infoFormParameterMap.get(infoField.getName() + "-label");
-			value = infoFormParameterMap.get(infoField.getName());
+			label = String.valueOf(
+				infoFormParameterMap.get(infoField.getName() + "-label"));
+
+			Object infoParameterMapValue = infoFormParameterMap.get(
+				infoField.getName());
+
+			if (infoParameterMapValue instanceof Map) {
+				Map<Locale, String> map =
+					(Map<Locale, String>)infoParameterMapValue;
+
+				value = map.get(locale);
+				valueI18n = map;
+			}
+			else {
+				value = String.valueOf(infoParameterMapValue);
+			}
 		}
 		else {
 			Object infoFieldValue = _getValue(
@@ -293,6 +310,12 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 				label = keyValuePair.getValue();
 				value = keyValuePair.getKey();
 			}
+			else if (infoFieldValue instanceof Map) {
+				Map<Locale, String> map = (Map<Locale, String>)infoFieldValue;
+
+				value = map.get(locale);
+				valueI18n = map;
+			}
 			else {
 				value = String.valueOf(infoFieldValue);
 			}
@@ -301,16 +324,16 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		InputTemplateNode inputTemplateNode = new InputTemplateNode(
 			errorMessage, inputHelpText, inputLabel, localizable, name,
 			readOnly, required, inputShowHelpText, inputShowLabel,
-			infoFieldType.getName(), value);
+			infoFieldType.getName(), value, valueI18n);
 
 		_addInputTemplateNodeAttributes(
 			fragmentEntryLink, httpServletRequest, infoField, inputTemplateNode,
 			label, locale, value);
 
-		if (localizable && FeatureFlagManagerUtil.isEnabled("LPD-37927")) {
+		if (!localizable && FeatureFlagManagerUtil.isEnabled("LPD-37927")) {
 			_addLocalizationOptionsAttributes(
-				fragmentEntryLink, httpServletRequest, inputTemplateNode,
-				locale);
+				fragmentEntryLink, httpServletRequest, inputLabel,
+				inputTemplateNode, locale);
 		}
 
 		return inputTemplateNode;
@@ -467,7 +490,7 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 
 	private void _addLocalizationOptionsAttributes(
 		FragmentEntryLink fragmentEntryLink,
-		HttpServletRequest httpServletRequest,
+		HttpServletRequest httpServletRequest, String inputLabel,
 		InputTemplateNode inputTemplateNode, Locale locale) {
 
 		LayoutStructure layoutStructure = null;
@@ -513,6 +536,13 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 			formStyledLayoutStructureItem.getLocalizationConfigJSONObject();
 
 		if (localizationConfigJSONObject == null) {
+			inputTemplateNode.addAttribute(
+				"unlocalizedFieldsMessage",
+				_language.format(
+					locale, "x-field-cannot-be-localized", inputLabel));
+			inputTemplateNode.addAttribute(
+				"unlocalizedFieldsState", "disabled");
+
 			return;
 		}
 
@@ -951,6 +981,15 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		}
 
 		Object value = infoFieldValue.getValue();
+
+		if (infoField.isLocalizable() &&
+			(value instanceof InfoLocalizedValue)) {
+
+			InfoLocalizedValue<?> infoLocalizedValue =
+				(InfoLocalizedValue<?>)value;
+
+			return infoLocalizedValue.getValues();
+		}
 
 		if (Validator.isNull(value)) {
 			return defaultValue;

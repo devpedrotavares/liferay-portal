@@ -50,9 +50,11 @@ definition {
 				webContentTitle = ${entryTitle});
 		}
 
-		WebContent.editDisplayPage(pageName = ${pageName});
+		WebContent.editDisplayPage(
+			assetType = ${assetType},
+			pageName = ${pageName});
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 	}
 
 	@summary = "Default summary"

@@ -8,6 +8,7 @@ import React, {useMemo} from 'react';
 import './ProgressBarContent.css';
 
 import classNames from 'classnames';
+import i18n from '~/common/I18n';
 
 interface IProps {
 	displayUsage?: boolean;
@@ -30,6 +31,8 @@ const ProgressBarContent: React.FC<IProps> = ({
 		return `${Math.random() * 100}%`;
 	}, [displayUsage, maxCount, usedCount]);
 
+	const isUnlimited = maxCount < 0;
+
 	return (
 		<div className="progress-bar-content w-100">
 			<h5 className="mb-3">{title}</h5>
@@ -46,7 +49,9 @@ const ProgressBarContent: React.FC<IProps> = ({
 
 					{displayUsage && (
 						<span className="total-value-text">
-							of {maxCount.toLocaleString()}
+							{isUnlimited
+								? i18n.translate('of-unlimited')
+								: `${i18n.translate('of')} ${maxCount.toLocaleString()}`}
 						</span>
 					)}
 				</div>
@@ -55,7 +60,7 @@ const ProgressBarContent: React.FC<IProps> = ({
 					<div
 						className="bar-content"
 						style={{
-							width: barPercentage,
+							width: isUnlimited ? 0 : barPercentage,
 						}}
 					/>
 				</div>

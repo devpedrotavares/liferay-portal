@@ -65,7 +65,7 @@ function main() {
 
 		textarea.addEventListener('keyup', onInputKeyup);
 
-		if (input.attributes.localizable) {
+		if (input.localizable) {
 			Liferay.on('localizationSelect:localeChanged', (event) => {
 				currentLanguageId = event.languageId;
 
@@ -74,6 +74,9 @@ function main() {
 
 				if (translationInput.getAttribute('value') !== null) {
 					textarea.value = translationInput.value;
+				}
+				else {
+					textarea.value = getDefaultLanguageValue();
 				}
 			});
 
@@ -91,8 +94,57 @@ function main() {
 					languageId: currentLanguageId,
 				});
 			});
+
+			if (input.valueI18n) {
+				Object.entries(input.valueI18n).forEach(
+					([languageId, value]) => {
+						const translationInput =
+							getOrCreateTranslationInput(languageId);
+
+						translationInput.value = value;
+					}
+				);
+			}
+		}
+		else if (Liferay.FeatureFlags['LPD-37927']) {
+			Liferay.on('localizationSelect:localeChanged', (event) => {
+				const isDefaultLanguage =
+					event.languageId === themeDisplay.getDefaultLanguageId();
+
+				const unlocalizedInfo = document.getElementById(
+					`${fragmentNamespace}-unlocalized-info`
+				);
+
+				if (isDefaultLanguage) {
+					textarea.removeAttribute(
+						input.attributes.unlocalizedFieldsState === 'disabled'
+							? 'disabled'
+							: 'readonly'
+					);
+
+					unlocalizedInfo?.classList.add('d-none');
+				}
+				else {
+					textarea.setAttribute(
+						input.attributes.unlocalizedFieldsState === 'disabled'
+							? 'disabled'
+							: 'readonly',
+						''
+					);
+
+					unlocalizedInfo?.classList.remove('d-none');
+				}
+			});
 		}
 	}
+}
+
+function getDefaultLanguageValue() {
+	const defaultLanguageInput = getOrCreateTranslationInput(
+		themeDisplay.getDefaultLanguageId()
+	);
+
+	return defaultLanguageInput.value;
 }
 
 function getOrCreateTranslationInput(languageId) {
@@ -104,7 +156,7 @@ function getOrCreateTranslationInput(languageId) {
 		translationInput = document.createElement('input');
 		translationInput.type = 'hidden';
 		translationInput.id = inputId;
-		translationInput.name = `${input.name}_${currentLanguageId}`;
+		translationInput.name = `${input.name}_${languageId}`;
 		textarea.parentNode.appendChild(translationInput);
 	}
 

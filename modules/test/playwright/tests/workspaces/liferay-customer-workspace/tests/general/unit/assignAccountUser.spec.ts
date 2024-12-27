@@ -13,7 +13,6 @@ import {
 	customerPerformLogin,
 	customerPerformLogout,
 } from '../../../utils/customerLogin';
-import {mockOktaApiSession} from '../../../utils/oktaUtil';
 import {mockProvisioningApiAssignUser} from '../../../utils/provisioningUtil';
 
 export const test = mergeTests(
@@ -49,7 +48,6 @@ test.afterEach(async ({apiHelpers, page}) => {
 test.beforeEach(async ({apiHelpers, page}) => {
 	await customerPerformLogin(page, 'test@liferay.com');
 
-	await mockOktaApiSession(page);
 	await mockProvisioningApiAssignUser(page);
 
 	const account =
@@ -111,9 +109,11 @@ test('Account admin can assign new user to account', async ({
 
 	await projectTeamMembersPage.roleSelect.click({force: true});
 
-	await projectTeamMembersPage.userRoleOption.click({force: true});
+	await projectTeamMembersPage.roleOption.check({force: true});
 
-	await projectTeamMembersPage.applyButton.click({force: true});
+	await expect(projectTeamMembersPage.roleButton).toBeEnabled();
+
+	await projectTeamMembersPage.roleButton.click({force: true});
 
 	await projectTeamMembersPage.sendInvitationsButton.click({force: true});
 

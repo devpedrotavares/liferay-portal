@@ -33,6 +33,11 @@ components:
                         The type of the content.
                     readOnly: true
                     type: string
+                externalReferenceCode:
+                    description:
+                        The user's external reference code.
+                    readOnly: true
+                    type: string
                 familyName:
                     description:
                         The user's surname (last name).
@@ -117,6 +122,11 @@ components:
                 name:
                     description:
                         The keyword's name.
+                    type: string
+                siteExternalReferenceCode:
+                    description:
+                        The external reference code of the site to which this keyword is scoped.
+                    readOnly: true
                     type: string
                 siteId:
                     description:
@@ -204,6 +214,11 @@ components:
                     description:
                         The category's parent category, if it exists.
                     properties:
+                        externalReferenceCode:
+                            # @review
+                            description:
+                                The parent taxonomy category's external reference code.
+                            type: string
                         id:
                             format: int64
                             type: integer
@@ -218,6 +233,11 @@ components:
                     description:
                         The parent category's `TaxonomyVocabulary`, if such a parent category exists.
                     properties:
+                        externalReferenceCode:
+                            # @review
+                            description:
+                                The parent category's `TaxonomyVocabulary` external reference code.
+                            type: string
                         id:
                             format: int64
                             type: integer
@@ -229,6 +249,11 @@ components:
                             type: object
                     readOnly: true
                     type: object
+                siteExternalReferenceCode:
+                    description:
+                        The external reference code of the site to which this category is scoped.
+                    readOnly: true
+                    type: string
                 siteId:
                     description:
                         The ID of the site to which this category is scoped.
@@ -264,6 +289,11 @@ components:
             description:
                 Key value pair to associate detailed information with a category.
             properties:
+                externalReferenceCode:
+                    # @review
+                    description:
+                        The taxonomy category's external reference code.
+                    type: string
                 key:
                     # @review
                     description:
@@ -353,6 +383,11 @@ components:
                         The number of categories that directly depend on this vocabulary.
                     readOnly: true
                     type: integer
+                siteExternalReferenceCode:
+                    description:
+                        The external reference code of the site to which this vocabulary is scoped.
+                    readOnly: true
+                    type: string
                 siteId:
                     description:
                         The ID of the site to which this vocabulary is scoped.

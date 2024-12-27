@@ -10,14 +10,15 @@ import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetVocabularyService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.display.template.portlet.action.BaseConfigurationAction;
 
 import java.util.ArrayList;
@@ -57,10 +58,6 @@ public class AssetCategoriesNavigationConfigurationAction
 
 		super.postProcess(companyId, portletRequest, portletPreferences);
 
-		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-27566")) {
-			return;
-		}
-
 		boolean allAssetVocabularies = GetterUtil.getBoolean(
 			portletPreferences.getValue("allAssetVocabularies", null));
 
@@ -86,7 +83,7 @@ public class AssetCategoriesNavigationConfigurationAction
 			_resetPortletPreferences(portletPreferences);
 
 			_setPortletPreferences(
-				portletPreferences, groupAssetVocabularyIdsMap);
+				portletPreferences, portletRequest, groupAssetVocabularyIdsMap);
 
 			portletPreferences.reset("assetVocabularyIds");
 			portletPreferences.reset("displayStyleGroupId");
@@ -142,22 +139,34 @@ public class AssetCategoriesNavigationConfigurationAction
 
 	private void _setPortletPreferences(
 			PortletPreferences portletPreferences,
+			PortletRequest portletRequest,
 			Map<Long, List<String>> groupAssetVocabularyIdsMap)
 		throws PortalException, ReadOnlyException {
 
 		List<String> groupExternalReferenceCodes = new ArrayList<>();
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
 		for (Map.Entry<Long, List<String>> entries :
 				groupAssetVocabularyIdsMap.entrySet()) {
 
 			Group group = _groupLocalService.getGroup(entries.getKey());
 
-			groupExternalReferenceCodes.add(group.getExternalReferenceCode());
+			if (group.getGroupId() == themeDisplay.getScopeGroupId()) {
+				portletPreferences.setValues(
+					"assetVocabularyExternalReferenceCodes",
+					ArrayUtil.toStringArray(entries.getValue()));
+			}
+			else {
+				groupExternalReferenceCodes.add(
+					group.getExternalReferenceCode());
 
-			portletPreferences.setValues(
-				"assetVocabularyExternalReferenceCodes_" +
-					group.getExternalReferenceCode(),
-				ArrayUtil.toStringArray(entries.getValue()));
+				portletPreferences.setValues(
+					"assetVocabularyExternalReferenceCodes_" +
+						group.getExternalReferenceCode(),
+					ArrayUtil.toStringArray(entries.getValue()));
+			}
 		}
 
 		portletPreferences.setValues(

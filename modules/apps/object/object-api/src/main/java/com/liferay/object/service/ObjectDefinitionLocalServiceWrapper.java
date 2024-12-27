@@ -386,9 +386,10 @@ public class ObjectDefinitionLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectDefinition
-		fetchSystemObjectDefinition(String name) {
+		fetchSystemObjectDefinition(long companyId, String name) {
 
-		return _objectDefinitionLocalService.fetchSystemObjectDefinition(name);
+		return _objectDefinitionLocalService.fetchSystemObjectDefinition(
+			companyId, name);
 	}
 
 	@Override
@@ -707,6 +708,17 @@ public class ObjectDefinitionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionLocalService.updatePortlet(objectDefinitionId);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectDefinition
+		updateRootDescendantNodeObjectDefinition(
+			com.liferay.object.model.ObjectDefinition objectDefinition,
+			long rootObjectDefinitionId) {
+
+		return _objectDefinitionLocalService.
+			updateRootDescendantNodeObjectDefinition(
+				objectDefinition, rootObjectDefinitionId);
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {createCategories} from '../../helpers/CreateCategories';
+import {waitForAlert} from '../../utils/waitForAlert';
 import {assetCategoriesPagesTest} from './fixtures/assetCategoriesAdminPagesTest';
 
 const test = mergeTests(
@@ -17,6 +18,144 @@ const test = mergeTests(
 	isolatedSiteTest,
 	loginTest()
 );
+
+test('User can add, edit, delete a category and add a subcategory.', async ({
+	apiHelpers,
+	assetCategoriesAdminPage,
+	assetCategoriesEditPage,
+	page,
+	site,
+}) => {
+	const categoryName = 'category-1';
+	const vocabularyName = 'test vocabulary';
+
+	await test.step('add', async () => {
+		await createCategories({
+			apiHelpers,
+			categoryNames: [{name: categoryName}],
+			site,
+			vocabularyName,
+		});
+	});
+
+	await assetCategoriesAdminPage.goto(site.friendlyUrlPath);
+
+	const categoryNameChanged = 'category-1-changed';
+
+	await test.step('edit', async () => {
+		await assetCategoriesEditPage.goto(categoryName);
+
+		await assetCategoriesEditPage.fillName(categoryNameChanged);
+		await assetCategoriesEditPage.save(`Success:${categoryNameChanged}`);
+
+		await expect(
+			page.getByRole('link', {name: categoryNameChanged})
+		).toBeVisible();
+	});
+
+	await test.step('add a subcategory', async () => {
+		await assetCategoriesAdminPage.gotoAction(
+			'Add Subcategory',
+			categoryNameChanged
+		);
+
+		const subcategoryName = 'Subcategory name';
+
+		await assetCategoriesEditPage.fillName(subcategoryName);
+		await assetCategoriesEditPage.save(`Success:${subcategoryName}`);
+
+		await expect(
+			page.getByRole('link', {name: subcategoryName})
+		).toBeVisible();
+	});
+
+	await test.step('delete', async () => {
+		await assetCategoriesAdminPage.gotoVocabulary(vocabularyName);
+
+		await assetCategoriesAdminPage.gotoAction(
+			'Delete',
+			categoryNameChanged
+		);
+
+		await assetCategoriesEditPage.deleteButton.click();
+		await waitForAlert(page);
+
+		await expect(
+			page.getByRole('link', {name: categoryNameChanged})
+		).not.toBeVisible();
+	});
+});
+
+test('User can move a category and subcategory.', async ({
+	apiHelpers,
+	assetCategoriesAdminPage,
+	assetCategoriesEditPage,
+	page,
+	site,
+}) => {
+	const categoryName1 = 'category-1';
+	const categoryName2 = 'category-2';
+	const vocabularyName1 = 'vocabulary one';
+	const vocabularyName2 = 'vocabulary two';
+
+	const categories = await createCategories({
+		apiHelpers,
+		categoryNames: [{name: categoryName1}, {name: categoryName2}],
+		site,
+		vocabularyName: vocabularyName1,
+	});
+
+	await createCategories({
+		apiHelpers,
+		categoryNames: [],
+		site,
+		vocabularyName: vocabularyName2,
+	});
+
+	await assetCategoriesAdminPage.goto(site.friendlyUrlPath);
+
+	await test.step('move category to vocabulary two', async () => {
+		await assetCategoriesAdminPage.gotoAction('Move', categoryName1);
+
+		await assetCategoriesEditPage.moveCategory({
+			categoryName: categoryName1,
+			targetName: vocabularyName2,
+		});
+
+		await assetCategoriesAdminPage.gotoVocabulary(vocabularyName2);
+
+		await expect(
+			page.getByRole('link', {name: categoryName1})
+		).toBeVisible();
+	});
+
+	await test.step('move subcategory to another category', async () => {
+		const subcategoryName = 'subcategory test';
+		await apiHelpers.headlessAdminTaxonomy.postTaxonomyCategoryTaxonomyCategory(
+			{
+				name: subcategoryName,
+				parentTaxonomyCategoryId: categories[0].id,
+			}
+		);
+
+		await page.getByRole('link', {name: categoryName1}).click();
+
+		await assetCategoriesAdminPage.gotoAction('Move', subcategoryName);
+
+		await assetCategoriesEditPage.moveCategory({
+			categoryName: subcategoryName,
+			expandNames: [vocabularyName1],
+			targetName: categoryName2,
+		});
+
+		await assetCategoriesAdminPage.gotoVocabulary(vocabularyName1);
+		await page.getByRole('link', {name: categoryName2}).click();
+
+		await expect(
+			page.getByRole('row', {name: subcategoryName})
+		).toBeVisible();
+	});
+});
 
 test('User can add, edit, delete properties in category.', async ({
 	apiHelpers,

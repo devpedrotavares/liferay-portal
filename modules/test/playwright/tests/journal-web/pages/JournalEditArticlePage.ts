@@ -29,6 +29,7 @@ export class JournalEditArticlePage {
 	readonly publishButton: Locator;
 	readonly redoButton: Locator;
 	readonly selectButton: Locator;
+	readonly selectAndConfirmPublishButton: Locator;
 	readonly submitForWorkflowButton: Locator;
 	readonly titleInput: Locator;
 	readonly undoButton: Locator;
@@ -61,6 +62,9 @@ export class JournalEditArticlePage {
 			'#_com_liferay_journal_web_portlet_JournalPortlet_publishButton'
 		);
 		this.redoButton = page.getByTitle('Redo', {exact: true});
+		this.selectAndConfirmPublishButton = page.getByLabel(
+			'Select and Confirm Publish Settings'
+		);
 		this.selectButton = page.getByRole('button', {
 			exact: true,
 			name: 'Select',
@@ -145,19 +149,53 @@ export class JournalEditArticlePage {
 		await this.publishArticle();
 	}
 
-	async publishArticle() {
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: this.page.getByRole('menuitem', {
-				name: 'Publish With Permissions',
-			}),
-			trigger: this.page.getByRole('button', {
-				name: 'Select and Confirm Publish Settings',
-			}),
-		});
+	async publishArticle(
+		existingArticle?: boolean,
+		viewableBy?: 'Site Members' | 'Owner'
+	) {
+		if (existingArticle) {
+			await expect(async () => {
+				await clickAndExpectToBeVisible({
+					autoClick: true,
+					target: this.page.getByRole('menuitem', {
+						name: /publish|publier/i,
+					}),
+					trigger: this.page.getByRole('button', {
+						name: /select and confirm publish settings|sélectionnez et confirmez les/i,
+					}),
+				});
+
+				await waitForAlert(this.page, 'was updated successfully', {
+					timeout: 2000,
+				});
+			}).toPass();
+
+			return;
+		}
+
+		await expect(async () => {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: this.page.getByRole('menuitem', {
+					name: /publish with permissions|publier avec permissions/i,
+				}),
+				trigger: this.page.getByRole('button', {
+					name: /select and confirm publish settings|sélectionnez et confirmez les/i,
+				}),
+			});
+
+			await expect(this.page.getByLabel('Viewable By')).toBeVisible({
+				timeout: 2000,
+			});
+		}).toPass();
+
+		if (viewableBy) {
+			await this.page.getByLabel('Viewable By').selectOption(viewableBy);
+		}
 
 		await this.page
-			.getByRole('button', {exact: true, name: 'Publish'})
+			.locator('[role="dialog"]')
+			.getByRole('button', {name: /publish|publier/i})
 			.click();
 	}
 
@@ -192,14 +230,13 @@ export class JournalEditArticlePage {
 		await this.fillTitle(title);
 		await this.fillFriendlyURL('test');
 
-		await this.publishButton.click();
+		await this.publishArticle();
 		await expect(this.page.getByTitle(title, {exact: true})).toBeVisible();
 	}
 
 	async createWCWithBasicPublishButton(articleTitle: string) {
 		await this.titleInput.fill(articleTitle);
-		await this.publishButton.waitFor();
-		await this.publishButton.click();
+		this.publishArticle();
 
 		await waitForAlert(
 			this.page,
@@ -237,7 +274,7 @@ export class JournalEditArticlePage {
 			.nth(1)
 			.fill('Duplicated Text Field');
 
-		await this.publishButton.click();
+		await this.publishArticle();
 	}
 
 	async fillTitle(title: string) {
@@ -251,9 +288,7 @@ export class JournalEditArticlePage {
 
 		await this.fillTitle(title);
 
-		await this.publishButton.waitFor();
-
-		await this.publishButton.click();
+		await this.publishArticle(true);
 
 		await waitForAlert(
 			this.page,

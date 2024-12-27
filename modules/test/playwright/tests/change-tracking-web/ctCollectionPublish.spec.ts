@@ -6,8 +6,12 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {changeTrackingPagesTest} from '../../fixtures/changeTrackingPagesTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
+import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
+import {pagesAdminPagesTest} from '../../fixtures/pagesAdminPagesTest';
+import {productMenuPageTest} from '../../fixtures/productMenuPageTest';
 import getRandomString from '../../utils/getRandomString';
 import getBasicWebContentStructureId from '../../utils/structured-content/getBasicWebContentStructureId';
 import {waitForAlert} from '../../utils/waitForAlert';
@@ -15,12 +19,56 @@ import {blogsPagesTest} from '../blogs-web/fixtures/blogsPagesTest';
 import {journalPagesTest} from '../journal-web/fixtures/journalPagesTest';
 
 export const test = mergeTests(
+	applicationsMenuPageTest,
 	isolatedSiteTest,
 	apiHelpersTest,
 	blogsPagesTest,
 	changeTrackingPagesTest,
-	journalPagesTest
+	journalPagesTest,
+	pagesAdminPagesTest,
+	pageEditorPagesTest,
+	productMenuPageTest
 );
+
+test('LPD-42499 Assert correct message appears in Checking changes page', async ({
+	applicationsMenuPage,
+	changeTrackingPage,
+	ctCollection,
+	page,
+	pageEditorPage,
+	pagesAdminPage,
+	productMenuPage,
+	site,
+}) => {
+	await applicationsMenuPage.goToSite(site.name);
+
+	const layoutTitle = getRandomString();
+
+	await productMenuPage.openProductMenuIfClosed();
+
+	await productMenuPage.goToPages();
+
+	await pagesAdminPage.createNewPage({
+		addButtonLabel: 'Page',
+		draft: true,
+		name: layoutTitle,
+		template: 'Blank',
+	});
+
+	await pageEditorPage.publishPage();
+
+	await changeTrackingPage.goToReviewChanges(ctCollection.name);
+
+	await page.reload();
+
+	await page.getByRole('link', {name: 'Publish'}).click();
+
+	await expect(
+		page.getByText(
+			'Publishing may overwrite changes made in production after this Publication was created.'
+		)
+	).toBeVisible();
+});
 
 test('Cannot publish empty ctCollection', async ({
 	blogsEditBlogEntryPage,
@@ -53,13 +101,15 @@ test('Cannot publish empty ctCollection', async ({
 
 	await changeTrackingPage.workOnPublication(ctCollection);
 
-	await changeTrackingPage.goToReviewChanges(ctCollection.name);
+	await changeTrackingPage.goToReviewChanges(ctCollection.body.name);
 
 	await page.reload();
 
 	await page.getByRole('link', {name: 'Publish'}).click();
 
-	await expect(page.getByText('Publish: ' + ctCollection.name)).toBeVisible();
+	await expect(
+		page.getByText('Publish: ' + ctCollection.body.name)
+	).toBeVisible();
 
 	await page
 		.locator('li')
@@ -163,11 +213,11 @@ test('Publish Parallel Publications', async ({
 	await waitForAlert(page, `Success:${title2} was created successfully.`);
 
 	await apiHelpers.headlessChangeTracking.publishCTCollection(
-		ctCollection.id
+		ctCollection.body.id
 	);
 
 	await apiHelpers.headlessChangeTracking.publishCTCollection(
-		ctCollection2.id
+		ctCollection2.body.id
 	);
 
 	await journalPage.goto(site.friendlyUrlPath);
@@ -197,7 +247,7 @@ test('LPD-33274 Disable Publish button after first click', async ({
 		titleMap: {en_US: title},
 	});
 
-	await changeTrackingPage.goToReviewChanges(ctCollection.name);
+	await changeTrackingPage.goToReviewChanges(ctCollection.body.name);
 
 	await page.getByRole('link', {name: 'Publish'}).click();
 

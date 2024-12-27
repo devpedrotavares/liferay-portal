@@ -12,7 +12,6 @@ import {
 } from 'frontend-js-web';
 
 import {LocaleChangedHandler} from './LocaleChangedHandler.es';
-import initializeLock from './initializeLock';
 import removeAlert from './removeAlert';
 import showAlert from './showAlert';
 
@@ -64,31 +63,6 @@ export default function _JournalPortlet({
 	let selectedLanguageId = initialDefaultLanguageId;
 
 	const lockHolder = {};
-
-	if (!Liferay.FeatureFlags['LPD-15596']) {
-		initializeLock('publishing', {
-			errorIndicator: document.getElementById(
-				`${namespace}lockErrorIndicator`
-			),
-			lockedIndicator: document.getElementById(
-				`${namespace}savingChangesIndicator`
-			),
-			namespace,
-			onLockChange: ({isLocked}) => {
-				[publishButton, resetValuesButton, saveButton].forEach(
-					(triggerElement) => {
-						if (triggerElement) {
-							triggerElement.disabled = isLocked;
-						}
-					}
-				);
-			},
-			triggerElements: [publishButton, resetValuesButton, saveButton],
-			unlockedIndicator: document.getElementById(
-				`${namespace}changesSavedIndicator`
-			),
-		});
-	}
 
 	Liferay.componentReady(`${namespace}publishing`).then((lock) => {
 		lockHolder.lock = lock;
@@ -277,10 +251,7 @@ export default function _JournalPortlet({
 	const handlePublishButtonClick = (event) => {
 		lockHolder.lock?.lock();
 
-		if (
-			Liferay.FeatureFlags['LPD-11228'] &&
-			Liferay.FeatureFlags['LPD-15596']
-		) {
+		if (Liferay.FeatureFlags['LPD-11228']) {
 			return;
 		}
 

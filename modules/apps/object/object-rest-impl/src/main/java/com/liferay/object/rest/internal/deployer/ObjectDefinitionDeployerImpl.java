@@ -8,6 +8,8 @@ package com.liferay.object.rest.internal.deployer;
 import com.liferay.object.deployer.ObjectDefinitionDeployer;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.internal.graphql.dto.v1_0.ObjectDefinitionGraphQLDTOContributor;
@@ -51,6 +53,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -85,6 +88,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import javax.ws.rs.Path;
@@ -112,54 +116,40 @@ import org.osgi.service.component.annotations.Reference;
 public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 	@Override
+	public Map<String, List<ServiceRegistration<?>>> deploy(
+		long companyId, List<ObjectDefinition> objectDefinitions) {
+
+		Map<String, List<ServiceRegistration<?>>> serviceRegistrationsMap =
+			new ConcurrentHashMap<>();
+
+		Map<Long, List<ObjectField>> objectFieldsMap =
+			_objectFieldLocalService.getObjectFieldsMap(companyId);
+		Map<Long, List<ObjectRelationship>> objectRelationshipsMap =
+			_objectRelationshipLocalService.getObjectRelationshipsMap(
+				companyId);
+
+		for (ObjectDefinition objectDefinition : objectDefinitions) {
+			serviceRegistrationsMap.put(
+				DBPartitionUtil.getPartitionKey(
+					objectDefinition.getObjectDefinitionId()),
+				_deploy(
+					objectDefinition,
+					objectFieldsMap.getOrDefault(
+						objectDefinition.getObjectDefinitionId(),
+						Collections.emptyList()),
+					objectRelationshipsMap.getOrDefault(
+						objectDefinition.getObjectDefinitionId(),
+						Collections.emptyList())));
+		}
+
+		return serviceRegistrationsMap;
+	}
+
+	@Override
 	public synchronized List<ServiceRegistration<?>> deploy(
 		ObjectDefinition objectDefinition) {
 
-		if (objectDefinition.isUnmodifiableSystemObject()) {
-			_initSystemObjectDefinition(
-				objectDefinition,
-				_systemObjectDefinitionManagerRegistry.
-					getSystemObjectDefinitionManager(
-						objectDefinition.getName()));
-
-			return Collections.emptyList();
-		}
-
-		ObjectScopeProvider objectScopeProvider =
-			_objectScopeProviderRegistry.getObjectScopeProvider(
-				objectDefinition.getScope());
-
-		Map<Long, ObjectDefinition> objectDefinitions =
-			_objectDefinitionsMap.get(objectDefinition.getRESTContextPath());
-
-		if (objectDefinitions == null) {
-			objectDefinitions = new HashMap<>();
-
-			_objectDefinitionsMap.put(
-				objectDefinition.getRESTContextPath(), objectDefinitions);
-		}
-
-		_excludeMethods(objectDefinition, objectScopeProvider);
-
-		_initCustomObjectDefinition(objectDefinition);
-
-		objectDefinitions.put(
-			objectDefinition.getCompanyId(), objectDefinition);
-
-		return Collections.singletonList(
-			_bundleContext.registerService(
-				GraphQLDTOContributor.class,
-				ObjectDefinitionGraphQLDTOContributor.of(
-					_entityModelProvider, _extensionProviderRegistry,
-					objectDefinition, _objectDefinitionLocalService,
-					_objectEntryManagerRegistry.getObjectEntryManager(
-						objectDefinition.getStorageType()),
-					_objectFieldLocalService, _objectRelationshipLocalService,
-					objectScopeProvider,
-					_systemObjectDefinitionManagerRegistry),
-				HashMapDictionaryBuilder.<String, Object>put(
-					"dto.name", objectDefinition.getDBTableName()
-				).build()));
+		return _deploy(objectDefinition, null, null);
 	}
 
 	public ObjectDefinition getObjectDefinition(
@@ -206,6 +196,58 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			_objectEntryManagerRegistry, _objectFieldLocalService,
 			_objectRelationshipService, _objectScopeProviderRegistry,
 			_systemObjectDefinitionManagerRegistry);
+	}
+
+	private List<ServiceRegistration<?>> _deploy(
+		ObjectDefinition objectDefinition, List<ObjectField> objectFields,
+		List<ObjectRelationship> objectRelationships) {
+
+		if (objectDefinition.isUnmodifiableSystemObject()) {
+			_initSystemObjectDefinition(
+				objectDefinition,
+				_systemObjectDefinitionManagerRegistry.
+					getSystemObjectDefinitionManager(
+						objectDefinition.getName()));
+
+			return Collections.emptyList();
+		}
+
+		ObjectScopeProvider objectScopeProvider =
+			_objectScopeProviderRegistry.getObjectScopeProvider(
+				objectDefinition.getScope());
+
+		Map<Long, ObjectDefinition> objectDefinitions =
+			_objectDefinitionsMap.get(objectDefinition.getRESTContextPath());
+
+		if (objectDefinitions == null) {
+			objectDefinitions = new HashMap<>();
+
+			_objectDefinitionsMap.put(
+				objectDefinition.getRESTContextPath(), objectDefinitions);
+		}
+
+		_excludeMethods(objectDefinition, objectScopeProvider);
+
+		_initCustomObjectDefinition(objectDefinition);
+
+		objectDefinitions.put(
+			objectDefinition.getCompanyId(), objectDefinition);
+
+		return Collections.singletonList(
+			_bundleContext.registerService(
+				GraphQLDTOContributor.class,
+				ObjectDefinitionGraphQLDTOContributor.of(
+					_entityModelProvider, _extensionProviderRegistry,
+					objectDefinition, _objectDefinitionLocalService,
+					_objectEntryManagerRegistry.getObjectEntryManager(
+						objectDefinition.getStorageType()),
+					_objectFieldLocalService, objectFields,
+					_objectRelationshipLocalService, objectRelationships,
+					objectScopeProvider,
+					_systemObjectDefinitionManagerRegistry),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"dto.name", objectDefinition.getDBTableName()
+				).build()));
 	}
 
 	private void _disposeComponentInstances(String restContextPath) {

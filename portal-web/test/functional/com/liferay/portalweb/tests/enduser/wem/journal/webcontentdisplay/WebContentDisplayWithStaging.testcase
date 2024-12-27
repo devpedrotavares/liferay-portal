@@ -352,7 +352,7 @@ definition {
 				webContentImage = "Document_2.jpeg",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Select the web content in Web Content Display") {
@@ -397,7 +397,7 @@ definition {
 				locator1 = "WCEditWebContent#IMAGE_DESCRIPTION",
 				value1 = "Web Content Image Description");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Publish to live") {

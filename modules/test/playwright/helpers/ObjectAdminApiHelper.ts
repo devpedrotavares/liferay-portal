@@ -44,12 +44,19 @@ export class ObjectAdminApiHelper {
 		);
 	}
 
-	async postRandomObjectDefinition(
-		status: {code: number},
-		objectFields?: Partial<ObjectField>[],
-		objectFolderExternalReferenceCode?: string,
-		titleObjectFieldName?: string
-	): Promise<ObjectDefinition> {
+	async postRandomObjectDefinition({
+		objectFields,
+		objectFolderExternalReferenceCode,
+		scope = 'company',
+		status,
+		titleObjectFieldName,
+	}: {
+		objectFields?: Partial<ObjectField>[];
+		objectFolderExternalReferenceCode?: string;
+		scope?: 'site' | 'company';
+		status: {code: number};
+		titleObjectFieldName?: string;
+	}) {
 		const objectDefinitionExternalReferenceCode =
 			'ObjectDefinition' + getRandomInt();
 
@@ -80,7 +87,7 @@ export class ObjectAdminApiHelper {
 			pluralLabel: {
 				en_US: objectDefinitionExternalReferenceCode,
 			},
-			scope: 'company',
+			scope,
 			status,
 			titleObjectFieldName: titleObjectFieldName ?? 'id',
 		};

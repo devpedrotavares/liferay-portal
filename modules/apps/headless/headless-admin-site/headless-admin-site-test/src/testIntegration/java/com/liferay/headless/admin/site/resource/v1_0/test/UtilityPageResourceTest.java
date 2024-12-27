@@ -12,6 +12,7 @@ import com.liferay.headless.admin.site.client.pagination.Page;
 import com.liferay.headless.admin.site.client.pagination.Pagination;
 import com.liferay.headless.admin.site.client.problem.Problem;
 import com.liferay.headless.admin.site.client.resource.v1_0.UtilityPageResource;
+import com.liferay.headless.admin.site.resource.v1_0.test.util.PageSpecificationsTestUtil;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -21,12 +22,18 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.util.PropsValues;
 
 import java.util.List;
 import java.util.Locale;
@@ -34,7 +41,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,6 +53,13 @@ import org.junit.runner.RunWith;
 @FeatureFlags("LPD-35443")
 @RunWith(Arquillian.class)
 public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Override
 	@Test
@@ -117,13 +133,12 @@ public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
 			Assert.assertNull(problem.getTitle());
 		}
 
-		UtilityPageResource curUtilityPageResource = _getUtilityPageResource();
+		UtilityPageResource utilityPageResource = _getUtilityPageResource();
 
 		_assertNestedFields(
-			curUtilityPageResource.
-				getSiteSiteByExternalReferenceCodeUtilityPage(
-					testGroup.getExternalReferenceCode(),
-					postUtilityPage.getExternalReferenceCode()));
+			utilityPageResource.getSiteSiteByExternalReferenceCodeUtilityPage(
+				testGroup.getExternalReferenceCode(),
+				postUtilityPage.getExternalReferenceCode()));
 	}
 
 	@Ignore
@@ -241,14 +256,35 @@ public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
 		}
 	}
 
-	@Ignore
 	@Override
 	@Test
 	public void testPostSiteSiteByExternalReferenceCodeUtilityPagePageSpecification()
 		throws Exception {
 
-		super.
-			testPostSiteSiteByExternalReferenceCodeUtilityPagePageSpecification();
+		UtilityPageResource utilityPageResource = _getUtilityPageResource();
+
+		UtilityPage utilityPage =
+			utilityPageResource.postSiteSiteByExternalReferenceCodeUtilityPage(
+				testGroup.getExternalReferenceCode(), randomUtilityPage());
+
+		LayoutUtilityPageEntry layoutUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.
+				getLayoutUtilityPageEntryByExternalReferenceCode(
+					utilityPage.getExternalReferenceCode(),
+					testGroup.getGroupId());
+
+		PageSpecificationsTestUtil.
+			testPostSiteSiteByExternalReferenceCodePageSpecification(
+				_layoutLocalService.getLayout(layoutUtilityPageEntry.getPlid()),
+				utilityPage.getPageSpecifications(),
+				ServiceContextTestUtil.getServiceContext(
+					testGroup.getGroupId(), TestPropsValues.getUserId()),
+				contentPageSpecification ->
+					utilityPageResource.
+						postSiteSiteByExternalReferenceCodeUtilityPagePageSpecification(
+							testGroup.getExternalReferenceCode(),
+							utilityPage.getExternalReferenceCode(),
+							contentPageSpecification));
 	}
 
 	@Override
@@ -366,6 +402,9 @@ public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
 			Assert.assertEquals(
 				jsonArray.toString(), entry.getValue(), jsonArray.getString(0));
 		}
+
+		PageSpecificationsTestUtil.assertPageSpecifications(
+			layout, utilityPage.getPageSpecifications());
 	}
 
 	private UtilityPage _getUtilityPage(
@@ -396,20 +435,17 @@ public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
 	}
 
 	private UtilityPageResource _getUtilityPageResource() throws Exception {
-		User omniadminUser = UserTestUtil.addOmniadminUser();
-
-		String password = RandomTestUtil.randomString();
-
-		_userLocalService.updatePassword(
-			omniadminUser.getUserId(), password, password, false, true);
+		User user = UserTestUtil.getAdminUser(testCompany.getCompanyId());
 
 		return UtilityPageResource.builder(
 		).authentication(
-			omniadminUser.getEmailAddress(), password
+			user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
 		).locale(
 			LocaleUtil.getDefault()
 		).parameters(
-			"nestedFields", "friendlyUrlHistory"
+			"nestedFields", "friendlyUrlHistory,pageSpecifications"
 		).build();
 	}
 
@@ -428,10 +464,10 @@ public class UtilityPageResourceTest extends BaseUtilityPageResourceTestCase {
 			testGetSiteSiteByExternalReferenceCodeUtilityPagesPage_addUtilityPage(
 				testGroup.getExternalReferenceCode(), randomUtilityPage());
 
-		UtilityPageResource curUtilityPageResource = _getUtilityPageResource();
+		UtilityPageResource utilityPageResource = _getUtilityPageResource();
 
 		page =
-			curUtilityPageResource.
+			utilityPageResource.
 				getSiteSiteByExternalReferenceCodeUtilityPagesPage(
 					testGroup.getExternalReferenceCode(), null, null, null,
 					Pagination.of(1, 10), null);

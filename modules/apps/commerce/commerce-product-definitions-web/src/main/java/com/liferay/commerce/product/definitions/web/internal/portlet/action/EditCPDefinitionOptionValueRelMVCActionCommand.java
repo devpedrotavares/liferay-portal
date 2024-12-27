@@ -108,12 +108,12 @@ public class EditCPDefinitionOptionValueRelMVCActionCommand
 		long cpDefinitionOptionValueRelId = ParamUtil.getLong(
 			actionRequest, "cpDefinitionOptionValueRelId");
 
-		if (cpDefinitionOptionValueRelId > 0) {
-			return _cpDefinitionOptionValueRelService.
-				deleteCPDefinitionOptionValueRel(cpDefinitionOptionValueRelId);
+		if (cpDefinitionOptionValueRelId <= 0) {
+			return null;
 		}
 
-		return null;
+		return _cpDefinitionOptionValueRelService.
+			deleteCPDefinitionOptionValueRel(cpDefinitionOptionValueRelId);
 	}
 
 	private CPDefinitionOptionValueRel _resetCPInstanceAndQuantity(
@@ -219,7 +219,8 @@ public class EditCPDefinitionOptionValueRelMVCActionCommand
 					"price"),
 				priority,
 				_commerceOrderItemQuantityFormatter.parse(
-					actionRequest, "quantity"),
+					actionRequest, CPDefinitionOptionValueRel.class.getName(),
+					"quantity"),
 				unitOfMeasureKey, serviceContext);
 	}
 

@@ -210,7 +210,7 @@ definition {
 
 		Depot.viewNoPanel(panelName = "Display Page");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
@@ -319,7 +319,7 @@ definition {
 			webContentText = "WC WebContent Text",
 			webContentTitle = "Remove and Restore WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.moveToRecycleBinCP(
 			assetType = "Web Content Article",

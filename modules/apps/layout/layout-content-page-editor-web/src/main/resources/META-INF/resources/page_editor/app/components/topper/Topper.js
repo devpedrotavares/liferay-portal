@@ -17,6 +17,7 @@ import {ITEM_ACTIVATION_ORIGINS} from '../../config/constants/itemActivationOrig
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {config} from '../../config/index';
 import {useSetCollectionActiveItemContext} from '../../contexts/CollectionActiveItemContext';
+import {useToControlsId} from '../../contexts/CollectionItemContext';
 import {
 	useActivationOrigin,
 	useActiveItemIds,
@@ -25,9 +26,11 @@ import {
 	useIsHovered,
 	useMultiSelectType,
 	useSelectItem,
+	useSelectMultipleItems,
 } from '../../contexts/ControlsContext';
 import {useEditableProcessorUniqueId} from '../../contexts/EditableProcessorContext';
 import {
+	useIsMovementTarget,
 	useMovementSources,
 	useMovementTarget,
 	useMovementTargetPosition,
@@ -111,15 +114,20 @@ function TopperContent({
 	const hoverItem = useHoverItem();
 	const {isOverTarget, targetPosition, targetRef} = useDropTarget(item);
 	const isMultiSelect = activeItemIds.length > 1;
-	const {itemId: keyboardMovementTargetId} = useMovementTarget();
+	const isKeyboardTarget = useIsMovementTarget();
+
+	const toControlsId = useToControlsId();
+
 	const keyboardMovementPosition = useMovementTargetPosition();
 	const selectItem = useSelectItem();
+	const selectItems = useSelectMultipleItems();
 	const topperLabelId = useId();
 
 	const dropContainerId = useDropContainerId();
 	const dropTargetPosition = targetPosition || keyboardMovementPosition;
 
-	const isHighlighted = isItemHighlighted(item, dropContainerId);
+	const isHighlighted =
+		isOverTarget && isItemHighlighted(item, dropContainerId);
 
 	const selectable =
 		!multiSelectType ||
@@ -156,7 +164,7 @@ function TopperContent({
 		}
 	};
 
-	const onDragEnd = (parentItemId, position) => {
+	const onDragEnd = (parentItemId, position, toControlsId) => {
 		const thunk = isStepper(dragItem)
 			? moveStepper({
 					itemId: item.itemId,
@@ -165,6 +173,11 @@ function TopperContent({
 				})
 			: moveItems({
 					itemIds: activeItemIds,
+					onMoveEnd: () => {
+						if (toControlsId) {
+							selectItems(activeItemIds.map(toControlsId));
+						}
+					},
 					parentItemIds: [parentItemId],
 					positions: [position],
 				});
@@ -189,7 +202,7 @@ function TopperContent({
 		draggingItem || draggingTopper || lastSource?.itemId === item.itemId;
 
 	const isTarget =
-		(isOverTarget || keyboardMovementTargetId === item.itemId) &&
+		(isOverTarget || isKeyboardTarget(toControlsId(item.itemId))) &&
 		!isUnmappedCollection(item) &&
 		!isUnmappedForm(item);
 
@@ -268,9 +281,7 @@ function TopperContent({
 			}}
 			tabIndex={isFocusable ? 0 : -1}
 		>
-			{isActive ||
-			isHighlighted ||
-			(isHovered && Liferay.FeatureFlags['LPD-32075']) ? (
+			{isActive || isHighlighted || isHovered ? (
 				<TopperLabel
 					isDragging={isDraggingSource}
 					isHovered={isHovered && !isActive}

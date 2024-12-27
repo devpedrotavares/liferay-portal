@@ -4,8 +4,11 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
+import {createReadStream} from 'fs';
+import path from 'node:path';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {collectionsPagesTest} from '../../fixtures/collectionsPagesTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
@@ -13,12 +16,14 @@ import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
 import {pageViewModePagesTest} from '../../fixtures/pageViewModePagesTest';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../utils/getRandomString';
+import {waitForAlert} from '../../utils/waitForAlert';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
 import {pagesPagesTest} from './fixtures/pagesPagesTest';
 
 const test = mergeTests(
 	apiHelpersTest,
+	collectionsPagesTest,
 	featureFlagsTest({
 		'LPS-178052': true,
 	}),
@@ -88,7 +93,10 @@ test.describe('Page content', () => {
 
 			// Select experiences
 
-			await simulationMenuPage.changePreviewBy('Experiences');
+			await simulationMenuPage.changeCombobox(
+				'Preview By',
+				'Experiences'
+			);
 
 			// Assert default experience
 
@@ -100,11 +108,7 @@ test.describe('Page content', () => {
 
 			// Assert custom experience
 
-			await clickAndExpectToBeVisible({
-				autoClick: true,
-				target: page.getByRole('option', {name: 'E1'}),
-				trigger: page.getByRole('combobox', {name: 'Experience'}),
-			});
+			await simulationMenuPage.changeCombobox('Experience', 'E1');
 
 			await expect(
 				page.getByText('Showing content for the experience "E1".')
@@ -115,13 +119,223 @@ test.describe('Page content', () => {
 	);
 
 	test(
+		'Preview content in a widget page by segment',
+		{
+			tag: '@LPS-186155',
+		},
+		async ({
+			apiHelpers,
+			collectionsPage,
+			page,
+			simulationMenuPage,
+			site,
+			widgetPagePage,
+		}) => {
+
+			// Create blogs entry
+
+			const blogsEntryName = getRandomString();
+
+			await apiHelpers.headlessDelivery.postBlog(site.id, {
+				headline: blogsEntryName,
+			});
+
+			// Create document
+
+			const documentName = getRandomString();
+
+			await apiHelpers.headlessDelivery.postDocument(
+				site.id,
+				createReadStream(
+					path.join(__dirname, '/dependencies/attachment.txt')
+				),
+				{
+					fileName: 'attachment.txt',
+					title: documentName,
+				}
+			);
+
+			// Create segments entry
+
+			const userName = getRandomString();
+			const segmentsEntryName = getRandomString();
+
+			const segmentsEntry =
+				await apiHelpers.jsonWebServicesSegmentsEntry.addSegmentsEntry({
+					criteria: {
+						criteria: {
+							user: {
+								conjunction: 'and',
+								filterString: `(firstName eq '${userName}')`,
+								typeValue: 'model',
+							},
+						},
+						filterString: {
+							model: `(firstName eq '${userName}')`,
+						},
+					},
+					groupId: site.id,
+					name: segmentsEntryName,
+				});
+
+			// Create dynamic asset list
+
+			const assetListEntryName = getRandomString();
+
+			const dlFileEntryClassName =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					'com.liferay.document.library.kernel.model.DLFileEntry'
+				);
+
+			const assetListEntry =
+				await apiHelpers.jsonWebServicesAssetListEntry.addDynamicAssetListEntry(
+					{
+						groupId: site.id,
+						title: assetListEntryName,
+						typeSettings: `anyAssetType=${dlFileEntryClassName.classNameId}`,
+					}
+				);
+
+			const blogsEntryClassName =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					'com.liferay.blogs.model.BlogsEntry'
+				);
+
+			await apiHelpers.jsonWebServicesAssetListEntry.updateAssetListEntry(
+				{
+					assetListEntryId: assetListEntry.assetListEntryId,
+					groupId: site.id,
+					segmentsEntryId: segmentsEntry.segmentsEntryId,
+					typeSettings: `anyAssetType=${blogsEntryClassName.classNameId}`,
+				}
+			);
+
+			// Update collection variations priority
+
+			await collectionsPage.goto(site.friendlyUrlPath);
+
+			await page.getByRole('link', {name: assetListEntryName}).click();
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {name: 'Deprioritize'}),
+				trigger: page.getByLabel('Actions for Anyone'),
+			});
+
+			await waitForAlert(
+				page,
+				'Success:Variation Anyone moved to position 2.'
+			);
+
+			// Create page and go to view mode
+
+			const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				title: getRandomString(),
+			});
+
+			await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+
+			// Add Asset Publisher widget
+
+			await widgetPagePage.addPortlet('Asset Publisher');
+
+			// Select custom collection
+
+			await widgetPagePage.clickOnAction(
+				'Asset Publisher',
+				'Configuration'
+			);
+
+			const configurationIFrame = page.frameLocator(
+				`iframe[title*="Asset Publisher"]`
+			);
+
+			const selectCollectionIframe = configurationIFrame.frameLocator(
+				'iframe[title="Select Collection"]'
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: selectCollectionIframe.getByRole('button', {
+					name: assetListEntryName,
+				}),
+				trigger: configurationIFrame.getByLabel('Select Collection'),
+			});
+
+			await expect(
+				configurationIFrame.getByRole('textbox', {name: 'Collection'})
+			).toHaveValue(assetListEntryName);
+
+			await widgetPagePage.saveAndClose('Asset Publisher');
+
+			await expect(async () => {
+				await page.goto(
+					`/web${site.friendlyUrlPath}${layout.friendlyURL}`
+				);
+
+				// Open simulation panel
+
+				await simulationMenuPage.openSimulationPanel();
+
+				// Assert default collection
+
+				await expect(
+					page.getByText('Showing content for the segment "Anyone".')
+				).toBeVisible({timeout: 5000});
+
+				const simulationPreviewIframe = page.frameLocator(
+					'iframe[title="Simulation Preview"]'
+				);
+
+				await expect(
+					simulationPreviewIframe.getByRole('link', {
+						name: documentName,
+					})
+				).toBeVisible({timeout: 1000});
+
+				await expect(
+					simulationPreviewIframe.getByRole('link', {
+						name: blogsEntryName,
+					})
+				).not.toBeVisible({timeout: 1000});
+
+				// Assert segmented collection
+
+				await simulationMenuPage.changeCombobox(
+					'Segment',
+					segmentsEntryName
+				);
+
+				await expect(
+					page.getByText(
+						`Showing content for the segment "${segmentsEntryName}".`
+					)
+				).toBeVisible({timeout: 5000});
+
+				await expect(
+					simulationPreviewIframe.getByRole('link', {
+						name: blogsEntryName,
+					})
+				).toBeVisible({timeout: 1000});
+
+				await expect(
+					simulationPreviewIframe.getByRole('link', {
+						name: documentName,
+					})
+				).not.toBeVisible({timeout: 1000});
+			}).toPass();
+		}
+	);
+
+	test(
 		'View info messages',
 		{
 			tag: ['@LPS-186155', '@LPS-187159'],
 		},
 		async ({apiHelpers, page, simulationMenuPage, site}) => {
 
-			// Create page and go to view mode
+			// Create page
 
 			const layout = await apiHelpers.headlessDelivery.createSitePage({
 				pageDefinition: getPageDefinition(),
@@ -129,35 +343,44 @@ test.describe('Page content', () => {
 				title: getRandomString(),
 			});
 
-			await page.goto(
-				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
-			);
+			// Go to view mode and check info messages
 
-			// Open simulation panel
+			await expect(async () => {
+				await page.goto(
+					`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+				);
 
-			await simulationMenuPage.openSimulationPanel();
+				// Open simulation panel
 
-			// Assert empty messages
+				await simulationMenuPage.openSimulationPanel();
 
-			await expect(
-				page.getByText('Showing content for the segment "Anyone".')
-			).toBeVisible();
+				// Assert empty messages
 
-			await expect(
-				page.getByText(
-					'No segments have been added yet. To add a new segment go to Product Menu > People > Segments.'
-				)
-			).toBeVisible();
+				await expect(
+					page.getByText('Showing content for the segment "Anyone".')
+				).toBeVisible({timeout: 5000});
 
-			await simulationMenuPage.changePreviewBy('Experiences');
+				await expect(
+					page.getByText(
+						'No segments have been added yet. To add a new segment go to Product Menu > People > Segments.'
+					)
+				).toBeVisible({timeout: 1000});
 
-			await expect(
-				page.getByText('Showing content for the experience "Default".')
-			).toBeVisible();
+				await simulationMenuPage.changeCombobox(
+					'Preview By',
+					'Experiences'
+				);
 
-			await expect(
-				page.getByText('No experiences have been added yet.')
-			).toBeVisible();
+				await expect(
+					page.getByText(
+						'Showing content for the experience "Default".'
+					)
+				).toBeVisible({timeout: 1000});
+
+				await expect(
+					page.getByText('No experiences have been added yet.')
+				).toBeVisible({timeout: 1000});
+			}).toPass();
 		}
 	);
 });

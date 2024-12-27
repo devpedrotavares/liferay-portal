@@ -15,8 +15,9 @@ create index IX_E153EF0E on CPAttachmentFileEntry (status, displayDate);
 create unique index IX_50416EE0 on CPAttachmentFileEntry (uuid_[$COLUMN_LENGTH:75$], groupId, ctCollectionId);
 
 create index IX_FFC978A3 on CPConfigurationEntry (CPConfigurationListId);
+create unique index IX_4B033D0 on CPConfigurationEntry (classNameId, classPK, ctCollectionId, CPConfigurationListId);
+create index IX_9CF4EC9E on CPConfigurationEntry (classNameId, classPK, visible);
 create index IX_69AB0AD9 on CPConfigurationEntry (companyId);
-create unique index IX_922671A on CPConfigurationEntry (ctCollectionId, CPConfigurationListId, classNameId, classPK);
 create unique index IX_B5AF3F22 on CPConfigurationEntry (ctCollectionId, companyId, externalReferenceCode[$COLUMN_LENGTH:75$]);
 create unique index IX_DE212C7 on CPConfigurationEntry (uuid_[$COLUMN_LENGTH:75$], ctCollectionId, groupId);
 
@@ -27,6 +28,8 @@ create unique index IX_E989EBF5 on CPConfigurationList (groupId, uuid_[$COLUMN_L
 create index IX_85ED285B on CPConfigurationList (parentCPConfigurationListId);
 create index IX_DD7144ED on CPConfigurationList (status, displayDate);
 create index IX_20625D47 on CPConfigurationList (uuid_[$COLUMN_LENGTH:75$]);
+
+create unique index IX_5B3D330D on CPConfigurationListRel (CPConfigurationListId, classNameId, classPK, ctCollectionId);
 
 create index IX_95975FB4 on CPDSpecificationOptionValue (CPDefinitionId, CPOptionCategoryId);
 create index IX_173E8E91 on CPDSpecificationOptionValue (CPDefinitionId, CPSpecificationOptionId);

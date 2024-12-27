@@ -29,9 +29,9 @@ test.beforeEach(({page}) => {
 
 test.describe('Manage object relationships through Model Builder', () => {
 	test('can create multiple object relationships between the same objects', async ({
+		addNewObjectRelationshipModalPage,
 		apiHelpers,
 		modelBuilderDiagramPage,
-		modelBuilderObjectDefinitionNodePage,
 		page,
 		viewObjectDefinitionsPage,
 	}) => {
@@ -41,17 +41,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -77,12 +77,10 @@ test.describe('Manage object relationships through Model Builder', () => {
 
 		const objectRelationship1Label = 'objectRelationship' + getRandomInt();
 
-		await modelBuilderObjectDefinitionNodePage.handleObjectRelationshipModal(
-			{
-				objectRelationshipLabel: objectRelationship1Label,
-				type: 'One to Many',
-			}
-		);
+		await addNewObjectRelationshipModalPage.handleForm({
+			objectRelationshipLabel: objectRelationship1Label,
+			type: 'One to Many',
+		});
 
 		await modelBuilderDiagramPage.connectObjectDefinitionsNodeHandles(
 			objectDefinition2.id,
@@ -92,12 +90,10 @@ test.describe('Manage object relationships through Model Builder', () => {
 
 		const objectRelationship2Label = 'objectRelationship' + getRandomInt();
 
-		await modelBuilderObjectDefinitionNodePage.handleObjectRelationshipModal(
-			{
-				objectRelationshipLabel: objectRelationship2Label,
-				type: 'One to Many',
-			}
-		);
+		await addNewObjectRelationshipModalPage.handleForm({
+			objectRelationshipLabel: objectRelationship2Label,
+			type: 'One to Many',
+		});
 
 		await page.waitForTimeout(500);
 
@@ -113,6 +109,7 @@ test.describe('Manage object relationships through Model Builder', () => {
 	});
 
 	test('can create one to many relationship with object field by dragging node handles', async ({
+		addNewObjectRelationshipModalPage,
 		apiHelpers,
 		modelBuilderDiagramPage,
 		modelBuilderObjectDefinitionNodePage,
@@ -124,17 +121,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -165,12 +162,10 @@ test.describe('Manage object relationships through Model Builder', () => {
 		const objectRelationshipLabel = 'objectRelationship' + getRandomInt();
 
 		const objectRelationship =
-			await modelBuilderObjectDefinitionNodePage.handleObjectRelationshipModal(
-				{
-					objectRelationshipLabel,
-					type: 'One to Many',
-				}
-			);
+			await addNewObjectRelationshipModalPage.handleForm({
+				objectRelationshipLabel,
+				type: 'One to Many',
+			});
 
 		apiHelpers.data.push({
 			id: objectRelationship.id,
@@ -198,6 +193,7 @@ test.describe('Manage object relationships through Model Builder', () => {
 	});
 
 	test('can create relationship between definitions from different folders', async ({
+		addNewObjectRelationshipModalPage,
 		apiHelpers,
 		modelBuilderDiagramPage,
 		modelBuilderLeftSidebarPage,
@@ -210,18 +206,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -238,18 +233,18 @@ test.describe('Manage object relationships through Model Builder', () => {
 
 		await modelBuilderDiagramPage.fitViewButton.click();
 
+		await modelBuilderObjectDefinitionNodePage.openAddNewObjectFieldOrRelationshipModal(
+			objectDefinition1.label['en_US'],
+			modelBuilderDiagramPage.objectDefinitionNodes,
+			modelBuilderObjectDefinitionNodePage.addObjectRelationshipButton
+		);
+
 		const objectRelationship =
-			await modelBuilderObjectDefinitionNodePage.createObjectRelationship(
-				{
-					manyRecordsOf: objectDefinition2.label['en_US'],
-					objectDefinitionLabel: objectDefinition1.label['en_US'],
-					objectDefinitionNodes:
-						modelBuilderDiagramPage.objectDefinitionNodes,
-					objectRelationshipLabel:
-						'objectRelationship' + getRandomInt(),
-					objectRelationshipType: 'One to Many',
-				}
-			);
+			await addNewObjectRelationshipModalPage.handleForm({
+				manyRecordsOf: objectDefinition2.label['en_US'],
+				objectRelationshipLabel: 'objectRelationship' + getRandomInt(),
+				type: 'One to Many',
+			});
 
 		apiHelpers.data.push({
 			id: objectRelationship.id,
@@ -288,6 +283,7 @@ test.describe('Manage object relationships through Model Builder', () => {
 	});
 
 	test('can create relationship by using add relationship button', async ({
+		addNewObjectRelationshipModalPage,
 		apiHelpers,
 		modelBuilderDiagramPage,
 		modelBuilderObjectDefinitionNodePage,
@@ -299,17 +295,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -330,17 +326,18 @@ test.describe('Manage object relationships through Model Builder', () => {
 
 		const objectRelationshipLabel = 'objectRelationship' + getRandomInt();
 
+		await modelBuilderObjectDefinitionNodePage.openAddNewObjectFieldOrRelationshipModal(
+			objectDefinition2.label['en_US'],
+			modelBuilderDiagramPage.objectDefinitionNodes,
+			modelBuilderObjectDefinitionNodePage.addObjectRelationshipButton
+		);
+
 		const objectRelationship =
-			await modelBuilderObjectDefinitionNodePage.createObjectRelationship(
-				{
-					manyRecordsOf: objectDefinition1.name,
-					objectDefinitionLabel: objectDefinition2.label['en_US'],
-					objectDefinitionNodes:
-						modelBuilderDiagramPage.objectDefinitionNodes,
-					objectRelationshipLabel,
-					objectRelationshipType: 'One to Many',
-				}
-			);
+			await addNewObjectRelationshipModalPage.handleForm({
+				manyRecordsOf: objectDefinition1.name,
+				objectRelationshipLabel,
+				type: 'One to Many',
+			});
 
 		apiHelpers.data.push({
 			id: objectRelationship.id,
@@ -355,6 +352,7 @@ test.describe('Manage object relationships through Model Builder', () => {
 	});
 
 	test('can create object relationship to linked object definition by drag and drop', async ({
+		addNewObjectRelationshipModalPage,
 		apiHelpers,
 		modelBuilderDiagramPage,
 		modelBuilderObjectDefinitionNodePage,
@@ -369,25 +367,24 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		const objectDefinition3 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -457,12 +454,10 @@ test.describe('Manage object relationships through Model Builder', () => {
 		const objectRelationshipLabel2 = 'objectRelationship' + getRandomInt();
 
 		const objectRelationship2 =
-			await modelBuilderObjectDefinitionNodePage.handleObjectRelationshipModal(
-				{
-					objectRelationshipLabel: objectRelationshipLabel2,
-					type: 'One to Many',
-				}
-			);
+			await addNewObjectRelationshipModalPage.handleForm({
+				objectRelationshipLabel: objectRelationshipLabel2,
+				type: 'One to Many',
+			});
 
 		apiHelpers.data.push({
 			id: objectRelationship2.id,
@@ -501,11 +496,11 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -608,18 +603,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
 			type: 'objectDefinition',
@@ -726,17 +720,17 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -820,7 +814,9 @@ test.describe('Manage object relationships through Model Builder', () => {
 		viewObjectDefinitionsPage,
 	}) => {
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition({code: 0});
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				status: {code: 0},
+			});
 
 		const objectDefinitionApiClient =
 			await apiHelpers.buildRestClient(ObjectDefinitionApi);
@@ -882,18 +878,19 @@ test.describe('Manage object relationships through Model Builder', () => {
 		apiHelpers.data.push({id: objectFolder.id, type: 'objectFolder'});
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 1},
-				[],
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFields: [],
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 1},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,

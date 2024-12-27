@@ -69,4 +69,12 @@ public interface FragmentCollectionContributor {
 		return ResourceBundleLoaderUtil.getPortalResourceBundleLoader();
 	}
 
+	public default boolean isDeprecated() {
+		return false;
+	}
+
+	public default boolean isEnabled() {
+		return true;
+	}
+
 }

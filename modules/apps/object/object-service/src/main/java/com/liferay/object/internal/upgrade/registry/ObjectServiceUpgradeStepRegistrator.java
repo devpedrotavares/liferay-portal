@@ -123,7 +123,10 @@ public class ObjectServiceUpgradeStepRegistrator
 		registry.register("3.7.0", "3.8.0", new DummyUpgradeStep());
 
 		registry.register(
-			"3.8.0", "3.9.0", new ObjectLayoutBoxUpgradeProcess(),
+			"3.8.0", "3.8.1", new ObjectLayoutBoxUpgradeProcess());
+
+		registry.register(
+			"3.8.1", "3.9.0",
 			new com.liferay.object.internal.upgrade.v3_9_0.
 				ObjectViewColumnUpgradeProcess());
 
@@ -315,10 +318,12 @@ public class ObjectServiceUpgradeStepRegistrator
 				SchemaUpgradeProcess());
 
 		registry.register(
-			"5.3.1", "6.0.0",
+			"5.3.1", "5.3.2",
 			new com.liferay.object.internal.upgrade.v6_0_0.
-				ObjectValidationRuleUpgradeProcess(),
-			ObjectValidationRuleSettingTable.create());
+				ObjectValidationRuleUpgradeProcess());
+
+		registry.register(
+			"5.3.2", "6.0.0", ObjectValidationRuleSettingTable.create());
 
 		registry.register(
 			"6.0.0", "7.0.0",
@@ -479,6 +484,11 @@ public class ObjectServiceUpgradeStepRegistrator
 
 		registry.register(
 			"10.0.0", "10.0.1", new ObjectDefinitionPortletIdUpgradeProcess());
+
+		registry.register(
+			"10.0.1", "10.1.0",
+			UpgradeProcessFactory.alterColumnType(
+				"ObjectEntry", "externalReferenceCode", "VARCHAR(1000)"));
 	}
 
 	@Reference

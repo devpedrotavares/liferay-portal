@@ -153,7 +153,7 @@ definition {
 			webContentContent = "Contenido de WC WebContent",
 			webContentTitle = "Título del contenido web de WC");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 }

@@ -306,10 +306,6 @@ const MillerColumns = ({
 		.map((col) => col.length);
 
 	const onKeyDown = (event) => {
-		if (!Liferay.FeatureFlags['LPD-35220']) {
-			return;
-		}
-
 		const activeElement = document.activeElement;
 		const resizes = document.querySelectorAll('[id*="resize"]');
 
@@ -357,8 +353,6 @@ const MillerColumns = ({
 				rtl={rtl}
 			>
 				<DndProvider backend={HTML5Backend}>
-					<DragPreviewWrapper />
-
 					<div
 						className="bg-white miller-columns-row"
 						onKeyDown={onKeyDown}
@@ -385,6 +379,8 @@ const MillerColumns = ({
 								rtl={rtl}
 							/>
 						))}
+
+						<DragPreviewWrapper />
 					</div>
 				</DndProvider>
 			</KeyboardMovementProvider>
@@ -430,7 +426,13 @@ function DragPreviewWrapper() {
 		};
 	}, [target]);
 
-	return <DragPreview alignment={alignment} getLabel={getDragPreviewLabel} />;
+	return (
+		<DragPreview
+			alignment={alignment}
+			focusElement={!!sources.length}
+			getLabel={getDragPreviewLabel}
+		/>
+	);
 }
 
 export default MillerColumns;

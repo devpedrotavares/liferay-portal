@@ -280,7 +280,8 @@ public interface ObjectDefinitionLocalService
 		String uuid, long companyId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public ObjectDefinition fetchSystemObjectDefinition(String name);
+	public ObjectDefinition fetchSystemObjectDefinition(
+		long companyId, String name);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
@@ -460,6 +461,10 @@ public interface ObjectDefinitionLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectDefinition updatePortlet(long objectDefinitionId)
 		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectDefinition updateRootDescendantNodeObjectDefinition(
+		ObjectDefinition objectDefinition, long rootObjectDefinitionId);
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ObjectDefinition updateRootObjectDefinitionId(

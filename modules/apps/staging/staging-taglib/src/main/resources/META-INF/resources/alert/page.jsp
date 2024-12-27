@@ -23,17 +23,17 @@
 				<use xlink:href="<%= spritemap %>#info-circle" />
 			</svg>
 
-			<strong class="lead"><liferay-ui:message key="alert-helper-info" />: </strong>
+			<strong class="lead"><liferay-ui:message key="info" />: </strong>
 		</c:when>
 		<c:when test="<%= type == AlertType.SUCCESS.getAlertCode() %>">
 			<i class="icon-ok-sign"></i>
 
-			<strong class="lead"><liferay-ui:message key="alert-helper-success" />: </strong>
+			<strong class="lead"><liferay-ui:message key="success" />: </strong>
 		</c:when>
 		<c:when test="<%= type == AlertType.WARNING.getAlertCode() %>">
 			<i class="icon-warning-sign"></i>
 
-			<strong class="lead"><liferay-ui:message key="alert-helper-warning" />: </strong>
+			<strong class="lead"><liferay-ui:message key="warning" />: </strong>
 		</c:when>
 	</c:choose>
 </liferay-util:buffer>

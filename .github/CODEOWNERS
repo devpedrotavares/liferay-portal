@@ -1,3 +1,4 @@
+modules/_node-scripts/    @liferay-frontend
 modules/apps/accessibility/    @liferay-platform-experience
 modules/apps/account/    @liferay-commerce
 modules/apps/adaptive-media/    @liferay-content-management
@@ -50,8 +51,8 @@ modules/apps/bookmarks/    @liferay-content-management
 modules/apps/bulk/    @liferay-content-management
 modules/apps/calendar/    @liferay-bpm
 modules/apps/captcha/    @liferay-appsec
-modules/apps/change-tracking/    @liferay-site-management
 modules/apps/change-set/
+modules/apps/change-tracking/    @liferay-site-management
 modules/apps/click-to-chat/    @liferay-site-management
 modules/apps/client-extension/
 modules/apps/comment/    @liferay-content-management
@@ -77,7 +78,7 @@ modules/apps/document-library/    @liferay-content-management
 modules/apps/dynamic-data-lists/    @liferay-bpm
 modules/apps/dynamic-data-mapping/    @liferay-bpm
 modules/apps/expando/    @liferay-core-infra
-modules/apps/export-import/
+modules/apps/export-import/    @liferay-headless
 modules/apps/external-reference/
 modules/apps/feature-flag/    @liferay-platform-experience
 modules/apps/flags/    @liferay-content-management
@@ -123,7 +124,6 @@ modules/apps/item-selector/    @liferay-content-management
 modules/apps/journal/    @liferay-content-management
 modules/apps/json-storage/
 modules/apps/knowledge-base/    @liferay-content-management
-modules/apps/layout/
 modules/apps/layout/layout-admin-api    @liferay-page-management
 modules/apps/layout/layout-admin-web    @liferay-page-management
 modules/apps/layout/layout-admin-web-test    @liferay-page-management
@@ -131,28 +131,53 @@ modules/apps/layout/layout-api    @liferay-page-management
 modules/apps/layout/layout-content-page-editor-api    @liferay-page-management
 modules/apps/layout/layout-content-page-editor-web    @liferay-page-management
 modules/apps/layout/layout-content-page-editor-web-test    @liferay-page-management
+modules/apps/layout/layout-display-page-api    @liferay-page-management
+modules/apps/layout/layout-display-page-impl    @liferay-page-management
+modules/apps/layout/layout-display-page-test    @liferay-page-management
+modules/apps/layout/layout-dynamic-data-mapping-form-field-type
+modules/apps/layout/layout-dynamic-data-mapping-form-field-type-api
 modules/apps/layout/layout-impl    @liferay-page-management
+modules/apps/layout/layout-item-selector-api    @liferay-page-management
+modules/apps/layout/layout-item-selector-web    @liferay-page-management
+modules/apps/layout/layout-js-components-web    @liferay-page-management
+modules/apps/layout/layout-locked-layouts-web    @liferay-page-management
+modules/apps/layout/layout-locked-layouts-web-test    @liferay-page-management
 modules/apps/layout/layout-page-template-admin-api    @liferay-page-management
 modules/apps/layout/layout-page-template-admin-web    @liferay-page-management
 modules/apps/layout/layout-page-template-admin-web-test    @liferay-page-management
 modules/apps/layout/layout-page-template-api    @liferay-page-management
+modules/apps/layout/layout-page-template-item-selector-api
+modules/apps/layout/layout-page-template-item-selector-web
 modules/apps/layout/layout-page-template-service    @liferay-page-management
 modules/apps/layout/layout-page-template-test    @liferay-page-management
+modules/apps/layout/layout-portlets-web    @liferay-page-management
 modules/apps/layout/layout-prototype-api    @liferay-page-management
 modules/apps/layout/layout-prototype-impl    @liferay-page-management
 modules/apps/layout/layout-prototype-test    @liferay-page-management
-modules/apps/layout/layout-reports-web/layout-reports-web    @liferay-page-management
+modules/apps/layout/layout-reports-test    @liferay-page-management
+modules/apps/layout/layout-reports-web    @liferay-page-management
 modules/apps/layout/layout-seo-api    @liferay-page-management
 modules/apps/layout/layout-seo-service    @liferay-page-management
 modules/apps/layout/layout-seo-test    @liferay-page-management
 modules/apps/layout/layout-seo-web    @liferay-page-management
 modules/apps/layout/layout-seo-web-test    @liferay-page-management
+modules/apps/layout/layout-service    @liferay-page-management
+modules/apps/layout/layout-set-prototype-api    @liferay-headless
+modules/apps/layout/layout-set-prototype-impl    @liferay-headless
+modules/apps/layout/layout-set-prototype-test    @liferay-headless
+modules/apps/layout/layout-set-prototype-web    @liferay-headless
 modules/apps/layout/layout-taglib    @liferay-page-management
 modules/apps/layout/layout-test    @liferay-page-management
 modules/apps/layout/layout-test-util    @liferay-page-management
-modules/apps/layout/layout-utility-page/layout-utility-page-api    @liferay-page-management
-modules/apps/layout/layout-utility-page/layout-utility-page-service    @liferay-page-management
-modules/apps/layout/layout-utility-page/layout-utility-page-test    @liferay-page-management
+modules/apps/layout/layout-theme-item-selector-api    @liferay-page-management
+modules/apps/layout/layout-theme-item-selector-web    @liferay-page-management
+modules/apps/layout/layout-type-controller    @liferay-page-management
+modules/apps/layout/layout-uad
+modules/apps/layout/layout-uad-test
+modules/apps/layout/layout-utility-page    @liferay-page-management
+modules/apps/layout/layout-utility-page-api    @liferay-page-management
+modules/apps/layout/layout-utility-page-service    @liferay-page-management
+modules/apps/layout/layout-utility-page-test    @liferay-page-management
 modules/apps/learn/
 modules/apps/license-manager/
 modules/apps/list-type/

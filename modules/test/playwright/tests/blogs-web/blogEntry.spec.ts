@@ -9,7 +9,6 @@ import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
-import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
 import getRandomString from '../../utils/getRandomString';
 import {blogsPagesTest} from './fixtures/blogsPagesTest';
 import {blogsCategorizedFriendlyUrlSetup} from './utils/blogsCategorizedFriendlyUrlSetup';
@@ -20,10 +19,8 @@ const test = mergeTests(
 	apiHelpersTest,
 	isolatedSiteTest,
 	blogsPagesTest,
-	pageEditorPagesTest,
 	loginTest(),
 	featureFlagsTest({
-		'LPD-11147': true,
 		'LPD-39304': true,
 		'LPS-178052': true,
 	})
@@ -72,14 +69,7 @@ test(
 	{
 		tag: '@LPD-26752',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'category-1'},
@@ -89,10 +79,8 @@ test(
 
 		await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
@@ -142,14 +130,7 @@ test(
 	{
 		tag: '@LPD-24858',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'category 1'},
@@ -159,10 +140,8 @@ test(
 
 		await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
@@ -198,14 +177,7 @@ test(
 	{
 		tag: '@LPD-26753',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'category-1'},
@@ -215,10 +187,8 @@ test(
 
 		const {categories} = await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
@@ -271,14 +241,7 @@ test(
 	{
 		tag: '@LPS-26755',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'lifestyle', name_i18n: {['ES-es']: 'estilo-de-vida'}},
@@ -288,10 +251,8 @@ test(
 
 		await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
@@ -330,14 +291,7 @@ test(
 	{
 		tag: '@LPD-26659',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'category-1'},
@@ -347,10 +301,8 @@ test(
 
 		await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
@@ -402,14 +354,7 @@ test(
 	{
 		tag: '@LPD-26659',
 	},
-	async ({
-		apiHelpers,
-		blogsEditBlogEntryPage,
-		displayPageTemplatesPage,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
+	async ({apiHelpers, blogsEditBlogEntryPage, page, site}) => {
 		const vocabularyName = getRandomString();
 		const friendlyUrlCategories = [
 			{name: 'category-1'},
@@ -419,10 +364,8 @@ test(
 
 		await blogsCategorizedFriendlyUrlSetup({
 			apiHelpers,
-			displayPageTemplatesPage,
 			friendlyUrlCategories,
 			page,
-			pageEditorPage,
 			site,
 			vocabularyName,
 		});
