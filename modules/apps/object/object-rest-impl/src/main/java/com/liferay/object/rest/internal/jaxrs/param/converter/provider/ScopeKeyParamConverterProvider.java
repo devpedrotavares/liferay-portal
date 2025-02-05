@@ -45,6 +45,9 @@ public class ScopeKeyParamConverterProvider
 
 		if (StringUtil.equals(
 				_objectDefinition.getScope(),
+				ObjectDefinitionConstants.SCOPE_DEPOT) ||
+			StringUtil.equals(
+				_objectDefinition.getScope(),
 				ObjectDefinitionConstants.SCOPE_SITE)) {
 
 			String groupId = _getGroupId(_company.getCompanyId(), parameter);
