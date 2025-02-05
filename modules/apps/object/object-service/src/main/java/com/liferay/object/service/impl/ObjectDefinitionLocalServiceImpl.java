@@ -8,6 +8,8 @@ package com.liferay.object.service.impl;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.fragment.cache.FragmentEntryLinkCache;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
@@ -62,6 +64,7 @@ import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionLocalizationTable
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionLocalizationTableFactory;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableFactory;
+import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
@@ -99,6 +102,7 @@ import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -138,6 +142,7 @@ import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalRunMode;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Validator;
@@ -1401,6 +1406,7 @@ public class ObjectDefinitionLocalServiceImpl
 			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT;
 
 		_validateExternalReferenceCode(externalReferenceCode, system);
+		_validateAcceptedGroupIds("", modifiable, scope, system);
 		_validateClassName(
 			0, user.getCompanyId(), className, modifiable, system);
 		_validateEnableComments(
@@ -1710,6 +1716,59 @@ public class ObjectDefinitionLocalServiceImpl
 		_ploEntryLocalService.deletePLOEntries(
 			objectDefinition.getCompanyId(),
 			"model.resource." + objectDefinition.getClassName());
+	}
+
+	private void _deleteOrphanedObjectEntries(
+			String acceptedGroupIds, String oldAcceptedGroupIds)
+		throws PortalException {
+
+		if (acceptedGroupIds.equals(oldAcceptedGroupIds) ||
+			acceptedGroupIds.equals(StringPool.STAR) ||
+			Validator.isNull(oldAcceptedGroupIds)) {
+
+			return;
+		}
+
+		Set<String> acceptedGroupIdsSet = SetUtil.fromArray(
+			StringUtil.split(acceptedGroupIds));
+
+		if (oldAcceptedGroupIds.equals(StringPool.STAR)) {
+			for (DepotEntry depotEntry :
+					_depotEntryLocalService.getDepotEntries(
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS)) { // TODO add companyId to the query
+
+				if (acceptedGroupIdsSet.contains(
+						String.valueOf(depotEntry.getGroupId()))) {
+
+					continue;
+				}
+
+				for (ObjectEntry objectEntry :
+						_objectEntryLocalService.getObjectEntries(
+							depotEntry.getGroupId(), 0L, QueryUtil.ALL_POS,
+							QueryUtil.ALL_POS)) {
+
+					_objectEntryLocalService.deleteObjectEntry(objectEntry);
+				}
+			}
+
+			return;
+		}
+
+		Set<String> removedGroupIds = SetUtil.fromArray(
+			StringUtil.split(oldAcceptedGroupIds));
+
+		removedGroupIds.removeAll(acceptedGroupIdsSet);
+
+		for (String removedGroupId : removedGroupIds) {
+			for (ObjectEntry objectEntry :
+					_objectEntryLocalService.getObjectEntries(
+						GetterUtil.getLong(removedGroupId), 0L,
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS)) {
+
+				_objectEntryLocalService.deleteObjectEntry(objectEntry);
+			}
+		}
 	}
 
 	private void _dropTable(String dbTableName) {
@@ -2174,6 +2233,9 @@ public class ObjectDefinitionLocalServiceImpl
 				objectDefinition.isModifiable(), objectDefinition.isSystem());
 		}
 
+		_validateAcceptedGroupIds(
+			acceptedGroupIds, objectDefinition.isModifiable(), scope,
+			objectDefinition.isSystem());
 		_validateEnableCategorization(
 			enableCategorization, objectDefinition.isModifiable(),
 			objectDefinition.getStorageType(), objectDefinition.isSystem());
@@ -2215,6 +2277,9 @@ public class ObjectDefinitionLocalServiceImpl
 			_getObjectFolderId(
 				objectDefinition.getCompanyId(), objectFolderId));
 		objectDefinition.setTitleObjectFieldId(titleObjectFieldId);
+
+		String oldAcceptedGroupIds = objectDefinition.getAcceptedGroupIds();
+
 		objectDefinition.setAccountEntryRestricted(accountEntryRestricted);
 		objectDefinition.setActive(active);
 
@@ -2246,6 +2311,8 @@ public class ObjectDefinitionLocalServiceImpl
 		if (!objectDefinition.isUnmodifiableSystemObject()) {
 			_addOrUpdateObjectDefinitionPLOEntries(objectDefinition);
 		}
+
+		_deleteOrphanedObjectEntries(acceptedGroupIds, oldAcceptedGroupIds);
 
 		if (objectDefinition.isApproved()) {
 			if (!active && oldActive) {
@@ -2385,6 +2452,37 @@ public class ObjectDefinitionLocalServiceImpl
 			});
 
 		actionableDynamicQuery.performActions();
+	}
+
+	private void _validateAcceptedGroupIds(
+			String acceptedGroupIds, boolean modifiable, String scope,
+			boolean system)
+		throws PortalException {
+
+		if (Validator.isNull(acceptedGroupIds)) {
+			return;
+		}
+
+		if (_isUnmodifiableSystemObject(modifiable, system) ||
+			(Validator.isNotNull(acceptedGroupIds) &&
+			 !scope.equals(ObjectDefinitionConstants.SCOPE_DEPOT))) {
+
+			throw new ObjectDefinitionScopeException("");
+		}
+
+		ObjectScopeProvider objectScopeProvider =
+			_objectScopeProviderRegistry.getObjectScopeProvider(scope);
+
+		for (String groupId : StringUtil.split(acceptedGroupIds)) {
+			if (!objectScopeProvider.isValidGroupId(
+					GetterUtil.getLong(groupId))) {
+
+				throw new ObjectDefinitionScopeException(
+					StringBundler.concat(
+						"Group ID ", groupId, " is not valid for scope \"",
+						scope, "\""));
+			}
+		}
 	}
 
 	private void _validateAccountEntryRestrictedObjectFieldId(
@@ -2792,6 +2890,9 @@ public class ObjectDefinitionLocalServiceImpl
 
 	@Reference
 	private CurrentConnection _currentConnection;
+
+	@Reference
+	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Reference
 	private DynamicQueryBatchIndexingActionableFactory
