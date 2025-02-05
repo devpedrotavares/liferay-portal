@@ -31,10 +31,10 @@ public class ObjectDefinitionLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectDefinition addCustomObjectDefinition(
-			long userId, long objectFolderId, String className,
-			boolean enableComments, boolean enableFriendlyURLCustomization,
-			boolean enableIndexSearch, boolean enableLocalization,
-			boolean enableObjectEntryDraft,
+			long userId, long objectFolderId, String acceptedGroupIds,
+			String className, boolean enableComments,
+			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
+			boolean enableLocalization, boolean enableObjectEntryDraft,
 			java.util.Map<java.util.Locale, String> labelMap, String name,
 			String panelAppOrder, String panelCategoryKey,
 			java.util.Map<java.util.Locale, String> pluralLabelMap,
@@ -43,7 +43,7 @@ public class ObjectDefinitionLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionLocalService.addCustomObjectDefinition(
-			userId, objectFolderId, className, enableComments,
+			userId, objectFolderId, acceptedGroupIds, className, enableComments,
 			enableFriendlyURLCustomization, enableIndexSearch,
 			enableLocalization, enableObjectEntryDraft, labelMap, name,
 			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, scope,
@@ -648,8 +648,9 @@ public class ObjectDefinitionLocalServiceWrapper
 				String externalReferenceCode, long objectDefinitionId,
 				long accountEntryRestrictedObjectFieldId,
 				long descriptionObjectFieldId, long objectFolderId,
-				long titleObjectFieldId, boolean accountEntryRestricted,
-				boolean active, String className, boolean enableCategorization,
+				long titleObjectFieldId, String acceptedGroupIds,
+				boolean accountEntryRestricted, boolean active,
+				String className, boolean enableCategorization,
 				boolean enableComments, boolean enableFriendlyURLCustomization,
 				boolean enableIndexSearch, boolean enableLocalization,
 				boolean enableObjectEntryDraft,
@@ -663,9 +664,9 @@ public class ObjectDefinitionLocalServiceWrapper
 		return _objectDefinitionLocalService.updateCustomObjectDefinition(
 			externalReferenceCode, objectDefinitionId,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
-			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			className, enableCategorization, enableComments,
-			enableFriendlyURLCustomization, enableIndexSearch,
+			objectFolderId, titleObjectFieldId, acceptedGroupIds,
+			accountEntryRestricted, active, className, enableCategorization,
+			enableComments, enableFriendlyURLCustomization, enableIndexSearch,
 			enableLocalization, enableObjectEntryDraft,
 			enableObjectEntryHistory, labelMap, name, panelAppOrder,
 			panelCategoryKey, portlet, pluralLabelMap, scope, status);
