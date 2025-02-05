@@ -2464,6 +2464,19 @@ public class ObjectEntryLocalServiceTest {
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
 	}
 
+	private ObjectDefinition _updateObjectDefinition(ObjectDefinition objectDefinition)
+		throws PortalException {
+		return _objectDefinitionLocalService.updateCustomObjectDefinition(
+			objectDefinition.getExternalReferenceCode(), objectDefinition.getObjectDefinitionId(), 0, 0,
+			objectDefinition.getObjectFolderId(),
+			objectDefinition.getTitleObjectFieldId(), objectDefinition.getAcceptedGroupIds(), objectDefinition.getAccountEntryRestricted(), objectDefinition.getActive(),
+			objectDefinition.getClassName(), objectDefinition.getEnableCategorization(), objectDefinition.getEnableComments(), objectDefinition.getEnableFriendlyURLCustomization(), objectDefinition.getEnableIndexSearch(),
+			objectDefinition.getEnableLocalization(), objectDefinition.getEnableObjectEntryDraft(), objectDefinition.getEnableObjectEntryHistory(), objectDefinition.getLabelMap(),
+			objectDefinition.getName(), objectDefinition.getPanelAppOrder(), objectDefinition.getPanelCategoryKey(), objectDefinition.getPortlet(),
+			objectDefinition.getPluralLabelMap(),
+			objectDefinition.getScope(), objectDefinition.getStatus());
+	}
+
 	@Test
 	public void testAddObjectEntryWithStandaloneObjectAction()
 		throws Exception {
@@ -3188,7 +3201,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectDefinition.getObjectDefinitionId(),
 			_objectDefinition.getAccountEntryRestrictedObjectFieldId(),
 			_objectDefinition.getDescriptionObjectFieldId(), 0,
-			_objectDefinition.getTitleObjectFieldId(),
+			_objectDefinition.getTitleObjectFieldId(), null,
 			_objectDefinition.isAccountEntryRestricted(), false,
 			_objectDefinition.getClassName(),
 			_objectDefinition.isEnableCategorization(),
@@ -3839,6 +3852,107 @@ public class ObjectEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testAddObjectEntryWithAcceptedGroupIds() throws Exception {
+		ObjectDefinition objectDefinition = _publishCustomObjectDefinition(
+			false,
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING,
+					RandomTestUtil.randomString(), StringUtil.randomId())));
+
+		objectDefinition.setScope(ObjectDefinitionConstants.SCOPE_DEPOT);
+
+		objectDefinition = _objectDefinitionLocalService.updateObjectDefinition(objectDefinition);
+
+		DepotEntry depotEntry1 = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		long objectDefinitionId = objectDefinition.getObjectDefinitionId();
+
+		AssertUtils.assertFailure(
+			ObjectDefinitionScopeException.class,
+			StringBundler.concat(
+				"Group ID ", depotEntry1.getGroupId(),
+				" is not accepted for object definition ",
+				objectDefinition.getObjectDefinitionId()),
+			() -> _objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), depotEntry1.getGroupId(),
+				objectDefinitionId,
+				Collections.emptyMap(),
+				ServiceContextTestUtil.getServiceContext()));
+
+		DepotEntry depotEntry2 = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		objectDefinition.setAcceptedGroupIds(
+			StringBundler.concat(
+				depotEntry1.getGroupId(),
+				StringPool.COMMA, depotEntry2.getGroupId()));
+
+		objectDefinition = _updateObjectDefinition(objectDefinition);
+
+		_addObjectEntry(
+			depotEntry1.getGroupId(),
+			objectDefinition.getObjectDefinitionId(),
+			Collections.emptyMap()); // TODO assert values after
+		_addObjectEntry(
+			depotEntry2.getGroupId(),
+			objectDefinition.getObjectDefinitionId(),
+			Collections.emptyMap()); // TODO assert values after
+
+		objectDefinition.setAcceptedGroupIds(String.valueOf(depotEntry2.getGroupId()));
+
+		objectDefinition = _updateObjectDefinition(objectDefinition);
+
+		List<ObjectEntry> objectEntries =
+			_objectEntryLocalService.getObjectEntries(
+				depotEntry1.getGroupId(),
+				objectDefinition.getObjectDefinitionId(),
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		Assert.assertTrue(objectEntries.isEmpty());
+
+		objectDefinition.setAcceptedGroupIds(StringPool.STAR);
+
+		objectDefinition = _updateObjectDefinition(objectDefinition);
+
+		objectEntries =
+			_objectEntryLocalService.getObjectEntries(
+				depotEntry2.getGroupId(),
+				objectDefinition.getObjectDefinitionId(),
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		Assert.assertFalse(objectEntries.isEmpty());
+
+		objectDefinition.setAcceptedGroupIds(RandomTestUtil.randomString());
+
+		objectDefinition = _updateObjectDefinition(objectDefinition);
+
+		objectEntries =
+			_objectEntryLocalService.getObjectEntries(
+				depotEntry2.getGroupId(),
+				objectDefinition.getObjectDefinitionId(),
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		Assert.assertTrue(objectEntries.isEmpty());
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+	}
+
+	@Test
 	public void testScope() throws Exception {
 
 		// Scope by company
@@ -3862,12 +3976,38 @@ public class ObjectEntryLocalServiceTest {
 
 		// Scope by depot
 
-		// TODO Turn on theses tests once depot is reenabled
-
-		/*_testScope(0, ObjectDefinitionConstants.SCOPE_DEPOT, false);
+		_testScope(0, ObjectDefinitionConstants.SCOPE_DEPOT, false);
 		_testScope(
-			depotEntryGroupId, ObjectDefinitionConstants.SCOPE_DEPOT, true);
-		_testScope(siteGroupId, ObjectDefinitionConstants.SCOPE_DEPOT, false);*/
+			depotEntry.getGroupId(), ObjectDefinitionConstants.SCOPE_DEPOT,
+			true);
+		_testScope(
+			TestPropsValues.getGroupId(), ObjectDefinitionConstants.SCOPE_DEPOT,
+			false);
+
+		ObjectDefinition objectDefinition = _publishCustomObjectDefinition(
+			false,
+			Arrays.asList(
+				ObjectFieldUtil.createObjectField(
+					ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+					ObjectFieldConstants.DB_TYPE_STRING,
+					RandomTestUtil.randomString(), StringUtil.randomId())));
+
+		objectDefinition.setAcceptedGroupIds(RandomTestUtil.randomString());
+		objectDefinition.setScope(ObjectDefinitionConstants.SCOPE_DEPOT);
+
+		_objectDefinitionLocalService.updateObjectDefinition(objectDefinition);
+
+		AssertUtils.assertFailure(
+			ObjectDefinitionScopeException.class,
+			StringBundler.concat(
+				"Group ID ", depotEntry.getGroupId(),
+				" is not accepted for object definition ",
+				objectDefinition.getObjectDefinitionId()),
+			() -> _objectEntryLocalService.addObjectEntry(
+				TestPropsValues.getUserId(), depotEntry.getGroupId(),
+				objectDefinition.getObjectDefinitionId(),
+				Collections.<String, Serializable>emptyMap(),
+				ServiceContextTestUtil.getServiceContext()));
 
 		// Scope by site
 
