@@ -93,6 +93,7 @@
 		<column name="objectFolderId" type="long" />
 		<column name="rootObjectDefinitionId" type="long" />
 		<column name="titleObjectFieldId" type="long" />
+		<column name="acceptedGroupIds" type="String" />
 		<column name="accountEntryRestricted" type="boolean" />
 		<column name="active" type="boolean" />
 		<column name="className" type="String" />
