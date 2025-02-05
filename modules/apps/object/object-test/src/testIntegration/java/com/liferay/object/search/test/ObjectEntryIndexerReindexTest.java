@@ -83,7 +83,7 @@ public class ObjectEntryIndexerReindexTest {
 
 			ObjectDefinition objectDefinition =
 				_objectDefinitionLocalService.addCustomObjectDefinition(
-					TestPropsValues.getUserId(), 0, null, false, false, true,
+					TestPropsValues.getUserId(), 0, null, null, false, false, true,
 					true, false,
 					LocalizedMapUtil.getLocalizedMap(
 						RandomTestUtil.randomString()),

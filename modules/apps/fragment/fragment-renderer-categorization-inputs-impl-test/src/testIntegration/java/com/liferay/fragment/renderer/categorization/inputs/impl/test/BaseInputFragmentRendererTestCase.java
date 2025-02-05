@@ -210,7 +210,7 @@ public abstract class BaseInputFragmentRendererTestCase {
 			objectDefinition.getAccountEntryRestrictedObjectFieldId(),
 			objectDefinition.getDescriptionObjectFieldId(), 0,
 			objectDefinition.getTitleObjectFieldId(),
-			objectDefinition.isAccountEntryRestricted(),
+			null, objectDefinition.isAccountEntryRestricted(),
 			objectDefinition.isActive(), objectDefinition.getClassName(), false,
 			objectDefinition.isEnableComments(),
 			objectDefinition.isEnableFriendlyURLCustomization(),

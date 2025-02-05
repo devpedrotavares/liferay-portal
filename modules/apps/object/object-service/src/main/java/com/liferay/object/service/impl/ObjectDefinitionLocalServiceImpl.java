@@ -204,8 +204,8 @@ public class ObjectDefinitionLocalServiceImpl
 		throws PortalException {
 
 		return _addObjectDefinition(
-			null, userId, objectFolderId, className, null, enableComments,
-			enableFriendlyURLCustomization, enableIndexSearch,
+			null, userId, objectFolderId, className, acceptedGroupIds, null,
+			enableComments, enableFriendlyURLCustomization, enableIndexSearch,
 			enableLocalization, enableObjectEntryDraft, labelMap, true, name,
 			panelAppOrder, panelCategoryKey, null, null, pluralLabelMap,
 			portlet, scope, storageType, false, null, 0,
@@ -395,7 +395,7 @@ public class ObjectDefinitionLocalServiceImpl
 		throws PortalException {
 
 		return _addObjectDefinition(
-			externalReferenceCode, userId, objectFolderId, className,
+			externalReferenceCode, userId, objectFolderId, null, className, // TODO pass actual value
 			dbTableName, enableComments, enableFriendlyURLCustomization,
 			enableIndexSearch, enableLocalization, false, labelMap, modifiable,
 			name, panelAppOrder, panelCategoryKey, pkObjectFieldDBColumnName,
@@ -1143,8 +1143,9 @@ public class ObjectDefinitionLocalServiceImpl
 		return _updateObjectDefinition(
 			externalReferenceCode, objectDefinition,
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
-			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
-			className, null, enableCategorization, enableComments,
+			objectFolderId, titleObjectFieldId, acceptedGroupIds,
+			accountEntryRestricted, active, className, null,
+			enableCategorization, enableComments,
 			enableFriendlyURLCustomization, enableIndexSearch,
 			enableLocalization, enableObjectEntryDraft,
 			enableObjectEntryHistory, labelMap, name, panelAppOrder,
@@ -1377,15 +1378,16 @@ public class ObjectDefinitionLocalServiceImpl
 
 	private ObjectDefinition _addObjectDefinition(
 			String externalReferenceCode, long userId, long objectFolderId,
-			String className, String dbTableName, boolean enableComments,
-			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
-			boolean enableLocalization, boolean enableObjectEntryDraft,
-			Map<Locale, String> labelMap, boolean modifiable, String name,
-			String panelAppOrder, String panelCategoryKey,
-			String pkObjectFieldDBColumnName, String pkObjectFieldName,
-			Map<Locale, String> pluralLabelMap, boolean portlet, String scope,
-			String storageType, boolean system, String titleObjectFieldName,
-			int version, int status, List<ObjectField> objectFields)
+			String acceptedGroupIds, String className, String dbTableName,
+			boolean enableComments, boolean enableFriendlyURLCustomization,
+			boolean enableIndexSearch, boolean enableLocalization,
+			boolean enableObjectEntryDraft, Map<Locale, String> labelMap,
+			boolean modifiable, String name, String panelAppOrder,
+			String panelCategoryKey, String pkObjectFieldDBColumnName,
+			String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
+			boolean portlet, String scope, String storageType, boolean system,
+			String titleObjectFieldName, int version, int status,
+			List<ObjectField> objectFields)
 		throws PortalException {
 
 		User user = _userLocalService.getUser(userId);
@@ -1408,7 +1410,7 @@ public class ObjectDefinitionLocalServiceImpl
 			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT;
 
 		_validateExternalReferenceCode(externalReferenceCode, system);
-		_validateAcceptedGroupIds("", modifiable, scope, system);
+		_validateAcceptedGroupIds(acceptedGroupIds, modifiable, scope, system);
 		_validateClassName(
 			0, user.getCompanyId(), className, modifiable, system);
 		_validateEnableComments(
@@ -1432,6 +1434,7 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setUserName(user.getFullName());
 		objectDefinition.setObjectFolderId(
 			_getObjectFolderId(user.getCompanyId(), objectFolderId));
+		objectDefinition.setAcceptedGroupIds(acceptedGroupIds);
 		objectDefinition.setActive(
 			_isUnmodifiableSystemObject(modifiable, system));
 		objectDefinition.setClassName(
@@ -2203,16 +2206,16 @@ public class ObjectDefinitionLocalServiceImpl
 			String externalReferenceCode, ObjectDefinition objectDefinition,
 			long accountEntryRestrictedObjectFieldId,
 			long descriptionObjectFieldId, long objectFolderId,
-			long titleObjectFieldId, boolean accountEntryRestricted,
-			boolean active, String className, String dbTableName,
-			boolean enableCategorization, boolean enableComments,
-			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
-			boolean enableLocalization, boolean enableObjectEntryDraft,
-			boolean enableObjectEntryHistory, Map<Locale, String> labelMap,
-			String name, String panelAppOrder, String panelCategoryKey,
-			boolean portlet, String pkObjectFieldDBColumnName,
-			String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
-			String scope, int status)
+			long titleObjectFieldId, String acceptedGroupIds,
+			boolean accountEntryRestricted, boolean active, String className,
+			String dbTableName, boolean enableCategorization,
+			boolean enableComments, boolean enableFriendlyURLCustomization,
+			boolean enableIndexSearch, boolean enableLocalization,
+			boolean enableObjectEntryDraft, boolean enableObjectEntryHistory,
+			Map<Locale, String> labelMap, String name, String panelAppOrder,
+			String panelCategoryKey, boolean portlet,
+			String pkObjectFieldDBColumnName, String pkObjectFieldName,
+			Map<Locale, String> pluralLabelMap, String scope, int status)
 		throws PortalException {
 
 		long oldObjectFolderId = objectDefinition.getObjectFolderId();
@@ -2281,6 +2284,8 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setTitleObjectFieldId(titleObjectFieldId);
 
 		String oldAcceptedGroupIds = objectDefinition.getAcceptedGroupIds();
+
+		objectDefinition.setAcceptedGroupIds(acceptedGroupIds);
 
 		objectDefinition.setAccountEntryRestricted(accountEntryRestricted);
 		objectDefinition.setActive(active);

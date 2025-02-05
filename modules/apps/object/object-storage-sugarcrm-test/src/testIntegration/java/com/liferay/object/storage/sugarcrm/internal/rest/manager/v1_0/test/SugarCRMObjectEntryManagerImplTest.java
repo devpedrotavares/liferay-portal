@@ -125,7 +125,7 @@ public class SugarCRMObjectEntryManagerImplTest
 
 		_objectDefinition =
 			objectDefinitionLocalService.addCustomObjectDefinition(
-				adminUser.getUserId(), 0, null, false, false, true, false,
+				adminUser.getUserId(), 0, null, null, false, false, true, false,
 				false, LocalizedMapUtil.getLocalizedMap("Contact"), "Contact",
 				null, null, LocalizedMapUtil.getLocalizedMap("Contacts"), true,
 				ObjectDefinitionConstants.SCOPE_COMPANY,
