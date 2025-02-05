@@ -292,7 +292,7 @@ public class ObjectEntryLocalServiceImpl
 		ObjectDefinition objectDefinition =
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
 
-		_validateGroupId(groupId, objectDefinition.getScope());
+		_validateGroupId(groupId, objectDefinition);
 
 		int workflowAction = serviceContext.getWorkflowAction();
 
@@ -5136,17 +5136,30 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
-	private void _validateGroupId(long groupId, String scope)
+	private void _validateGroupId(
+			long groupId, ObjectDefinition objectDefinition)
 		throws PortalException {
 
 		ObjectScopeProvider objectScopeProvider =
-			_objectScopeProviderRegistry.getObjectScopeProvider(scope);
+			_objectScopeProviderRegistry.getObjectScopeProvider(
+				objectDefinition.getScope());
 
 		if (!objectScopeProvider.isValidGroupId(groupId)) {
 			throw new ObjectDefinitionScopeException(
 				StringBundler.concat(
-					"Group ID ", groupId, " is not valid for scope \"", scope,
-					"\""));
+					"Group ID ", groupId, " is not valid for scope \"",
+					objectDefinition.getScope(), "\""));
+		}
+
+		if (!ArrayUtil.contains(
+				StringUtil.split(objectDefinition.getAcceptedGroupIds()),
+				String.valueOf(groupId))) {
+
+			throw new ObjectDefinitionScopeException(
+				StringBundler.concat(
+					"Group ID ", groupId,
+					" is not accepted for object definition ",
+					objectDefinition.getObjectDefinitionId()));
 		}
 	}
 
