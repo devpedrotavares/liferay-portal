@@ -289,6 +289,21 @@ public interface ObjectDefinitionModel
 	public void setTitleObjectFieldId(long titleObjectFieldId);
 
 	/**
+	 * Returns the accepted group IDs of this object definition.
+	 *
+	 * @return the accepted group IDs of this object definition
+	 */
+	@AutoEscape
+	public String getAcceptedGroupIds();
+
+	/**
+	 * Sets the accepted group IDs of this object definition.
+	 *
+	 * @param acceptedGroupIds the accepted group IDs of this object definition
+	 */
+	public void setAcceptedGroupIds(String acceptedGroupIds);
+
+	/**
 	 * Returns the account entry restricted of this object definition.
 	 *
 	 * @return the account entry restricted of this object definition

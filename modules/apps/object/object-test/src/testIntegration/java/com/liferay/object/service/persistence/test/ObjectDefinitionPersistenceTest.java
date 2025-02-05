@@ -146,6 +146,8 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setTitleObjectFieldId(RandomTestUtil.nextLong());
 
+		newObjectDefinition.setAcceptedGroupIds(RandomTestUtil.randomString());
+
 		newObjectDefinition.setAccountEntryRestricted(
 			RandomTestUtil.randomBoolean());
 
@@ -250,6 +252,9 @@ public class ObjectDefinitionPersistenceTest {
 		Assert.assertEquals(
 			existingObjectDefinition.getTitleObjectFieldId(),
 			newObjectDefinition.getTitleObjectFieldId());
+		Assert.assertEquals(
+			existingObjectDefinition.getAcceptedGroupIds(),
+			newObjectDefinition.getAcceptedGroupIds());
 		Assert.assertEquals(
 			existingObjectDefinition.isAccountEntryRestricted(),
 			newObjectDefinition.isAccountEntryRestricted());
@@ -516,10 +521,11 @@ public class ObjectDefinitionPersistenceTest {
 			true, "modifiedDate", true, "accountEntryRestrictedObjectFieldId",
 			true, "descriptionObjectFieldId", true, "objectFolderId", true,
 			"rootObjectDefinitionId", true, "titleObjectFieldId", true,
-			"accountEntryRestricted", true, "active", true, "className", true,
-			"dbTableName", true, "enableCategorization", true, "enableComments",
-			true, "enableFriendlyURLCustomization", true, "enableIndexSearch",
-			true, "enableLocalization", true, "enableObjectEntryDraft", true,
+			"acceptedGroupIds", true, "accountEntryRestricted", true, "active",
+			true, "className", true, "dbTableName", true,
+			"enableCategorization", true, "enableComments", true,
+			"enableFriendlyURLCustomization", true, "enableIndexSearch", true,
+			"enableLocalization", true, "enableObjectEntryDraft", true,
 			"enableObjectEntryHistory", true, "label", true, "modifiable", true,
 			"name", true, "panelAppOrder", true, "panelCategoryKey", true,
 			"pkObjectFieldDBColumnName", true, "pkObjectFieldName", true,
@@ -862,6 +868,8 @@ public class ObjectDefinitionPersistenceTest {
 		objectDefinition.setRootObjectDefinitionId(RandomTestUtil.nextLong());
 
 		objectDefinition.setTitleObjectFieldId(RandomTestUtil.nextLong());
+
+		objectDefinition.setAcceptedGroupIds(RandomTestUtil.randomString());
 
 		objectDefinition.setAccountEntryRestricted(
 			RandomTestUtil.randomBoolean());

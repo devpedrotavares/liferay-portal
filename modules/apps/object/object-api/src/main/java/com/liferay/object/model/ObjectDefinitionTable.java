@@ -66,6 +66,10 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 		createColumn(
 			"titleObjectFieldId", Long.class, Types.BIGINT,
 			Column.FLAG_DEFAULT);
+	public final Column<ObjectDefinitionTable, String> acceptedGroupIds =
+		createColumn(
+			"acceptedGroupIds", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, Boolean> accountEntryRestricted =
 		createColumn(
 			"accountEntryRestricted", Boolean.class, Types.BOOLEAN,

@@ -51,6 +51,7 @@ public class ObjectDefinitionWrapper
 		attributes.put("objectFolderId", getObjectFolderId());
 		attributes.put("rootObjectDefinitionId", getRootObjectDefinitionId());
 		attributes.put("titleObjectFieldId", getTitleObjectFieldId());
+		attributes.put("acceptedGroupIds", getAcceptedGroupIds());
 		attributes.put("accountEntryRestricted", isAccountEntryRestricted());
 		attributes.put("active", isActive());
 		attributes.put("className", getClassName());
@@ -173,6 +174,12 @@ public class ObjectDefinitionWrapper
 
 		if (titleObjectFieldId != null) {
 			setTitleObjectFieldId(titleObjectFieldId);
+		}
+
+		String acceptedGroupIds = (String)attributes.get("acceptedGroupIds");
+
+		if (acceptedGroupIds != null) {
+			setAcceptedGroupIds(acceptedGroupIds);
 		}
 
 		Boolean accountEntryRestricted = (Boolean)attributes.get(
@@ -337,6 +344,16 @@ public class ObjectDefinitionWrapper
 	@Override
 	public ObjectDefinition cloneWithOriginalValues() {
 		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the accepted group IDs of this object definition.
+	 *
+	 * @return the accepted group IDs of this object definition
+	 */
+	@Override
+	public String getAcceptedGroupIds() {
+		return model.getAcceptedGroupIds();
 	}
 
 	/**
@@ -1134,6 +1151,16 @@ public class ObjectDefinitionWrapper
 		throws com.liferay.portal.kernel.exception.LocaleException {
 
 		model.prepareLocalizedFieldsForImport(defaultImportLocale);
+	}
+
+	/**
+	 * Sets the accepted group IDs of this object definition.
+	 *
+	 * @param acceptedGroupIds the accepted group IDs of this object definition
+	 */
+	@Override
+	public void setAcceptedGroupIds(String acceptedGroupIds) {
+		model.setAcceptedGroupIds(acceptedGroupIds);
 	}
 
 	/**

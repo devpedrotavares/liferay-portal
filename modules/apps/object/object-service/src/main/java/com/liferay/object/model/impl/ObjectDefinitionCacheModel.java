@@ -69,7 +69,7 @@ public class ObjectDefinitionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(79);
+		StringBundler sb = new StringBundler(81);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -99,6 +99,8 @@ public class ObjectDefinitionCacheModel
 		sb.append(rootObjectDefinitionId);
 		sb.append(", titleObjectFieldId=");
 		sb.append(titleObjectFieldId);
+		sb.append(", acceptedGroupIds=");
+		sb.append(acceptedGroupIds);
 		sb.append(", accountEntryRestricted=");
 		sb.append(accountEntryRestricted);
 		sb.append(", active=");
@@ -207,6 +209,14 @@ public class ObjectDefinitionCacheModel
 		objectDefinitionImpl.setObjectFolderId(objectFolderId);
 		objectDefinitionImpl.setRootObjectDefinitionId(rootObjectDefinitionId);
 		objectDefinitionImpl.setTitleObjectFieldId(titleObjectFieldId);
+
+		if (acceptedGroupIds == null) {
+			objectDefinitionImpl.setAcceptedGroupIds("");
+		}
+		else {
+			objectDefinitionImpl.setAcceptedGroupIds(acceptedGroupIds);
+		}
+
 		objectDefinitionImpl.setAccountEntryRestricted(accountEntryRestricted);
 		objectDefinitionImpl.setActive(active);
 
@@ -335,6 +345,7 @@ public class ObjectDefinitionCacheModel
 		rootObjectDefinitionId = objectInput.readLong();
 
 		titleObjectFieldId = objectInput.readLong();
+		acceptedGroupIds = objectInput.readUTF();
 
 		accountEntryRestricted = objectInput.readBoolean();
 
@@ -419,6 +430,13 @@ public class ObjectDefinitionCacheModel
 		objectOutput.writeLong(rootObjectDefinitionId);
 
 		objectOutput.writeLong(titleObjectFieldId);
+
+		if (acceptedGroupIds == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(acceptedGroupIds);
+		}
 
 		objectOutput.writeBoolean(accountEntryRestricted);
 
@@ -540,6 +558,7 @@ public class ObjectDefinitionCacheModel
 	public long objectFolderId;
 	public long rootObjectDefinitionId;
 	public long titleObjectFieldId;
+	public String acceptedGroupIds;
 	public boolean accountEntryRestricted;
 	public boolean active;
 	public String className;

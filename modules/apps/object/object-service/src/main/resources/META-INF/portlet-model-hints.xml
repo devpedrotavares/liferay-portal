@@ -45,6 +45,7 @@
 		<field name="objectFolderId" type="long" />
 		<field name="rootObjectDefinitionId" type="long" />
 		<field name="titleObjectFieldId" type="long" />
+		<field name="acceptedGroupIds" type="String" />
 		<field name="accountEntryRestricted" type="boolean" />
 		<field name="active" type="boolean" />
 		<field name="className" type="String">

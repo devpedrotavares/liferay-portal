@@ -37,6 +37,7 @@ create table ObjectDefinition (
 	objectFolderId LONG,
 	rootObjectDefinitionId LONG,
 	titleObjectFieldId LONG,
+	acceptedGroupIds VARCHAR(75) null,
 	accountEntryRestricted BOOLEAN,
 	active_ BOOLEAN,
 	className VARCHAR(255) null,
