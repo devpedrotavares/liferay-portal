@@ -8,14 +8,18 @@ import {Locator, Page, expect} from '@playwright/test';
 import {HomePage} from '../portal-web/HomePage';
 
 export class ApplicationsMenuPage {
+	private readonly accountGroupsItem: Locator;
 	private readonly accountsItem: Locator;
+	private readonly accountUsersItem: Locator;
 	private readonly aiCreatorLink: Locator;
 	private readonly announcementsItem: Locator;
 	private readonly apiBuilderMenuItem: Locator;
+	private readonly auditItem: Locator;
 	private readonly applicationsMenuTabButton: Locator;
 	private readonly blueprintsItem: Locator;
 	private readonly clientExtensionsLink: Locator;
 	private readonly commerceChannelsMenuItem: Locator;
+	private readonly commerceCurrenciesMenuItem: Locator;
 	private readonly commerceDiscountsMenuItem: Locator;
 	private readonly commerceOrdersMenuItem: Locator;
 	private readonly commercePanelButton: Locator;
@@ -23,11 +27,14 @@ export class ApplicationsMenuPage {
 	private readonly commerceReturnsMenuItem: Locator;
 	private readonly commerceShipmentsMenuItem: Locator;
 	private readonly commerceSpecificationsMenuItem: Locator;
+	private readonly commerceTaxCategoriesMenuItem: Locator;
 	private readonly componentsMenuItem: Locator;
 	private readonly controlPanelButton: Locator;
 	private readonly countriesManagementItem: Locator;
 	private readonly customFieldsMenuItem: Locator;
 	private readonly dataMigrationCenterMenuItem: Locator;
+	private readonly exportMenuItem: Locator;
+	private readonly importMenuItem: Locator;
 	private readonly dataSetManagerMenuItem: Locator;
 	private readonly defaultPermissionsLink: Locator;
 	private readonly gogoShellItem: Locator;
@@ -38,11 +45,13 @@ export class ApplicationsMenuPage {
 	private readonly objectsMenuItem: Locator;
 	private readonly metricsItem: Locator;
 	private readonly page: Page;
+	private readonly passwordPoliciesAdminItem: Locator;
 	private readonly paymentsMenuItem: Locator;
 	private readonly picklistsMenuItem: Locator;
 	private readonly processBuilderItem: Locator;
 	private readonly productsMenuItem: Locator;
 	private readonly queueMenuItem: Locator;
+	private readonly resultRankingsItem: Locator;
 	private readonly rolesItem: Locator;
 	private readonly samlAdminItem: Locator;
 	private readonly searchItem: Locator;
@@ -56,9 +65,17 @@ export class ApplicationsMenuPage {
 	private readonly virtualInstancesItem: Locator;
 
 	constructor(page: Page) {
+		this.accountGroupsItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Account Groups',
+		});
 		this.accountsItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Accounts',
+		});
+		this.accountUsersItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Account Users',
 		});
 		this.aiCreatorLink = page.getByRole('link', {
 			exact: true,
@@ -75,6 +92,10 @@ export class ApplicationsMenuPage {
 		this.applicationsMenuTabButton = page.getByRole('tab', {
 			name: 'Applications',
 		});
+		this.auditItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Audit',
+		});
 		this.blueprintsItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Blueprints',
@@ -85,6 +106,10 @@ export class ApplicationsMenuPage {
 		this.commerceChannelsMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Channels',
+		});
+		this.commerceCurrenciesMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Currencies',
 		});
 		this.commerceDiscountsMenuItem = page.getByRole('menuitem', {
 			exact: true,
@@ -116,6 +141,10 @@ export class ApplicationsMenuPage {
 			exact: true,
 			name: 'Specifications',
 		});
+		this.commerceTaxCategoriesMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Tax Categories',
+		});
 		this.componentsMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Components',
@@ -139,6 +168,14 @@ export class ApplicationsMenuPage {
 		this.dataMigrationCenterMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Data Migration Center',
+		});
+		this.exportMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Export',
+		});
+		this.importMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Import',
 		});
 		this.dataSetManagerMenuItem = page.getByRole('menuitem', {
 			exact: true,
@@ -169,6 +206,10 @@ export class ApplicationsMenuPage {
 			name: 'Objects',
 		});
 		this.page = page;
+		this.passwordPoliciesAdminItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Password Policies',
+		});
 		this.paymentsMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Payments',
@@ -188,6 +229,10 @@ export class ApplicationsMenuPage {
 		this.queueMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Queue',
+		});
+		this.resultRankingsItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Result Rankings',
 		});
 		this.rolesItem = page.getByRole('menuitem', {
 			exact: true,
@@ -244,10 +289,40 @@ export class ApplicationsMenuPage {
 		}
 	}
 
-	async goToAccounts() {
-		await this.goto();
+	async goToAccountGroups(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+		}
+
+		await this.controlPanelButton.click();
+		await this.accountGroupsItem.click();
+	}
+
+	async goToAccounts(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+		}
+
 		await this.controlPanelButton.click();
 		await this.accountsItem.click();
+	}
+
+	async goToAccountUsers(forceReload = true) {
+		if (forceReload) {
+			await this.goto();
+		}
+		else {
+			await this.homePage.openApplicationMenu();
+		}
+
+		await this.controlPanelButton.click();
+		await this.accountUsersItem.click();
 	}
 
 	async goToAnnouncements() {
@@ -303,6 +378,16 @@ export class ApplicationsMenuPage {
 	async goToDataMigrationCenter() {
 		await this.goToApplicationsMenu();
 		await this.dataMigrationCenterMenuItem.click();
+	}
+
+	async goToExport() {
+		await this.goToApplicationsMenu();
+		await this.exportMenuItem.click();
+	}
+
+	async goToImport() {
+		await this.goToApplicationsMenu();
+		await this.importMenuItem.click();
 	}
 
 	async goToDefaultPermissions() {
@@ -397,6 +482,11 @@ export class ApplicationsMenuPage {
 		await this.commerceChannelsMenuItem.click();
 	}
 
+	async goToCommerceCurrencies(checkTabVisibility = true) {
+		await this.goToCommercePanel(checkTabVisibility);
+		await this.commerceCurrenciesMenuItem.click();
+	}
+
 	async goToCommerceDiscounts() {
 		await this.goToCommercePanel();
 		await this.commerceDiscountsMenuItem.click();
@@ -430,6 +520,17 @@ export class ApplicationsMenuPage {
 	async goToCommerceSpecifications() {
 		await this.goToCommercePanel();
 		await this.commerceSpecificationsMenuItem.click();
+	}
+
+	async goToCommerceTaxCategories(checkTabVisibility = true) {
+		await this.goto();
+		await this.goToCommercePanel(checkTabVisibility);
+		await this.commerceTaxCategoriesMenuItem.click();
+	}
+
+	async goToPasswordPolicies() {
+		await this.goToControlPanel();
+		await this.passwordPoliciesAdminItem.click();
 	}
 
 	async goToPayments(checkTabVisibility = true) {
@@ -470,6 +571,11 @@ export class ApplicationsMenuPage {
 	async goToProcessBuilder() {
 		await this.goToApplicationsMenu();
 		await this.processBuilderItem.click();
+	}
+
+	async goToResultRankings() {
+		await this.goToApplicationsMenu();
+		await this.resultRankingsItem.click();
 	}
 
 	async goToRoles() {
@@ -525,9 +631,21 @@ export class ApplicationsMenuPage {
 		await this.usersAndOrganizationsItem.click();
 	}
 
+	async goToUsersAndOrganizationsWithLimitedAccess() {
+		await this.homePage.openApplicationMenu();
+		await this.controlPanelButton.click();
+		await this.usersAndOrganizationsItem.click();
+	}
+
 	async goToVirtualInstances() {
 		await this.goto();
 		await this.controlPanelButton.click();
 		await this.virtualInstancesItem.click();
+	}
+
+	async goToAudit() {
+		await this.goto();
+		await this.controlPanelButton.click();
+		await this.auditItem.click();
 	}
 }

@@ -57,6 +57,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "new-ranking"));
 
 <liferay-frontend:edit-form
 	action="<%= addResultsRankingEntryURL %>"
+	fluid="<%= true %>"
 	name="addResultRankingsFm"
 >
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />

@@ -13,9 +13,15 @@ import {SelectField} from '../../../../../../app/components/fragment_configurati
 import {FORM_MAPPING_SOURCES} from '../../../../../../app/config/constants/formMappingSources';
 import {LAYOUT_TYPES} from '../../../../../../app/config/constants/layoutTypes';
 import {config} from '../../../../../../app/config/index';
-import {useSelector} from '../../../../../../app/contexts/StoreContext';
+import {
+	useDispatch,
+	useSelector,
+	useSelectorRef,
+} from '../../../../../../app/contexts/StoreContext';
 import selectSegmentsExperienceId from '../../../../../../app/selectors/selectSegmentsExperienceId';
 import {formIsMapped} from '../../../../../../app/utils/formIsMapped';
+import {hasLocalizationSelect} from '../../../../../../app/utils/hasLocalizationSelect';
+import {openAddLocalizationSelect} from '../../../../../../app/utils/openAddLocalizationSelect';
 import {openInfoFieldSelector} from '../../../../../../common/openInfoFieldSelector';
 
 export default function FormMappingOptions({
@@ -25,6 +31,8 @@ export default function FormMappingOptions({
 }) {
 	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 
+	const dispatch = useDispatch();
+
 	const formTypes = useMemo(() => getTypes(), []);
 
 	const [classNameId, setClassNameId] = useControlledState(
@@ -32,6 +40,10 @@ export default function FormMappingOptions({
 	);
 	const [classTypeId, setClassTypeId] = useControlledState(
 		item.config.classTypeId
+	);
+
+	const fragmentEntryLinksRef = useSelectorRef(
+		(state) => state.fragmentEntryLinks
 	);
 
 	const selectedType = formTypes.find(({value}) => value === classNameId);
@@ -63,7 +75,23 @@ export default function FormMappingOptions({
 					formItemId: item.itemId,
 					itemType: type.className,
 					onCancel: resetMapping,
-					onSave: saveMapping,
+					onSave: (fields) => {
+						saveMapping(fields);
+
+						if (Liferay.FeatureFlags['LPD-37927']) {
+							if (
+								fields.some((field) => field.localizable) &&
+								!hasLocalizationSelect(
+									fragmentEntryLinksRef.current
+								)
+							) {
+								openAddLocalizationSelect({
+									dispatch,
+									formId: item.itemId,
+								});
+							}
+						}
+					},
 					segmentsExperienceId,
 				});
 			}
@@ -73,6 +101,8 @@ export default function FormMappingOptions({
 		},
 		[
 			formTypes,
+			fragmentEntryLinksRef,
+			dispatch,
 			item,
 			onValueSelect,
 			setClassNameId,

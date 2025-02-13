@@ -106,7 +106,7 @@ public class ManyToManyObjectRelationshipInfoCollectionProviderTest {
 
 		ObjectEntry objectDefinition1ObjectEntry1 =
 			_objectEntryLocalService.addObjectEntry(
-				TestPropsValues.getUserId(), _group.getGroupId(),
+				TestPropsValues.getUserId(), _group.getGroupId(), null,
 				_objectDefinition1.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"objectDefinition1TextObjectFieldName",
@@ -116,7 +116,7 @@ public class ManyToManyObjectRelationshipInfoCollectionProviderTest {
 
 		ObjectEntry objectDefinition1ObjectEntry2 =
 			_objectEntryLocalService.addObjectEntry(
-				TestPropsValues.getUserId(), _group.getGroupId(),
+				TestPropsValues.getUserId(), _group.getGroupId(), null,
 				_objectDefinition1.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"objectDefinition1TextObjectFieldName",
@@ -126,7 +126,7 @@ public class ManyToManyObjectRelationshipInfoCollectionProviderTest {
 
 		ObjectEntry objectDefinition2ObjectEntry =
 			_objectEntryLocalService.addObjectEntry(
-				TestPropsValues.getUserId(), _group.getGroupId(),
+				TestPropsValues.getUserId(), _group.getGroupId(), null,
 				_objectDefinition2.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"objectDefinition2TextObjectFieldName",
@@ -163,7 +163,8 @@ public class ManyToManyObjectRelationshipInfoCollectionProviderTest {
 		throws Exception {
 
 		return _objectDefinitionLocalService.addCustomObjectDefinition(
-			TestPropsValues.getUserId(), 0, null, false, true, false, false,
+			TestPropsValues.getUserId(), 0, null, false, false, true, false,
+			false,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			ObjectDefinitionTestUtil.getRandomName(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),

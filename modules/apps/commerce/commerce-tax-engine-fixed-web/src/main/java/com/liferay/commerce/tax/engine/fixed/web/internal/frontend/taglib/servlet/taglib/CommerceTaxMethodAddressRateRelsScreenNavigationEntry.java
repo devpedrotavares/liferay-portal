@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @Component(
 	property = "screen.navigation.entry.order:Integer=10",
@@ -58,11 +58,7 @@ public class CommerceTaxMethodAddressRateRelsScreenNavigationEntry
 
 		String engineKey = commerceTaxMethod.getEngineKey();
 
-		if (engineKey.equals("by-address")) {
-			return true;
-		}
-
-		return false;
+		return engineKey.equals("by-address");
 	}
 
 	@Override

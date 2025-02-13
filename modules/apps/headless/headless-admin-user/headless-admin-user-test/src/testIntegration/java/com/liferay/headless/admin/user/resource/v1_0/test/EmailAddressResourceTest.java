@@ -11,6 +11,7 @@ import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.admin.user.client.dto.v1_0.EmailAddress;
+import com.liferay.headless.admin.user.client.pagination.Page;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.ListType;
 import com.liferay.portal.kernel.model.ListTypeConstants;
@@ -24,15 +25,19 @@ import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -62,6 +67,22 @@ public class EmailAddressResourceTest extends BaseEmailAddressResourceTestCase {
 			AccountConstants.ACCOUNT_ENTRY_TYPE_GUEST,
 			WorkflowConstants.STATUS_APPROVED,
 			ServiceContextTestUtil.getServiceContext());
+	}
+
+	@Override
+	@Test
+	public void testDeleteEmailAddress() throws Exception {
+		super.testDeleteEmailAddress();
+
+		_testDeletePrimaryEmailAddress();
+	}
+
+	@Override
+	@Test
+	public void testPatchEmailAddress() throws Exception {
+		super.testPatchEmailAddress();
+
+		_testPatchEmailAddressNotPrimary();
 	}
 
 	@Override
@@ -273,6 +294,58 @@ public class EmailAddressResourceTest extends BaseEmailAddressResourceTestCase {
 		ListType listType = listTypes.get(0);
 
 		return listType.getListTypeId();
+	}
+
+	private void _testDeletePrimaryEmailAddress() throws Exception {
+		EmailAddress emailAddress1 = randomEmailAddress();
+
+		emailAddress1.setPrimary(true);
+
+		emailAddress1 = _addEmailAddress(
+			emailAddress1, Contact.class.getName(), _user.getContactId(),
+			ListTypeConstants.CONTACT_EMAIL_ADDRESS);
+
+		Assert.assertTrue(emailAddress1.getPrimary());
+
+		EmailAddress emailAddress2 = testDeleteEmailAddress_addEmailAddress();
+
+		Assert.assertFalse(emailAddress2.getPrimary());
+
+		emailAddressResource.deleteEmailAddress(emailAddress1.getId());
+
+		emailAddress2 = emailAddressResource.getEmailAddress(
+			emailAddress2.getId());
+
+		Assert.assertTrue(emailAddress2.getPrimary());
+	}
+
+	private void _testPatchEmailAddressNotPrimary() throws Exception {
+		EmailAddress randomEmailAddress = randomEmailAddress();
+
+		randomEmailAddress.setPrimary(true);
+
+		randomEmailAddress = _addEmailAddress(
+			randomEmailAddress, Contact.class.getName(), _user.getContactId(),
+			ListTypeConstants.CONTACT_EMAIL_ADDRESS);
+
+		testPatchEmailAddress_addEmailAddress();
+
+		randomEmailAddress.setPrimary(false);
+
+		EmailAddress patchEmailAddress = emailAddressResource.patchEmailAddress(
+			randomEmailAddress.getId(), randomEmailAddress);
+
+		Page<EmailAddress> emailAddressesPage =
+			emailAddressResource.getUserAccountEmailAddressesPage(
+				_user.getUserId());
+
+		Assert.assertTrue(
+			ListUtil.exists(
+				ListUtil.fromCollection(emailAddressesPage.getItems()),
+				emailAddress ->
+					emailAddress.getPrimary() &&
+					!Objects.equals(
+						emailAddress.getId(), patchEmailAddress.getId())));
 	}
 
 	private EmailAddress _toEmailAddress(

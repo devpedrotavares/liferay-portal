@@ -1698,12 +1698,11 @@ public class CommerceDiscountLocalServiceImpl
 			true
 		).and(
 			() -> {
-				if (companyId != null) {
-					return CommerceDiscountTable.INSTANCE.companyId.eq(
-						companyId);
+				if (companyId == null) {
+					return null;
 				}
 
-				return null;
+				return CommerceDiscountTable.INSTANCE.companyId.eq(companyId);
 			}
 		).and(
 			CommerceDiscountTable.INSTANCE.status.eq(
@@ -1823,13 +1822,8 @@ public class CommerceDiscountLocalServiceImpl
 	private boolean _isWorkflowEnabled(
 		long companyId, long groupId, String className) {
 
-		if (_workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
-				companyId, groupId, className, 0)) {
-
-			return true;
-		}
-
-		return false;
+		return _workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
+			companyId, groupId, className, 0);
 	}
 
 	private CommerceDiscount _startWorkflowInstance(

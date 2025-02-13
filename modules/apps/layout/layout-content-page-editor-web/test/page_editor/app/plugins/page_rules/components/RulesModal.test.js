@@ -4,7 +4,6 @@
  */
 
 import {act, fireEvent, render, screen} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import '@testing-library/jest-dom/extend-expect';
@@ -37,6 +36,7 @@ jest.mock(
 
 jest.mock('frontend-js-web', () => ({
 	...jest.requireActual('frontend-js-web'),
+	openToast: jest.fn(),
 	sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
 }));
 
@@ -72,13 +72,11 @@ const renderComponent = ({rules = []} = {}) => {
 const selectPickerOption = (pickerLabel, optionValue) => {
 	fireEvent.click(screen.getByLabelText(pickerLabel));
 
-	act(() => {
-		fireEvent.click(
-			screen.getByText(optionValue, {
-				selector: '[role="option"]',
-			})
-		);
-	});
+	fireEvent.click(
+		screen.getByText(optionValue, {
+			selector: '[role="option"]',
+		})
+	);
 };
 
 describe('RulesSidebar', () => {
@@ -104,14 +102,14 @@ describe('RulesSidebar', () => {
 		});
 	});
 
-	it('renders', () => {
+	it('renders', async () => {
 		renderComponent();
 
 		expect(screen.getByText('add-action')).toBeInTheDocument();
 		expect(screen.getByText('add-condition')).toBeInTheDocument();
 	});
 
-	it('does not allow saving an incomplete rule', () => {
+	it('does not allow saving an incomplete rule', async () => {
 		renderComponent();
 
 		fireEvent.click(screen.getByText('save'));
@@ -123,13 +121,11 @@ describe('RulesSidebar', () => {
 		).toBeInTheDocument();
 	});
 
-	it('does not allow saving an unnamed rule', () => {
+	it('does not allow saving an unnamed rule', async () => {
 		renderComponent();
 
-		act(() => {
-			userEvent.type(screen.getByLabelText('rule-name'), '', {
-				allAtOnce: true,
-			});
+		fireEvent.change(screen.getByLabelText('rule-name'), {
+			target: {value: ''},
 		});
 
 		fireEvent.click(screen.getByText('save'));
@@ -137,7 +133,7 @@ describe('RulesSidebar', () => {
 		expect(screen.getByText('this-field-is-required')).toBeInTheDocument();
 	});
 
-	it('does allow completing a condition', () => {
+	it('does allow completing a condition', async () => {
 		renderComponent();
 
 		selectPickerOption('select-item-for-the-condition', 'user');
@@ -149,11 +145,10 @@ describe('RulesSidebar', () => {
 		).toBeInTheDocument();
 	});
 
-	it('does allow completing a action', () => {
+	it('does allow completing a action', async () => {
 		renderComponent();
 
 		selectPickerOption('select-action', 'show');
-		selectPickerOption('select-item-for-the-action', 'fragment');
 		selectPickerOption('select-fragment', 'containercillo');
 
 		expect(
@@ -161,7 +156,7 @@ describe('RulesSidebar', () => {
 		).toBeInTheDocument();
 	});
 
-	it('allows saving a rule', () => {
+	it('allows saving a rule', async () => {
 		renderComponent();
 
 		selectPickerOption('select-item-for-the-condition', 'user');
@@ -169,7 +164,6 @@ describe('RulesSidebar', () => {
 		selectPickerOption('select-user', 'user1');
 
 		selectPickerOption('select-action', 'show');
-		selectPickerOption('select-item-for-the-action', 'fragment');
 		selectPickerOption('select-fragment', 'containercillo');
 
 		fireEvent.click(screen.getByText('save'));
@@ -178,16 +172,18 @@ describe('RulesSidebar', () => {
 			expect.objectContaining({
 				actions: [
 					expect.objectContaining({
-						action: 'fragment',
 						itemId: 'item1',
 						type: 'show',
 					}),
 				],
 				conditions: [
 					expect.objectContaining({
-						condition: 'user',
+						field: 'user',
+						options: {
+							type: 'equal',
+							value: 'userId1',
+						},
 						type: 'user',
-						value: 'userId1',
 					}),
 				],
 				name: 'rule',
@@ -195,7 +191,7 @@ describe('RulesSidebar', () => {
 		);
 	});
 
-	it('removes selection in first condition when pressing delete condition', () => {
+	it('removes selection in first condition when pressing delete condition', async () => {
 		renderComponent();
 
 		selectPickerOption('select-item-for-the-condition', 'user');
@@ -210,11 +206,10 @@ describe('RulesSidebar', () => {
 		expect(screen.queryByText('select-user')).not.toBeInTheDocument();
 	});
 
-	it('removes selection in first action when pressing delete action', () => {
+	it('removes selection in first action when pressing delete action', async () => {
 		renderComponent();
 
 		selectPickerOption('select-action', 'show');
-		selectPickerOption('select-item-for-the-action', 'fragment');
 		selectPickerOption('select-fragment', 'containercillo');
 
 		act(() => {

@@ -1,4 +1,4 @@
-@component-name = "data-engine"
+@component-name = "portal-bpm"
 definition {
 
 	property portal.release = "true";
@@ -91,7 +91,7 @@ definition {
 
 		DataEngine.addRepeatableField(fieldLabel = "Rich Text");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
@@ -103,7 +103,7 @@ definition {
 			key_fieldName = "RichText",
 			locator1 = "DDMField#REMOVE_REPEATED_FIELD");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
@@ -127,7 +127,7 @@ definition {
 			content = "Hello",
 			fieldLabel = "Rich Text");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 
@@ -194,9 +194,7 @@ definition {
 			structureName = "WC Structure Name",
 			webContentTitle = "WebContent Title");
 
-		Click(
-			key_text = "Publish",
-			locator1 = "Button#ANY");
+		WebContent.publishWithPermissions();
 
 		AssertTextEquals.assertPartialText(
 			locator1 = "TextInput#REQUIRED_ALERT",
@@ -315,7 +313,7 @@ definition {
 
 		WebContent.addWithStructureCP(webContentTitle = "WC WebContent Title");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		AssertElementPresent(locator1 = "WCEditWebContent#FIELD_REQUIRED_ALERT");
 	}

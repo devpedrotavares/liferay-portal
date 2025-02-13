@@ -33,11 +33,8 @@ import SidePanel from './side_panel/SidePanel';
 import filterCreationActions from './utils/actionItems/filterCreationActions';
 import EVENTS from './utils/eventsDefinitions';
 import getRandomId from './utils/getRandomId';
-import {
-	formatItemChanges,
-	getCurrentItemUpdates,
-	loadData,
-} from './utils/index';
+import {formatItemChanges, getCurrentItemUpdates} from './utils/index';
+import {loadData} from './utils/loadData';
 import {logError} from './utils/logError';
 import ViewsContext from './views/ViewsContext';
 import getViewComponent from './views/getViewComponent';
@@ -117,8 +114,23 @@ const FrontendDataSet = ({
 	const [total, setTotal] = useState(0);
 
 	const getInitialViewsState = () => {
+		const customInternalViews =
+			customRenderers?.views?.map((customRenderer) => ({
+				component: customRenderer.component,
+				default: customRenderer.default,
+				label: customRenderer.label,
+				name: customRenderer.name,
+				schema: customRenderer.schema,
+				thumbnail: customRenderer.symbol,
+			})) || [];
+
 		let initialActiveView =
-			views.find(({default: defaultProp}) => defaultProp) || views[0];
+			views.find(({default: defaultProp}) => defaultProp) ||
+			customInternalViews?.find(
+				({default: defaultProp}) => defaultProp
+			) ||
+			views[0] ||
+			(customInternalViews?.length && customInternalViews[0]);
 
 		let initialVisibleFieldNames = {};
 
@@ -142,7 +154,7 @@ const FrontendDataSet = ({
 		}
 
 		const activeView = {
-			component: getViewComponent(initialActiveView.contentRenderer),
+			component: getViewComponent(initialActiveView),
 			...initialActiveView,
 		};
 
@@ -186,7 +198,7 @@ const FrontendDataSet = ({
 			modifiedFields: {},
 			paginationDelta,
 			sorts: sortsProp,
-			views,
+			views: [...views, ...customInternalViews],
 			visibleFieldNames: initialVisibleFieldNames,
 		};
 	};
@@ -216,16 +228,16 @@ const FrontendDataSet = ({
 		const activeSorts =
 			sorts.length > 1 ? sorts.filter((sort) => sort.active) : sorts;
 
-		return loadData(
+		return loadData({
+			additionalAPIURLParameters,
 			apiURL,
 			currentURL,
-			activeFiltersOdataStrings,
+			delta: paginationDelta,
+			odataFiltersStrings: activeFiltersOdataStrings,
+			page: pageNumber,
 			searchParam,
-			paginationDelta,
-			pageNumber,
-			activeSorts,
-			additionalAPIURLParameters
-		);
+			sorts: activeSorts,
+		});
 	}, [
 		additionalAPIURLParameters,
 		apiURL,
@@ -561,7 +573,7 @@ const FrontendDataSet = ({
 				selectionType={selectionType}
 				showSearch={showSearch}
 				sidePanelId={dataSetSupportSidePanelId}
-				total={items?.length ?? 0}
+				total={total}
 			/>
 		</div>
 	) : null;
@@ -596,7 +608,7 @@ const FrontendDataSet = ({
 							Liferay.Language.get('sorry,-no-results-were-found')
 						}
 						imgSrc={
-							themeDisplay.getPathThemeImages() +
+							Liferay.ThemeDisplay.getPathThemeImages() +
 							(emptyState?.image ?? '/states/search_state.svg')
 						}
 						title={
@@ -932,7 +944,7 @@ const FrontendDataSet = ({
 					)}
 
 					<div
-						className="data-set-wrapper"
+						className={`data-set-wrapper visualization-mode-${activeView.contentRenderer}`}
 						data-testid={`visualization-mode-${activeView.name}`}
 						ref={wrapperRef}
 					>

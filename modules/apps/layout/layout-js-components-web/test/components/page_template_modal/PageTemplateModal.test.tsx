@@ -18,6 +18,7 @@ jest.mock('frontend-js-web', () => {
 	return {
 		...actual,
 		fetch: jest.fn(() => Promise.resolve({json: () => {}})),
+		openToast: jest.fn(),
 		sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
 	};
 });
@@ -98,7 +99,9 @@ describe('ConvertToPageTemplateModal', () => {
 			const saveButton = screen.getByText('save');
 			const select = screen.getByLabelText('page-template-set');
 
-			userEvent.selectOptions(select, 'set-1');
+			await userEvent.selectOptions(select, 'set-1', {
+				advanceTimers: jest.advanceTimersByTime,
+			});
 			fireEvent.change(select);
 
 			fireEvent.click(saveButton);
@@ -162,7 +165,9 @@ describe('ConvertToPageTemplateModal', () => {
 			const descriptionInput = screen.getByLabelText('description');
 			const saveButton = screen.getByText('save');
 
-			userEvent.type(descriptionInput, 'This is a description');
+			await userEvent.type(descriptionInput, 'This is a description', {
+				advanceTimers: jest.advanceTimersByTime,
+			});
 
 			fireEvent.click(saveButton);
 

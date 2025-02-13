@@ -14,7 +14,6 @@ import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -34,7 +33,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.portlet.PortletPreferences;
 import javax.portlet.RenderRequest;
@@ -194,25 +192,20 @@ public class AssetCategoriesNavigationDisplayContext {
 
 		PortletPreferences portletPreferences = _renderRequest.getPreferences();
 
-		Map<String, String[]> map = portletPreferences.getMap();
+		String displayStyleGroupExternalReferenceCode =
+			portletPreferences.getValue(
+				"displayStyleGroupExternalReferenceCode",
+				_assetCategoriesNavigationPortletInstanceConfiguration.
+					displayStyleGroupExternalReferenceCode());
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				_themeDisplay.getCompanyId(), "LPD-27566") &&
-			map.containsKey("displayStyleGroupExternalReferenceCode")) {
+		if (Validator.isNotNull(displayStyleGroupExternalReferenceCode)) {
+			Group group =
+				GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
+					displayStyleGroupExternalReferenceCode,
+					_themeDisplay.getCompanyId());
 
-			String displayStyleGroupExternalReferenceCode =
-				portletPreferences.getValue(
-					"displayStyleGroupExternalReferenceCode", null);
-
-			if (Validator.isNotNull(displayStyleGroupExternalReferenceCode)) {
-				Group group =
-					GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
-						displayStyleGroupExternalReferenceCode,
-						_themeDisplay.getCompanyId());
-
-				if (group != null) {
-					displayStyleGroupId = group.getGroupId();
-				}
+			if (group != null) {
+				displayStyleGroupId = group.getGroupId();
 			}
 		}
 
@@ -230,17 +223,20 @@ public class AssetCategoriesNavigationDisplayContext {
 	}
 
 	private String[] _getAssetVocabularyIds() {
+		List<Long> assetVocabularyIds = new ArrayList<>();
+
 		PortletPreferences portletPreferences = _renderRequest.getPreferences();
 
-		Map<String, String[]> map = portletPreferences.getMap();
+		assetVocabularyIds.addAll(
+			_getExternalAssetVocabularyIds(portletPreferences));
+		assetVocabularyIds.addAll(
+			_getLocalAssetVocabularyIds(portletPreferences));
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				_themeDisplay.getCompanyId(), "LPD-27566") ||
-			!map.containsKey("assetVocabularyGroupExternalReferenceCodes")) {
+		return ArrayUtil.toStringArray(assetVocabularyIds);
+	}
 
-			return _assetCategoriesNavigationPortletInstanceConfiguration.
-				assetVocabularyIds();
-		}
+	private List<Long> _getExternalAssetVocabularyIds(
+		PortletPreferences portletPreferences) {
 
 		List<Long> assetVocabularyIds = new ArrayList<>();
 
@@ -285,7 +281,36 @@ public class AssetCategoriesNavigationDisplayContext {
 			}
 		}
 
-		return ArrayUtil.toStringArray(assetVocabularyIds);
+		return assetVocabularyIds;
+	}
+
+	private List<Long> _getLocalAssetVocabularyIds(
+		PortletPreferences portletPreferences) {
+
+		List<Long> assetVocabularyIds = new ArrayList<>();
+
+		String[] assetVocabularyExternalReferenceCodes =
+			GetterUtil.getStringValues(
+				portletPreferences.getValues(
+					"assetVocabularyExternalReferenceCodes", null));
+
+		for (String assetVocabularyExternalReferenceCode :
+				assetVocabularyExternalReferenceCodes) {
+
+			AssetVocabulary assetVocabulary =
+				AssetVocabularyLocalServiceUtil.
+					fetchAssetVocabularyByExternalReferenceCode(
+						assetVocabularyExternalReferenceCode,
+						_themeDisplay.getScopeGroupId());
+
+			if (assetVocabulary == null) {
+				continue;
+			}
+
+			assetVocabularyIds.add(assetVocabulary.getVocabularyId());
+		}
+
+		return assetVocabularyIds;
 	}
 
 	private String _getTitle(AssetVocabulary assetVocabulary) {

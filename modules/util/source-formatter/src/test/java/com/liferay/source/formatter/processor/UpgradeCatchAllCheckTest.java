@@ -23,9 +23,14 @@ import java.nio.file.Paths;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +45,8 @@ public class UpgradeCatchAllCheckTest extends BaseSourceProcessorTestCase {
 	@Parameterized.Parameters(name = "Testcase-{index}: Testing {0} .{1}")
 	public static Iterable<Object[]> data() throws Exception {
 		List<Object[]> objectsArray = new ArrayList<>();
+
+		Map<String, Set<String>> issueKeyFileTypesMap = new HashMap<>();
 
 		String[] issueKeys = StringUtil.split(
 			System.getProperty("issue.key", null), StringPool.COMMA);
@@ -69,9 +76,25 @@ public class UpgradeCatchAllCheckTest extends BaseSourceProcessorTestCase {
 			String[] fileTypes = _getValidExtensions(jsonObject);
 
 			for (String fileType : fileTypes) {
-				if (_hasValidUpgradeFiles(issueKey, fileType)) {
-					objectsArray.add(new Object[] {issueKey, fileType});
-				}
+				issueKeyFileTypesMap.compute(
+					issueKey,
+					(key, value) -> {
+						if (value == null) {
+							value = new HashSet<>();
+						}
+
+						value.add(fileType);
+
+						return value;
+					});
+			}
+		}
+
+		for (Map.Entry<String, Set<String>> entry :
+				issueKeyFileTypesMap.entrySet()) {
+
+			for (String fileType : entry.getValue()) {
+				objectsArray.add(new Object[] {entry.getKey(), fileType});
 			}
 		}
 
@@ -101,10 +124,23 @@ public class UpgradeCatchAllCheckTest extends BaseSourceProcessorTestCase {
 			StringUtil.replace(_issueKey, CharPool.DASH, CharPool.UNDERLINE) +
 				".test" + _fileType;
 
-		if (_hasValidUpgradeFiles(_issueKey, _fileType)) {
-			_testUpgradeCatchAllCheck(
-				"upgrade/upgrade-catch-all-check/" + fileName);
-		}
+		Path filePath = Paths.get(
+			"src/test/resources/com/liferay/source/formatter/dependencies" +
+				"/upgrade/upgrade-catch-all-check/" + fileName);
+
+		Assert.assertTrue(
+			"Missing unit test in " + filePath, Files.exists(filePath));
+
+		Path expectedFilePath = Paths.get(
+			"src/test/resources/com/liferay/source/formatter/dependencies" +
+				"/expected/upgrade/upgrade-catch-all-check/" + fileName);
+
+		Assert.assertTrue(
+			"Missing unit test in " + expectedFilePath,
+			Files.exists(expectedFilePath));
+
+		_testUpgradeCatchAllCheck(
+			"upgrade/upgrade-catch-all-check/" + fileName);
 	}
 
 	@Override
@@ -131,20 +167,6 @@ public class UpgradeCatchAllCheckTest extends BaseSourceProcessorTestCase {
 		}
 
 		return validExtensions;
-	}
-
-	private static boolean _hasValidUpgradeFiles(
-		String issueKey, String fileType) {
-
-		String fileName =
-			StringUtil.replace(issueKey, CharPool.DASH, CharPool.UNDERLINE) +
-				".test" + fileType;
-
-		Path filePath = Paths.get(
-			"src/test/resources/com/liferay/source/formatter/dependencies" +
-				"/upgrade/upgrade-catch-all-check/" + fileName);
-
-		return Files.exists(filePath);
 	}
 
 	private void _testUpgradeCatchAllCheck(String fileName) throws Exception {

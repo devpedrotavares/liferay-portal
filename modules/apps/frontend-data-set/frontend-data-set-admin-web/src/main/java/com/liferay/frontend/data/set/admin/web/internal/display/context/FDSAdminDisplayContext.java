@@ -11,8 +11,8 @@ import com.liferay.frontend.data.set.SystemFDSEntry;
 import com.liferay.frontend.data.set.SystemFDSEntryRegistry;
 import com.liferay.frontend.data.set.admin.web.internal.constants.FDSAdminPortletKeys;
 import com.liferay.frontend.data.set.admin.web.internal.portlet.FDSAdminPortlet;
-import com.liferay.frontend.data.set.resolver.FDSAPIURLResolver;
-import com.liferay.frontend.data.set.resolver.FDSAPIURLResolverRegistry;
+import com.liferay.frontend.data.set.url.FDSAPIURLResolver;
+import com.liferay.frontend.data.set.url.FDSAPIURLResolverRegistry;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.definition.security.permission.resource.ObjectDefinitionPortletResourcePermissionRegistryUtil;
 import com.liferay.object.model.ObjectDefinition;
@@ -36,7 +36,7 @@ import com.liferay.portal.vulcan.pagination.Pagination;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.RenderRequest;
@@ -142,6 +142,19 @@ public class FDSAdminDisplayContext {
 			));
 	}
 
+	public String getImportSystemDataSetURL() {
+		ResourceURL resourceURL =
+			(ResourceURL)PortalUtil.getControlPanelPortletURL(
+				_renderRequest, _themeDisplay.getScopeGroup(),
+				FDSAdminPortletKeys.FDS_ADMIN, 0, 0,
+				RenderRequest.RESOURCE_PHASE);
+
+		resourceURL.setResourceID(
+			"/frontend_data_set_admin/import_system_data_set");
+
+		return resourceURL.toString();
+	}
+
 	public JSONArray getRESTApplicationResolvedSchemasJSONArray() {
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
@@ -213,36 +226,55 @@ public class FDSAdminDisplayContext {
 		return resourceURL.toString();
 	}
 
-	public JSONArray getSystemFDSEntryJSONArray() throws Exception {
-		Map<String, SystemFDSEntry> systemFDSEntries =
-			_systemFDSEntryRegistry.getSystemFDSEntries();
+	public String getSystemDataSetsURL() {
+		ResourceURL resourceURL =
+			(ResourceURL)PortalUtil.getControlPanelPortletURL(
+				_renderRequest, _themeDisplay.getScopeGroup(),
+				FDSAdminPortletKeys.FDS_ADMIN, 0, 0,
+				RenderRequest.RESOURCE_PHASE);
 
-		if (systemFDSEntries == null) {
+		resourceURL.setResourceID(
+			"/frontend_data_set_admin/get_system_data_sets");
+
+		return resourceURL.toString();
+	}
+
+	public JSONArray getSystemFDSEntryJSONArray() throws Exception {
+		Set<String> systemFDSNames =
+			_systemFDSEntryRegistry.getSystemFDSNames();
+
+		if (systemFDSNames == null) {
 			return JSONFactoryUtil.createJSONArray();
 		}
 
 		return JSONUtil.toJSONArray(
-			systemFDSEntries.values(),
-			systemFDSEntry -> JSONUtil.put(
-				"additionalAPIURLParameters",
-				systemFDSEntry.getAdditionalAPIURLParameters()
-			).put(
-				"defaultItemsPerPage", systemFDSEntry.getDefaultItemsPerPage()
-			).put(
-				"description", systemFDSEntry.getDescription()
-			).put(
-				"name", systemFDSEntry.getName()
-			).put(
-				"restApplication", systemFDSEntry.getRESTApplication()
-			).put(
-				"restEndpoint", systemFDSEntry.getRESTEndpoint()
-			).put(
-				"restSchema", systemFDSEntry.getRESTSchema()
-			).put(
-				"symbol", systemFDSEntry.getSymbol()
-			).put(
-				"title", systemFDSEntry.getTitle()
-			));
+			systemFDSNames,
+			systemFDSName -> {
+				SystemFDSEntry systemFDSEntry =
+					_systemFDSEntryRegistry.getSystemFDSEntry(systemFDSName);
+
+				return JSONUtil.put(
+					"additionalAPIURLParameters",
+					systemFDSEntry.getAdditionalAPIURLParameters()
+				).put(
+					"defaultItemsPerPage",
+					systemFDSEntry.getDefaultItemsPerPage()
+				).put(
+					"description", systemFDSEntry.getDescription()
+				).put(
+					"name", systemFDSEntry.getName()
+				).put(
+					"restApplication", systemFDSEntry.getRESTApplication()
+				).put(
+					"restEndpoint", systemFDSEntry.getRESTEndpoint()
+				).put(
+					"restSchema", systemFDSEntry.getRESTSchema()
+				).put(
+					"symbol", systemFDSEntry.getSymbol()
+				).put(
+					"title", systemFDSEntry.getTitle()
+				);
+			});
 	}
 
 	public boolean hasAddDataSetObjectEntryPermission() {

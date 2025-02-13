@@ -98,7 +98,7 @@ public class ExecuteInfoItemActionStrutsActionTest {
 			_portal.getClassNameId(objectDefinition.getClassName()));
 
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			_user.getUserId(), _group.getGroupId(),
+			_user.getUserId(), _group.getGroupId(), null,
 			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"text", RandomTestUtil.randomString()
@@ -164,7 +164,7 @@ public class ExecuteInfoItemActionStrutsActionTest {
 	private ObjectDefinition _addObjectDefinition() throws Exception {
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				_user.getUserId(), 0, null, false, true, false, false,
+				_user.getUserId(), 0, null, false, false, true, false, false,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null,
 				"control_panel.sites",

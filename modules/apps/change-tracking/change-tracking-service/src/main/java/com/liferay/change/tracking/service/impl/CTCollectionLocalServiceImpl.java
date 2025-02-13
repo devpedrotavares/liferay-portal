@@ -34,6 +34,7 @@ import com.liferay.change.tracking.model.CTEntry;
 import com.liferay.change.tracking.model.CTEntryTable;
 import com.liferay.change.tracking.model.CTPreferences;
 import com.liferay.change.tracking.model.CTSchemaVersion;
+import com.liferay.change.tracking.model.CTScore;
 import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.change.tracking.service.CTSchemaVersionLocalService;
@@ -43,6 +44,7 @@ import com.liferay.change.tracking.service.persistence.CTCommentPersistence;
 import com.liferay.change.tracking.service.persistence.CTEntryPersistence;
 import com.liferay.change.tracking.service.persistence.CTMessagePersistence;
 import com.liferay.change.tracking.service.persistence.CTPreferencesPersistence;
+import com.liferay.change.tracking.service.persistence.CTScorePersistence;
 import com.liferay.change.tracking.spi.display.CTDisplayRenderer;
 import com.liferay.change.tracking.spi.resolver.ConstraintResolver;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
@@ -65,6 +67,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
@@ -75,6 +78,7 @@ import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.change.tracking.CTService;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
@@ -467,7 +471,7 @@ public class CTCollectionLocalServiceImpl
 					sb.append(ctPersistence.getTableName());
 					sb.append(" where ctCollectionId = ");
 					sb.append(ctCollection.getCtCollectionId());
-					sb.append(" and ");
+					sb.append(" and (");
 					sb.append(primaryKeyName);
 					sb.append(" in (");
 
@@ -476,6 +480,7 @@ public class CTCollectionLocalServiceImpl
 					for (long modelClassPK : entry.getValue()) {
 						if (i == _BATCH_SIZE) {
 							sb.setStringAt(")", sb.index() - 1);
+
 							sb.append(" or ");
 							sb.append(primaryKeyName);
 							sb.append(" in (");
@@ -490,6 +495,8 @@ public class CTCollectionLocalServiceImpl
 					}
 
 					sb.setStringAt(")", sb.index() - 1);
+
+					sb.append(")");
 
 					Connection connection = _currentConnection.getConnection(
 						ctPersistence.getDataSource());
@@ -517,6 +524,13 @@ public class CTCollectionLocalServiceImpl
 
 		_ctMessagePersistence.removeByCtCollectionId(
 			ctCollection.getCtCollectionId());
+
+		CTScore ctScore = _ctScorePersistence.fetchByCtCollectionId(
+			ctCollection.getCtCollectionId());
+
+		if (ctScore != null) {
+			_ctScorePersistence.remove(ctScore);
+		}
 
 		Group group = _groupLocalService.fetchGroup(
 			ctCollection.getCompanyId(),
@@ -571,10 +585,7 @@ public class CTCollectionLocalServiceImpl
 		CTCollection ctCollection = ctCollectionPersistence.findByPrimaryKey(
 			ctCollectionId);
 
-		if (!force &&
-			(ctCollection.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
-			(ctCollection.getStatus() != WorkflowConstants.STATUS_PENDING)) {
-
+		if (!force && ctCollection.isReadOnly()) {
 			throw new PortalException(
 				"Change tracking collection " + ctCollection + " is read only");
 		}
@@ -802,7 +813,10 @@ public class CTCollectionLocalServiceImpl
 							ctPersistence.getTableName(),
 							" where ctCollectionId = ", ctCollectionId,
 							" and status not in (",
-							StringUtil.merge(_STATUSES, StringPool.COMMA),
+							StringUtil.merge(
+								_getStatuses(
+									ctCollectionId, ctPersistence, entry),
+								StringPool.COMMA),
 							")"));
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -866,9 +880,7 @@ public class CTCollectionLocalServiceImpl
 		CTCollection toCTCollection = ctCollectionPersistence.findByPrimaryKey(
 			toCTCollectionId);
 
-		if ((toCTCollection.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
-			(toCTCollection.getStatus() != WorkflowConstants.STATUS_PENDING)) {
-
+		if (toCTCollection.isReadOnly()) {
 			throw new CTCollectionStatusException(
 				"Change tracking collection " + toCTCollection +
 					" is read only");
@@ -1290,6 +1302,42 @@ public class CTCollectionLocalServiceImpl
 		return relatedEntriesMap;
 	}
 
+	private int[] _getStatuses(
+		long ctCollectionId, CTPersistence ctPersistence,
+		Map.Entry<Long, CTPersistence<?>> entry) {
+
+		CTCollection ctCollection = ctCollectionPersistence.fetchByPrimaryKey(
+			ctCollectionId);
+
+		long groupId = 0;
+
+		if (entry instanceof GroupedModel) {
+			GroupedModel groupedModel = (GroupedModel)entry;
+
+			groupId = groupedModel.getGroupId();
+		}
+
+		Class<?> clazz = ctPersistence.getModelClass();
+
+		if (!_workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
+				ctCollection.getCompanyId(), groupId, clazz.getName())) {
+
+			return new int[] {
+				WorkflowConstants.STATUS_APPROVED,
+				WorkflowConstants.STATUS_DRAFT,
+				WorkflowConstants.STATUS_EXPIRED,
+				WorkflowConstants.STATUS_IN_TRASH,
+				WorkflowConstants.STATUS_SCHEDULED
+			};
+		}
+
+		return new int[] {
+			WorkflowConstants.STATUS_APPROVED, WorkflowConstants.STATUS_EXPIRED,
+			WorkflowConstants.STATUS_IN_TRASH,
+			WorkflowConstants.STATUS_SCHEDULED
+		};
+	}
+
 	private void _moveCTEntries(
 		long companyId, long fromCTCollectionId, long toCTCollectionId,
 		long classNameId, List<CTEntry> ctEntries) {
@@ -1409,13 +1457,13 @@ public class CTCollectionLocalServiceImpl
 		long ctCollectionId, List<CTEntry> ctEntries,
 		CTPersistence<?> ctPersistence, String primaryKeyName) {
 
-		StringBundler sb = new StringBundler((2 * ctEntries.size()) + 7);
+		StringBundler sb = new StringBundler();
 
 		sb.append("delete from ");
 		sb.append(ctPersistence.getTableName());
 		sb.append(" where ctCollectionId = ");
 		sb.append(ctCollectionId);
-		sb.append(" and ");
+		sb.append(" and (");
 		sb.append(primaryKeyName);
 		sb.append(" in (");
 
@@ -1424,6 +1472,7 @@ public class CTCollectionLocalServiceImpl
 		for (CTEntry ctEntry : ctEntries) {
 			if (i == _BATCH_SIZE) {
 				sb.setStringAt(")", sb.index() - 1);
+
 				sb.append(" or ");
 				sb.append(primaryKeyName);
 				sb.append(" in (");
@@ -1438,6 +1487,8 @@ public class CTCollectionLocalServiceImpl
 		}
 
 		sb.setStringAt(")", sb.index() - 1);
+
+		sb.append(")");
 
 		Connection connection = _currentConnection.getConnection(
 			ctPersistence.getDataSource());
@@ -1469,7 +1520,7 @@ public class CTCollectionLocalServiceImpl
 		long fromCTCollectionId, long toCTCollectionId, List<CTEntry> ctEntries,
 		CTPersistence<?> ctPersistence, String primaryKeyName) {
 
-		StringBundler sb = new StringBundler((2 * ctEntries.size()) + 7);
+		StringBundler sb = new StringBundler();
 
 		sb.append("update ");
 		sb.append(ctPersistence.getTableName());
@@ -1477,7 +1528,7 @@ public class CTCollectionLocalServiceImpl
 		sb.append(toCTCollectionId);
 		sb.append(" where ctCollectionId = ");
 		sb.append(fromCTCollectionId);
-		sb.append(" and ");
+		sb.append(" and (");
 		sb.append(primaryKeyName);
 		sb.append(" in (");
 
@@ -1486,6 +1537,7 @@ public class CTCollectionLocalServiceImpl
 		for (CTEntry ctEntry : ctEntries) {
 			if (i == _BATCH_SIZE) {
 				sb.setStringAt(")", sb.index() - 1);
+
 				sb.append(" or ");
 				sb.append(primaryKeyName);
 				sb.append(" in (");
@@ -1500,6 +1552,8 @@ public class CTCollectionLocalServiceImpl
 		}
 
 		sb.setStringAt(")", sb.index() - 1);
+
+		sb.append(")");
 
 		Connection connection = _currentConnection.getConnection(
 			ctPersistence.getDataSource());
@@ -1554,11 +1608,6 @@ public class CTCollectionLocalServiceImpl
 
 	private static final int _BATCH_SIZE = 1000;
 
-	private static final int[] _STATUSES = {
-		WorkflowConstants.STATUS_APPROVED, WorkflowConstants.STATUS_EXPIRED,
-		WorkflowConstants.STATUS_IN_TRASH, WorkflowConstants.STATUS_SCHEDULED
-	};
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		CTCollectionLocalServiceImpl.class);
 
@@ -1604,6 +1653,9 @@ public class CTCollectionLocalServiceImpl
 	private CTSchemaVersionLocalService _ctSchemaVersionLocalService;
 
 	@Reference
+	private CTScorePersistence _ctScorePersistence;
+
+	@Reference
 	private CTServiceRegistry _ctServiceRegistry;
 
 	@Reference
@@ -1626,5 +1678,9 @@ public class CTCollectionLocalServiceImpl
 
 	@Reference
 	private UIDFactory _uidFactory;
+
+	@Reference
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }

@@ -96,7 +96,7 @@ export function ManagementToolbar({
 					<div className="border-right ml-sm-2 mr-3 pr-3">
 						<h3 className="mb-0 text-truncate">{label}</h3>
 
-						{Liferay.FeatureFlags['LPS-187142'] &&
+						{Liferay.FeatureFlags['LPD-34594'] &&
 							inheritanceLabel && (
 								<strong
 									className={`${inheritanceClassName} label`}
@@ -185,20 +185,16 @@ export function ManagementToolbar({
 								{Liferay.Language.get('save')}
 							</ClayButton>
 
-							{isApproved !== undefined &&
-								!isApproved &&
-								!isRootDescendantNode && (
-									<ClayButton
-										disabled={
-											!hasUpdatePermission || disabled
-										}
-										id={`${portletNamespace}publish`}
-										name="publish"
-										onClick={() => onPublish()}
-									>
-										{Liferay.Language.get('publish')}
-									</ClayButton>
-								)}
+							{isApproved !== undefined && !isApproved && (
+								<ClayButton
+									disabled={!hasUpdatePermission || disabled}
+									id={`${portletNamespace}publish`}
+									name="publish"
+									onClick={() => onPublish()}
+								>
+									{Liferay.Language.get('publish')}
+								</ClayButton>
+							)}
 						</ClayButton.Group>
 					</ClayManagementToolbar.ItemList>
 				)}

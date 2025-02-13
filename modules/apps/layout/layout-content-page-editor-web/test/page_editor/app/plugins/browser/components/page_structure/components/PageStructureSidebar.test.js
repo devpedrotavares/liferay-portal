@@ -28,6 +28,13 @@ jest.mock(
 	() => jest.fn()
 );
 
+jest.mock(
+	'../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/services/FormService',
+	() => ({
+		getFormFields: jest.fn(() => Promise.resolve({})),
+	})
+);
+
 jest.mock('frontend-js-web', () => ({
 	...jest.requireActual('frontend-js-web'),
 	sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
@@ -333,30 +340,30 @@ describe('PageStructureSidebar', () => {
 		expect(screen.queryByLabelText('remove-05-editable')).toBe(null);
 	});
 
-	it('sets element as active item', () => {
+	it('sets element as active item', async () => {
 		renderComponent({
 			activeItemIds: ['03-column'],
 		});
 		const button = screen.getByLabelText('select-grid');
-		userEvent.click(button);
+		await userEvent.click(button);
 		expect(button.parentElement).toHaveAttribute('aria-selected', 'true');
 	});
 
-	it('sets element as active item when it is a fragment', () => {
+	it('sets element as active item when it is a fragment', async () => {
 		renderComponent({
 			activeItemIds: ['03-column'],
 		});
 		const button = screen.getByLabelText('select-Fragment 1');
-		userEvent.click(button);
+		await userEvent.click(button);
 		expect(button.parentElement).toHaveAttribute('aria-selected', 'true');
 	});
 
-	it('sets element as active item when it is a column', () => {
+	it('sets element as active item when it is a column', async () => {
 		renderComponent({
 			activeItemIds: ['02-row'],
 		});
 		const button = screen.getByLabelText('select-module');
-		userEvent.click(button);
+		await userEvent.click(button);
 		expect(button.parentElement).toHaveAttribute('aria-selected', 'false');
 	});
 
@@ -401,15 +408,17 @@ describe('PageStructureSidebar', () => {
 		).toBeInTheDocument();
 	});
 
-	it('allow changing fragment name', () => {
+	it('allow changing fragment name', async () => {
 		const {baseElement} = renderComponent({
 			activeItemIds: ['04-fragment'],
 			rootItemChildren: ['04-fragment'],
 		});
-		userEvent.dblClick(screen.getByLabelText('select-Fragment 1'));
+		await userEvent.dblClick(screen.getByLabelText('select-Fragment 1'));
 		const input = baseElement.querySelector('input');
 		expect(input).toBeInTheDocument();
-		userEvent.type(input, 'Custom Fragment Name');
+
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Custom Fragment Name');
 		fireEvent.blur(input);
 		expect(screen.getByText('Custom Fragment Name')).toBeInTheDocument();
 		expect(updateItemConfig).toBeCalledWith(

@@ -54,62 +54,22 @@ public class ReleaseManagerTest {
 
 	@Test
 	public void testSuccessfulUpgrade() throws Exception {
-		Assert.assertEquals("success", _releaseManager.getStatus());
 		Assert.assertTrue(
 			Validator.isBlank(_releaseManager.getShortStatusMessage(false)));
+		Assert.assertEquals("success", _releaseManager.getStatus());
 		Assert.assertTrue(
 			Validator.isBlank(_releaseManager.getStatusMessage(false)));
-	}
-
-	@Test
-	public void testUnsuccessfulUpgradeByMissingModuleUpgrade()
-		throws Exception {
-
-		_testUnsuccessfulUpgradeByMissingModuleUpgrade(false, "unresolved");
 	}
 
 	@Test
 	public void testUnsuccessfulUpgradeByMissingModuleUpgradeWithAutorun()
 		throws Exception {
 
-		_testUnsuccessfulUpgradeByMissingModuleUpgrade(true, "failure");
-	}
-
-	@Test
-	public void testUnsuccessfulUpgradeByMissingPortalUpgrade()
-		throws Exception {
-
-		try (Connection connection = DataAccess.getConnection()) {
-			Version version = PortalUpgradeProcess.getCurrentSchemaVersion(
-				connection);
-
-			PortalUpgradeProcess.updateSchemaVersion(
-				connection, new Version(0, 0, 0));
-
-			try {
-				Assert.assertEquals("failure", _releaseManager.getStatus());
-				Assert.assertFalse(
-					Validator.isBlank(
-						_releaseManager.getShortStatusMessage(false)));
-				Assert.assertFalse(
-					Validator.isBlank(_releaseManager.getStatusMessage(false)));
-			}
-			finally {
-				PortalUpgradeProcess.updateSchemaVersion(connection, version);
-			}
-		}
-	}
-
-	private void _testUnsuccessfulUpgradeByMissingModuleUpgrade(
-			boolean autorun, String status)
-		throws Exception {
-
 		String upgradeDatabaseAutoRun = PropsUtil.get(
 			PropsKeys.UPGRADE_DATABASE_AUTO_RUN);
 
 		try {
-			PropsUtil.set(
-				PropsKeys.UPGRADE_DATABASE_AUTO_RUN, String.valueOf(autorun));
+			PropsUtil.set(PropsKeys.UPGRADE_DATABASE_AUTO_RUN, "true");
 
 			Bundle bundle = FrameworkUtil.getBundle(ReleaseManagerTest.class);
 
@@ -127,10 +87,10 @@ public class ReleaseManagerTest {
 
 				release = _releaseLocalService.updateRelease(release);
 
-				Assert.assertEquals(status, _releaseManager.getStatus());
 				Assert.assertFalse(
 					Validator.isBlank(
 						_releaseManager.getShortStatusMessage(false)));
+				Assert.assertEquals("failure", _releaseManager.getStatus());
 				Assert.assertFalse(
 					Validator.isBlank(_releaseManager.getStatusMessage(false)));
 			}
@@ -141,6 +101,31 @@ public class ReleaseManagerTest {
 		finally {
 			PropsUtil.set(
 				PropsKeys.UPGRADE_DATABASE_AUTO_RUN, upgradeDatabaseAutoRun);
+		}
+	}
+
+	@Test
+	public void testUnsuccessfulUpgradeByMissingPortalUpgrade()
+		throws Exception {
+
+		try (Connection connection = DataAccess.getConnection()) {
+			Version version = PortalUpgradeProcess.getCurrentSchemaVersion(
+				connection);
+
+			PortalUpgradeProcess.updateSchemaVersion(
+				connection, new Version(0, 0, 0));
+
+			try {
+				Assert.assertFalse(
+					Validator.isBlank(
+						_releaseManager.getShortStatusMessage(false)));
+				Assert.assertEquals("failure", _releaseManager.getStatus());
+				Assert.assertFalse(
+					Validator.isBlank(_releaseManager.getStatusMessage(false)));
+			}
+			finally {
+				PortalUpgradeProcess.updateSchemaVersion(connection, version);
+			}
 		}
 	}
 

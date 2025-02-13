@@ -21,15 +21,17 @@ import {objectPagesTest} from '../../fixtures/objectPagesTest';
 import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
 import {getRandomInt} from '../../utils/getRandomInt';
 import getRandomString from '../../utils/getRandomString';
+import {waitForAlert} from '../../utils/waitForAlert';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
-import {createObjectField} from './utils/mockObjectFields';
+import {createObjectFields} from './utils/mockObjectFields';
 
 export const test = mergeTests(
 	collectionsPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPS-178052': true,
+		'LPD-21926': {enabled: true},
+		'LPS-178052': {enabled: true},
 	}),
 	fragmentsPagesTest,
 	isolatedSiteTest,
@@ -48,11 +50,10 @@ test.describe('Manage object definitions through Model Builder', () => {
 		modelBuilderDiagramPage,
 	}) => {
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		const commerceOrderItemLabel = 'Commerce Order Item';
 
@@ -168,7 +169,12 @@ test.describe('Manage object definitions through Model Builder', () => {
 			type: 'objectDefinition',
 		});
 
-		expect(page.getByText(objectDefinitionLabel)).toBeVisible();
+		await waitForAlert(
+			page,
+			`Success:${objectDefinitionLabel} was created successfully.`
+		);
+
+		await expect(page.getByText(objectDefinitionLabel)).toBeVisible();
 
 		await viewObjectDefinitionsPage.viewInModelBuilderButton.click();
 
@@ -192,18 +198,16 @@ test.describe('Manage object definitions through Model Builder', () => {
 		modelBuilderObjectDefinitionNodePage,
 	}) => {
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 2},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 2},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 2},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 2},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -256,11 +260,10 @@ test.describe('Manage object definitions through Model Builder', () => {
 		modelBuilderObjectDefinitionNodePage,
 	}) => {
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
 
@@ -325,18 +328,17 @@ test.describe('Manage object definitions through Model Builder', () => {
 			await apiHelpers.objectAdmin.postRandomObjectFolder();
 
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				objectFolder.externalReferenceCode
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 0},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -463,17 +465,18 @@ test.describe('Manage object definitions through Model Builder', () => {
 		const {body: department} =
 			await objectDefinitionAPIClient.postObjectDefinition({
 				active: true,
+				enableFriendlyURLCustomization: true,
 				label: {
 					en_US: 'Department',
 					pt_BR: 'Departamento',
 				},
 				name: 'Department',
-				objectFields: [
-					createObjectField('text', {
+				objectFields: createObjectFields('text', [
+					{
 						label: 'Name',
 						name: 'name',
-					}),
-				],
+					},
+				]),
 				objectFolderExternalReferenceCode:
 					objectFolder.externalReferenceCode,
 				panelCategoryKey: 'control_panel.object',
@@ -483,7 +486,7 @@ test.describe('Manage object definitions through Model Builder', () => {
 				},
 				scope: 'company',
 				status: {code: 0},
-				titleObjectFieldName: 'id',
+				titleObjectFieldName: 'name',
 			});
 
 		apiHelpers.data.push({id: department.id, type: 'objectDefinition'});
@@ -505,7 +508,7 @@ test.describe('Manage object definitions through Model Builder', () => {
 				},
 				scope: 'site',
 				status: {code: 1},
-				titleObjectFieldName: 'name',
+				titleObjectFieldName: 'id',
 			});
 
 		apiHelpers.data.push({id: employee.id, type: 'objectDefinition'});
@@ -585,6 +588,14 @@ test.describe('Manage object definitions through Model Builder', () => {
 			await expect(
 				modelBuilderRightSidebarPage.objectDefinitionPanelLink
 			).toHaveText(panelLink, {ignoreCase: true});
+
+			// Seo Container
+
+			await expect(
+				modelBuilderRightSidebarPage.objectDefinitionSeo
+			).toBeChecked({
+				checked: objectDefinition.enableFriendlyURLCustomization,
+			});
 		}
 	});
 });
@@ -592,22 +603,19 @@ test.describe('Manage object definitions through Model Builder', () => {
 test.describe('Manage object definitions through View Object Definitions', () => {
 	test('can delete an object definition by FDS action', async ({
 		apiHelpers,
-		page,
 		viewObjectDefinitionsPage,
 	}) => {
 		const objectDefinition1 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 2},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 2},
+			});
 
 		const objectDefinition2 =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 2},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 2},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition1.id,
@@ -620,13 +628,9 @@ test.describe('Manage object definitions through View Object Definitions', () =>
 
 		await viewObjectDefinitionsPage.goto();
 
-		await page.locator('.dnd-td.item-actions').first().waitFor();
-
-		await page
-			.locator('.dnd-td.item-actions')
-			.last()
-			.locator('.dropdown-toggle')
-			.click();
+		await viewObjectDefinitionsPage.clickObjectDefinitionActionButton(
+			objectDefinition2.label['en_US']
+		);
 
 		await viewObjectDefinitionsPage.deleteObjectDefinitionOption.click();
 
@@ -662,11 +666,10 @@ test.describe('Manage object definitions through a Page', () => {
 		viewObjectDefinitionsPage,
 	}) => {
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -702,11 +705,10 @@ test.describe('Manage object definitions through a Page', () => {
 		viewObjectDefinitionsPage,
 	}) => {
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 0},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,

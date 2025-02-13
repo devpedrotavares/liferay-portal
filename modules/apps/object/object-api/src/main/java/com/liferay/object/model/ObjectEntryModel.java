@@ -231,6 +231,21 @@ public interface ObjectEntryModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
+	 * Returns the default language ID of this object entry.
+	 *
+	 * @return the default language ID of this object entry
+	 */
+	@AutoEscape
+	public String getDefaultLanguageId();
+
+	/**
+	 * Sets the default language ID of this object entry.
+	 *
+	 * @param defaultLanguageId the default language ID of this object entry
+	 */
+	public void setDefaultLanguageId(String defaultLanguageId);
+
+	/**
 	 * Returns the object definition ID of this object entry.
 	 *
 	 * @return the object definition ID of this object entry
@@ -245,6 +260,20 @@ public interface ObjectEntryModel
 	public void setObjectDefinitionId(long objectDefinitionId);
 
 	/**
+	 * Returns the object entry folder ID of this object entry.
+	 *
+	 * @return the object entry folder ID of this object entry
+	 */
+	public long getObjectEntryFolderId();
+
+	/**
+	 * Sets the object entry folder ID of this object entry.
+	 *
+	 * @param objectEntryFolderId the object entry folder ID of this object entry
+	 */
+	public void setObjectEntryFolderId(long objectEntryFolderId);
+
+	/**
 	 * Returns the root object entry ID of this object entry.
 	 *
 	 * @return the root object entry ID of this object entry
@@ -257,6 +286,21 @@ public interface ObjectEntryModel
 	 * @param rootObjectEntryId the root object entry ID of this object entry
 	 */
 	public void setRootObjectEntryId(long rootObjectEntryId);
+
+	/**
+	 * Returns the tree path of this object entry.
+	 *
+	 * @return the tree path of this object entry
+	 */
+	@AutoEscape
+	public String getTreePath();
+
+	/**
+	 * Sets the tree path of this object entry.
+	 *
+	 * @param treePath the tree path of this object entry
+	 */
+	public void setTreePath(String treePath);
 
 	/**
 	 * Returns the last publish date of this object entry.

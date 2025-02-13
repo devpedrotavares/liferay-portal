@@ -14,7 +14,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.facet.Facet;
 import com.liferay.portal.kernel.search.facet.collector.FacetCollector;
-import com.liferay.portal.kernel.search.facet.collector.TermCollector;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -214,11 +213,7 @@ public class AssetCategoriesSearchFacetDisplayContextBuilder
 	}
 
 	protected boolean isNothingSelected() {
-		if (_selectedCategoryIds.isEmpty()) {
-			return true;
-		}
-
-		return false;
+		return _selectedCategoryIds.isEmpty();
 	}
 
 	protected boolean isRenderNothing() {
@@ -230,11 +225,7 @@ public class AssetCategoriesSearchFacetDisplayContextBuilder
 	}
 
 	protected boolean isSelected(long categoryId) {
-		if (_selectedCategoryIds.contains(categoryId)) {
-			return true;
-		}
-
-		return false;
+		return _selectedCategoryIds.contains(categoryId);
 	}
 
 	private List<Tuple> _collectBuckets(Facet facet) {
@@ -244,39 +235,39 @@ public class AssetCategoriesSearchFacetDisplayContextBuilder
 
 		FacetCollector facetCollector = facet.getFacetCollector();
 
-		List<TermCollector> termCollectors = facetCollector.getTermCollectors();
+		return TransformUtil.transform(
+			facetCollector.getTermCollectors(),
+			termCollector -> {
+				long assetCategoryId = 0;
 
-		List<Tuple> buckets = new ArrayList<>(termCollectors.size());
+				String fieldName = facet.getFieldName();
 
-		for (TermCollector termCollector : termCollectors) {
-			long assetCategoryId = 0;
+				if ((fieldName != null) &&
+					fieldName.equals("assetVocabularyCategoryIds")) {
 
-			String fieldName = facet.getFieldName();
+					String[] parts = StringUtil.split(
+						termCollector.getTerm(), StringPool.DASH);
 
-			if ((fieldName != null) &&
-				fieldName.equals("assetVocabularyCategoryIds")) {
+					assetCategoryId = GetterUtil.getLong(parts[1]);
+				}
+				else {
+					assetCategoryId = GetterUtil.getLong(
+						termCollector.getTerm());
+				}
 
-				String[] parts = StringUtil.split(
-					termCollector.getTerm(), StringPool.DASH);
+				if (assetCategoryId <= 0) {
+					return null;
+				}
 
-				assetCategoryId = GetterUtil.getLong(parts[1]);
-			}
-			else {
-				assetCategoryId = GetterUtil.getLong(termCollector.getTerm());
-			}
-
-			if (assetCategoryId > 0) {
 				AssetCategory assetCategory = _fetchAssetCategory(
 					assetCategoryId);
 
-				if (assetCategory != null) {
-					buckets.add(
-						new Tuple(assetCategory, termCollector.getFrequency()));
+				if (assetCategory == null) {
+					return null;
 				}
-			}
-		}
 
-		return buckets;
+				return new Tuple(assetCategory, termCollector.getFrequency());
+			});
 	}
 
 	private AssetCategoriesSearchFacetDisplayContext

@@ -416,12 +416,14 @@ public class JournalArticleItemSelectorViewDisplayContext {
 					_getGroupId(), 0, _getFolderId(), _getDDMStructureId(),
 					_infoItemItemSelectorCriterion.getStatus(),
 					_themeDisplay.getLocale(),
+					new int[] {WorkflowConstants.STATUS_EXPIRED},
 					articleAndFolderSearchContainer.getStart(),
 					articleAndFolderSearchContainer.getEnd(),
 					folderOrderByComparator);
 			},
 			JournalFolderServiceUtil.getFoldersAndArticlesCount(
 				_getGroupId(), 0, _getFolderId(), _getDDMStructureId(),
+				new int[] {WorkflowConstants.STATUS_EXPIRED},
 				_infoItemItemSelectorCriterion.getStatus()));
 
 		_articleSearchContainer = articleAndFolderSearchContainer;
@@ -491,11 +493,7 @@ public class JournalArticleItemSelectorViewDisplayContext {
 	public boolean isShowBreadcrumb() {
 		Group group = _themeDisplay.getScopeGroup();
 
-		if (group.isLayout()) {
-			return false;
-		}
-
-		return true;
+		return !group.isLayout();
 	}
 
 	public boolean showArticleId() {
@@ -681,14 +679,8 @@ public class JournalArticleItemSelectorViewDisplayContext {
 	}
 
 	private boolean _isEverywhereScopeFilter() {
-		if (Objects.equals(
-				ParamUtil.getString(_httpServletRequest, "scope"),
-				"everywhere")) {
-
-			return true;
-		}
-
-		return false;
+		return Objects.equals(
+			ParamUtil.getString(_httpServletRequest, "scope"), "everywhere");
 	}
 
 	private void _populateSearchContext(

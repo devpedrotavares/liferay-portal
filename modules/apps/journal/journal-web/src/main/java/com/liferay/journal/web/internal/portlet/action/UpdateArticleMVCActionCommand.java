@@ -11,7 +11,6 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.util.DDMFormValuesToFieldsConverter;
-import com.liferay.journal.constants.JournalContentPortletKeys;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
@@ -24,7 +23,6 @@ import com.liferay.layout.model.LayoutClassedModelUsage;
 import com.liferay.layout.service.LayoutClassedModelUsageLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Portlet;
@@ -34,8 +32,8 @@ import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.MultiSessionMessages;
@@ -126,9 +124,6 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 
 		// Journal content
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
 		String portletResource = ParamUtil.getString(
 			actionRequest, "portletResource");
 		long refererPlid = ParamUtil.getLong(actionRequest, "refererPlid");
@@ -143,33 +138,18 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 					portletResource);
 
 			if (portletPreferences != null) {
+				Group group = _groupLocalService.fetchGroup(
+					article.getGroupId());
+
+				if (group != null) {
+					portletPreferences.setValue(
+						"groupExternalReferenceCode",
+						group.getExternalReferenceCode());
+				}
+
 				portletPreferences.setValue(
-					"groupId", String.valueOf(article.getGroupId()));
-
-				Portlet portlet = _portletLocalService.getPortletById(
-					portletResource);
-
-				if (!FeatureFlagManagerUtil.isEnabled(
-						themeDisplay.getCompanyId(), "LPD-27566") ||
-					(portlet == null) ||
-					!Objects.equals(
-						portlet.getPortletName(),
-						JournalContentPortletKeys.JOURNAL_CONTENT)) {
-
-					portletPreferences.setValue(
-						"articleId", article.getArticleId());
-
-					if (assetEntry != null) {
-						portletPreferences.setValue(
-							"assetEntryId",
-							String.valueOf(assetEntry.getEntryId()));
-					}
-				}
-				else {
-					portletPreferences.setValue(
-						"articleExternalReferenceCode",
-						article.getExternalReferenceCode());
-				}
+					"articleExternalReferenceCode",
+					article.getExternalReferenceCode());
 
 				portletPreferences.store();
 			}
@@ -210,62 +190,49 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 					actionRequest, portletResource + "requestProcessed");
 			}
 
-			if (FeatureFlagManagerUtil.isEnabled(
-					themeDisplay.getCompanyId(), "LPD-15596")) {
+			if (article.isPending()) {
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)actionRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
 
-				if (article.isPending()) {
-					User user = themeDisplay.getUser();
+				User user = themeDisplay.getUser();
 
-					Date displayDate = _portal.getDate(
-						ParamUtil.getInteger(
-							uploadPortletRequest, "displayDateMonth"),
-						ParamUtil.getInteger(
-							uploadPortletRequest, "displayDateDay"),
-						ParamUtil.getInteger(
-							uploadPortletRequest, "displayDateYear"),
-						ParamUtil.getInteger(
-							uploadPortletRequest, "displayDateHour"),
-						ParamUtil.getInteger(
-							uploadPortletRequest, "displayDateMinute"),
-						user.getTimeZone(), null);
+				Date displayDate = _portal.getDate(
+					ParamUtil.getInteger(
+						uploadPortletRequest, "displayDateMonth"),
+					ParamUtil.getInteger(
+						uploadPortletRequest, "displayDateDay"),
+					ParamUtil.getInteger(
+						uploadPortletRequest, "displayDateYear"),
+					ParamUtil.getInteger(
+						uploadPortletRequest, "displayDateHour"),
+					ParamUtil.getInteger(
+						uploadPortletRequest, "displayDateMinute"),
+					user.getTimeZone(), null);
 
-					if (displayDate != null) {
-						MultiSessionMessages.add(
-							actionRequest, "articlePendingScheduled",
-							article.getId());
-					}
-					else {
-						MultiSessionMessages.add(
-							actionRequest, "articlePending", article.getId());
-					}
-				}
-				else if (article.isScheduled()) {
+				if (displayDate != null) {
 					MultiSessionMessages.add(
-						actionRequest, "articleScheduled", article.getId());
+						actionRequest, "articlePendingScheduled",
+						article.getId());
 				}
 				else {
-					if (actionName.equals("/journal/add_article")) {
-						MultiSessionMessages.add(
-							actionRequest, "articleCreated", article.getId());
-					}
-					else {
-						MultiSessionMessages.add(
-							actionRequest, "articleUpdated", article.getId());
-					}
+					MultiSessionMessages.add(
+						actionRequest, "articlePending", article.getId());
 				}
 			}
-		}
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				themeDisplay.getCompanyId(), "LPD-15596")) {
-
-			if (actionName.equals("/journal/add_article")) {
+			else if (article.isScheduled()) {
 				MultiSessionMessages.add(
-					actionRequest, "articleCreated", article.getId());
+					actionRequest, "articleScheduled", article.getId());
 			}
 			else {
-				MultiSessionMessages.add(
-					actionRequest, "articleUpdated", article.getId());
+				if (actionName.equals("/journal/add_article")) {
+					MultiSessionMessages.add(
+						actionRequest, "articleCreated", article.getId());
+				}
+				else {
+					MultiSessionMessages.add(
+						actionRequest, "articleUpdated", article.getId());
+				}
 			}
 		}
 
@@ -634,6 +601,9 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
 
 	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
 	@Reference
@@ -660,8 +630,5 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private Portal _portal;
-
-	@Reference
-	private PortletLocalService _portletLocalService;
 
 }

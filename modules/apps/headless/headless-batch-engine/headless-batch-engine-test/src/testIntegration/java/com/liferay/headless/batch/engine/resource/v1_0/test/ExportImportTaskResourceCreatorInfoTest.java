@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PropsValues;
@@ -52,7 +51,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Vendel Toreki
  */
-@FeatureFlags("LPD-11036")
 @RunWith(Arquillian.class)
 public class ExportImportTaskResourceCreatorInfoTest {
 
@@ -249,7 +247,8 @@ public class ExportImportTaskResourceCreatorInfoTest {
 		throws Exception {
 
 		return _objectEntryLocalService.addObjectEntry(
-			user.getUserId(), 0L, objectDefinition.getObjectDefinitionId(),
+			user.getUserId(), 0L, null,
+			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				objectFieldName, objectFieldValue
 			).build(),
@@ -262,7 +261,8 @@ public class ExportImportTaskResourceCreatorInfoTest {
 		throws Exception {
 
 		return _objectEntryLocalService.addObjectEntry(
-			user.getUserId(), 0L, objectDefinition.getObjectDefinitionId(),
+			user.getUserId(), 0L, null,
+			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				objectFieldName, objectFieldValue
 			).put(

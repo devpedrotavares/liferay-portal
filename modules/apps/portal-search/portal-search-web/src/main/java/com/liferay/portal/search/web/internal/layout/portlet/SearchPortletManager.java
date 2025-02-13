@@ -22,12 +22,13 @@ import org.osgi.service.component.annotations.Component;
 public class SearchPortletManager implements PortletManager {
 
 	@Override
-	public boolean isVisible(Layout layout) {
-		if (FeatureFlagManagerUtil.isEnabled("LPD-13778")) {
-			return true;
-		}
+	public boolean isDeprecated() {
+		return true;
+	}
 
-		return false;
+	@Override
+	public boolean isVisible(Layout layout) {
+		return FeatureFlagManagerUtil.isEnabled("LPD-13778");
 	}
 
 }

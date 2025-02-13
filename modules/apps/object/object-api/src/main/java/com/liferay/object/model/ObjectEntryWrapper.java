@@ -46,8 +46,11 @@ public class ObjectEntryWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("defaultLanguageId", getDefaultLanguageId());
 		attributes.put("objectDefinitionId", getObjectDefinitionId());
+		attributes.put("objectEntryFolderId", getObjectEntryFolderId());
 		attributes.put("rootObjectEntryId", getRootObjectEntryId());
+		attributes.put("treePath", getTreePath());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
 		attributes.put("statusByUserId", getStatusByUserId());
@@ -120,16 +123,34 @@ public class ObjectEntryWrapper
 			setModifiedDate(modifiedDate);
 		}
 
+		String defaultLanguageId = (String)attributes.get("defaultLanguageId");
+
+		if (defaultLanguageId != null) {
+			setDefaultLanguageId(defaultLanguageId);
+		}
+
 		Long objectDefinitionId = (Long)attributes.get("objectDefinitionId");
 
 		if (objectDefinitionId != null) {
 			setObjectDefinitionId(objectDefinitionId);
 		}
 
+		Long objectEntryFolderId = (Long)attributes.get("objectEntryFolderId");
+
+		if (objectEntryFolderId != null) {
+			setObjectEntryFolderId(objectEntryFolderId);
+		}
+
 		Long rootObjectEntryId = (Long)attributes.get("rootObjectEntryId");
 
 		if (rootObjectEntryId != null) {
 			setRootObjectEntryId(rootObjectEntryId);
+		}
+
+		String treePath = (String)attributes.get("treePath");
+
+		if (treePath != null) {
+			setTreePath(treePath);
 		}
 
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
@@ -164,6 +185,13 @@ public class ObjectEntryWrapper
 	}
 
 	@Override
+	public String buildTreePath()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.buildTreePath();
+	}
+
+	@Override
 	public ObjectEntry cloneWithOriginalValues() {
 		return wrap(model.cloneWithOriginalValues());
 	}
@@ -186,6 +214,16 @@ public class ObjectEntryWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the default language ID of this object entry.
+	 *
+	 * @return the default language ID of this object entry
+	 */
+	@Override
+	public String getDefaultLanguageId() {
+		return model.getDefaultLanguageId();
 	}
 
 	/**
@@ -258,6 +296,16 @@ public class ObjectEntryWrapper
 	@Override
 	public long getObjectDefinitionId() {
 		return model.getObjectDefinitionId();
+	}
+
+	/**
+	 * Returns the object entry folder ID of this object entry.
+	 *
+	 * @return the object entry folder ID of this object entry
+	 */
+	@Override
+	public long getObjectEntryFolderId() {
+		return model.getObjectEntryFolderId();
 	}
 
 	/**
@@ -345,6 +393,33 @@ public class ObjectEntryWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getTitleValue();
+	}
+
+	@Override
+	public String getTitleValue(String languageId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getTitleValue(languageId);
+	}
+
+	/**
+	 * Returns the tree path of this object entry.
+	 *
+	 * @return the tree path of this object entry
+	 */
+	@Override
+	public String getTreePath() {
+		return model.getTreePath();
+	}
+
+	@Override
+	public String getURLTitle(java.util.Locale locale) {
+		return model.getURLTitle(locale);
+	}
+
+	@Override
+	public Map<String, String> getURLTitleMap() {
+		return model.getURLTitleMap();
 	}
 
 	/**
@@ -498,6 +573,16 @@ public class ObjectEntryWrapper
 	}
 
 	/**
+	 * Sets the default language ID of this object entry.
+	 *
+	 * @param defaultLanguageId the default language ID of this object entry
+	 */
+	@Override
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		model.setDefaultLanguageId(defaultLanguageId);
+	}
+
+	/**
 	 * Sets the external reference code of this object entry.
 	 *
 	 * @param externalReferenceCode the external reference code of this object entry
@@ -555,6 +640,16 @@ public class ObjectEntryWrapper
 	@Override
 	public void setObjectDefinitionId(long objectDefinitionId) {
 		model.setObjectDefinitionId(objectDefinitionId);
+	}
+
+	/**
+	 * Sets the object entry folder ID of this object entry.
+	 *
+	 * @param objectEntryFolderId the object entry folder ID of this object entry
+	 */
+	@Override
+	public void setObjectEntryFolderId(long objectEntryFolderId) {
+		model.setObjectEntryFolderId(objectEntryFolderId);
 	}
 
 	/**
@@ -643,6 +738,16 @@ public class ObjectEntryWrapper
 	}
 
 	/**
+	 * Sets the tree path of this object entry.
+	 *
+	 * @param treePath the tree path of this object entry
+	 */
+	@Override
+	public void setTreePath(String treePath) {
+		model.setTreePath(treePath);
+	}
+
+	/**
 	 * Sets the user ID of this object entry.
 	 *
 	 * @param userId the user ID of this object entry
@@ -690,6 +795,11 @@ public class ObjectEntryWrapper
 	@Override
 	public String toXmlString() {
 		return model.toXmlString();
+	}
+
+	@Override
+	public void updateTreePath(String treePath) {
+		model.updateTreePath(treePath);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-@component-name = "portal-clustering"
+@component-name = "portal-core-infra"
 definition {
 
 	property app.server.bundles.size = "1";
@@ -519,7 +519,7 @@ definition {
 			webContentContent = "WC WebContent Content Cluster2",
 			webContentTitle = "WC WebContent Title Cluster2");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title Cluster2");
 

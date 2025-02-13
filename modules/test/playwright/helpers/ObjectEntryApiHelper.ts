@@ -64,10 +64,29 @@ export class ObjectEntryApiHelper {
 
 	async postObjectEntry(
 		data: DataObject,
-		applicationName: string
+		applicationName: string,
+		scopeKey?: string
 	): Promise<ObjectEntry> {
+		if (scopeKey) {
+			return this.apiHelpers.post(
+				`${this.apiHelpers.baseUrl}${applicationName}/scopes/${scopeKey}`,
+				{data}
+			);
+		}
+
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${applicationName}/`,
+			{data}
+		);
+	}
+
+	async putObjectEntry(
+		data: DataObject,
+		applicationName: string,
+		objectEntryId: number
+	): Promise<ObjectEntry> {
+		return this.apiHelpers.put(
+			`${this.apiHelpers.baseUrl}${applicationName}/${objectEntryId}`,
 			{data}
 		);
 	}

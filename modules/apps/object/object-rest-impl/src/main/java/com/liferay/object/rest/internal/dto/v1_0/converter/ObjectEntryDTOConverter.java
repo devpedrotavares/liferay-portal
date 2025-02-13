@@ -54,6 +54,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -69,10 +70,12 @@ import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlParserUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -100,6 +103,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,7 +209,21 @@ public class ObjectEntryDTOConverter
 						_userLocalService.fetchUser(objectEntry.getUserId())));
 				setDateCreated(objectEntry::getCreateDate);
 				setDateModified(objectEntry::getModifiedDate);
+				setDefaultLanguageId(
+					() -> {
+						if (FeatureFlagManagerUtil.isEnabled(
+								objectDefinition.getCompanyId(), "LPD-32050")) {
+
+							return objectEntry.getDefaultLanguageId();
+						}
+
+						return null;
+					});
 				setExternalReferenceCode(objectEntry::getExternalReferenceCode);
+				setFriendlyUrlPath(
+					() -> objectEntry.getURLTitle(
+						dtoConverterContext.getLocale()));
+				setFriendlyUrlPath_i18n(objectEntry::getURLTitleMap);
 				setId(objectEntry::getObjectEntryId);
 				setKeywords(
 					() -> {
@@ -584,14 +602,13 @@ public class ObjectEntryDTOConverter
 		};
 	}
 
-	private String _getLocalizedValue(
+	private Serializable _getLocalizedValue(
 			DTOConverterContext dtoConverterContext, Long groupId,
 			Map<String, Serializable> objectField_i18n)
 		throws Exception {
 
-		String serializable = GetterUtil.getString(
-			objectField_i18n.get(
-				String.valueOf(dtoConverterContext.getLocale())));
+		Serializable serializable = objectField_i18n.get(
+			String.valueOf(dtoConverterContext.getLocale()));
 
 		if (Validator.isNotNull(serializable)) {
 			return serializable;
@@ -600,17 +617,16 @@ public class ObjectEntryDTOConverter
 		User user = dtoConverterContext.getUser();
 
 		if (user != null) {
-			serializable = GetterUtil.getString(
-				objectField_i18n.get(String.valueOf(user.getLocale())));
+			serializable = objectField_i18n.get(
+				String.valueOf(user.getLocale()));
 
 			if (Validator.isNotNull(serializable)) {
 				return serializable;
 			}
 		}
 
-		return GetterUtil.getString(
-			objectField_i18n.get(
-				String.valueOf(_portal.getSiteDefaultLocale(groupId))));
+		return objectField_i18n.get(
+			String.valueOf(_portal.getSiteDefaultLocale(groupId)));
 	}
 
 	private Map<String, UnsafeSupplier<Object, Exception>>
@@ -712,18 +728,91 @@ public class ObjectEntryDTOConverter
 			_objectScopeProviderRegistry.getObjectScopeProvider(
 				objectDefinition.getScope());
 
-		if (objectScopeProvider.isGroupAware()) {
-			Group group = _groupLocalService.fetchGroup(
-				objectEntry.getGroupId());
+		if (!objectScopeProvider.isGroupAware()) {
+			return null;
+		}
 
-			if (group == null) {
+		Group group = _groupLocalService.fetchGroup(objectEntry.getGroupId());
+
+		if (group == null) {
+			return null;
+		}
+
+		return group.getGroupKey();
+	}
+
+	private Serializable _getValue(
+			DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition,
+			com.liferay.object.model.ObjectEntry objectEntry,
+			ObjectField objectField, Serializable serializable)
+		throws Exception {
+
+		if (objectField.compareBusinessType(
+				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+			long fileEntryId = GetterUtil.getLong(serializable);
+
+			if (fileEntryId == 0) {
 				return null;
 			}
 
-			return group.getGroupKey();
+			return _getFileEntry(
+				objectDefinition, objectEntry, objectField, fileEntryId,
+				objectField.getName());
+		}
+		else if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_DATE) ||
+				 objectField.compareBusinessType(
+					 ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
+
+			if (Validator.isNull(serializable)) {
+				return null;
+			}
+
+			if (serializable instanceof String) {
+				Date date = DateUtil.parseDate(
+					"yyyy-MM-dd", (String)serializable,
+					LocaleUtil.getSiteDefault());
+
+				serializable = new Timestamp(date.getTime());
+			}
+
+			Timestamp timestamp = (Timestamp)serializable;
+
+			if (timestamp == null) {
+				return null;
+			}
+
+			return _getDateString(objectField, timestamp);
+		}
+		else if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
+
+			if (objectField.getListTypeDefinitionId() == 0) {
+				return null;
+			}
+
+			return (Serializable)TransformUtil.transformToList(
+				StringUtil.split(
+					(String)serializable, StringPool.COMMA_AND_SPACE),
+				key -> _getListEntry(
+					dtoConverterContext, key,
+					objectField.getListTypeDefinitionId()));
+		}
+		else if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
+
+			if (objectField.getListTypeDefinitionId() == 0) {
+				return null;
+			}
+
+			return _getListEntry(
+				dtoConverterContext, (String)serializable,
+				objectField.getListTypeDefinitionId());
 		}
 
-		return null;
+		return serializable;
 	}
 
 	private AuditEvent[] _toAuditEvents(
@@ -890,84 +979,41 @@ public class ObjectEntryDTOConverter
 				Map<String, Serializable> objectField_i18n =
 					(Map<String, Serializable>)values.get(i18nObjectFieldName);
 
-				unsafeSuppliers.put(
-					i18nObjectFieldName, () -> objectField_i18n);
-
 				if (objectField_i18n != null) {
 					serializable = _getLocalizedValue(
 						dtoConverterContext, objectEntry.getGroupId(),
 						objectField_i18n);
+
+					if (Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_BLOB) ||
+						Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_CLOB) ||
+						Objects.equals(
+							objectField.getDBType(),
+							ObjectFieldConstants.DB_TYPE_STRING)) {
+
+						serializable = GetterUtil.getString(serializable);
+					}
+
+					for (Map.Entry<String, Serializable> entry :
+							objectField_i18n.entrySet()) {
+
+						objectField_i18n.put(
+							entry.getKey(),
+							_getValue(
+								dtoConverterContext, objectDefinition,
+								objectEntry, objectField, entry.getValue()));
+					}
 				}
+
+				unsafeSuppliers.put(
+					i18nObjectFieldName, () -> objectField_i18n);
 			}
 
 			if (objectField.compareBusinessType(
-					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
-
-				long fileEntryId = GetterUtil.getLong(
-					values.get(objectField.getName()));
-
-				if (fileEntryId == 0) {
-					continue;
-				}
-
-				unsafeSuppliers.put(
-					objectFieldName,
-					() -> _getFileEntry(
-						objectDefinition, objectEntry, objectField, fileEntryId,
-						objectFieldName));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_DATE) ||
-					 objectField.compareBusinessType(
-						 ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
-
-				Timestamp timestamp = (Timestamp)serializable;
-
-				if (timestamp == null) {
-					continue;
-				}
-
-				unsafeSuppliers.put(
-					objectFieldName,
-					() -> _getDateString(objectField, timestamp));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.
-							BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
-
-				if (objectField.getListTypeDefinitionId() == 0) {
-					continue;
-				}
-
-				Serializable finalSerializable = serializable;
-
-				unsafeSuppliers.put(
-					objectFieldName,
-					() -> TransformUtil.transformToList(
-						StringUtil.split(
-							(String)finalSerializable,
-							StringPool.COMMA_AND_SPACE),
-						key -> _getListEntry(
-							dtoConverterContext, key,
-							objectField.getListTypeDefinitionId())));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
-
-				if (objectField.getListTypeDefinitionId() == 0) {
-					continue;
-				}
-
-				Serializable finalSerializable = serializable;
-
-				unsafeSuppliers.put(
-					objectFieldName,
-					() -> _getListEntry(
-						dtoConverterContext, (String)finalSerializable,
-						objectField.getListTypeDefinitionId()));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT)) {
+					ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT)) {
 
 				Serializable finalSerializable = serializable;
 
@@ -1001,7 +1047,11 @@ public class ObjectEntryDTOConverter
 			else {
 				Serializable finalSerializable = serializable;
 
-				unsafeSuppliers.put(objectFieldName, () -> finalSerializable);
+				unsafeSuppliers.put(
+					objectFieldName,
+					() -> _getValue(
+						dtoConverterContext, objectDefinition, objectEntry,
+						objectField, finalSerializable));
 			}
 		}
 

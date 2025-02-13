@@ -45,23 +45,25 @@ import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.RequestBody;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Response;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.ResponseCode;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Schema;
-import com.liferay.portal.vulcan.pagination.Page;
-import com.liferay.portal.vulcan.permission.Permission;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 
 import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -429,7 +431,7 @@ public class RESTBuilder {
 
 				String returnType = StringUtil.removeSubstrings(
 					javaMethodSignature.getReturnType(),
-					Page.class.getName() + "<", ">");
+					"com.liferay.portal.vulcan.pagination.Page<", ">");
 
 				String returnSchemaName = StringUtil.extractLast(
 					returnType, ".");
@@ -451,7 +453,8 @@ public class RESTBuilder {
 						yamlString);
 
 					if (StringUtil.equals(
-							Permission.class.getName(), returnType)) {
+							"com.liferay.portal.vulcan.permission.Permission",
+							returnType)) {
 
 						yamlString = _addSchema(
 							FreeMarkerUtil.processTemplate(
@@ -1246,6 +1249,34 @@ public class RESTBuilder {
 				context));
 	}
 
+	private void _deleteDir(Path dirPath) throws Exception {
+		Files.walkFileTree(
+			dirPath,
+			new SimpleFileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult postVisitDirectory(
+						Path dirPath, IOException ioException)
+					throws IOException {
+
+					Files.delete(dirPath);
+
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult visitFile(
+						Path path, BasicFileAttributes basicFileAttributes)
+					throws IOException {
+
+					Files.delete(path);
+
+					return FileVisitResult.CONTINUE;
+				}
+
+			});
+	}
+
 	private String _fixEnums(String yamlString) {
 		String enumString = " enum: ";
 
@@ -1542,7 +1573,10 @@ public class RESTBuilder {
 					StringUtil.quote(javaMethodSignature.getPath(), '"') + ":");
 
 				if (x == -1) {
-					x = yamlString.indexOf(javaMethodSignature.getPath() + ":");
+					x = yamlString.indexOf(
+						" " + javaMethodSignature.getPath() + ":");
+
+					x = x + 1;
 				}
 
 				String pathLine = yamlString.substring(
@@ -2068,6 +2102,8 @@ public class RESTBuilder {
 				"--additional-properties=modelPropertyNaming=original," +
 					"paramNaming=original",
 				"--generator-name", "typescript-" + targetClientType,
+				"--global-property",
+				"apis,models,supportingFiles=api.ts:apis.ts:models.ts",
 				"--input-spec", openAPIYAMLFile.getPath(), "--output",
 				outputPathString, "--skip-validate-spec"));
 
@@ -2093,15 +2129,8 @@ public class RESTBuilder {
 		}
 
 		Files.deleteIfExists(Paths.get("./openapitools.json"));
-		Files.deleteIfExists(Paths.get(outputPathString, ".gitignore"));
-		Files.deleteIfExists(Paths.get(outputPathString, ".openapi-generator"));
-		Files.deleteIfExists(
-			Paths.get(outputPathString, ".openapi-generator", "FILES"));
-		Files.deleteIfExists(
-			Paths.get(outputPathString, ".openapi-generator", "VERSION"));
-		Files.deleteIfExists(
-			Paths.get(outputPathString, ".openapi-generator-ignore"));
-		Files.deleteIfExists(Paths.get(outputPathString, "git_push.sh"));
+
+		_deleteDir(Paths.get(outputPathString, ".openapi-generator"));
 	}
 
 	private void _invokeClientJSGenerator(String openAPIYAMLString)

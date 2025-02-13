@@ -41,8 +41,6 @@ definition {
 	@description = "This is a use case for LPS-119168."
 	@priority = 4
 	test AddUser {
-		property testray.component.names = "Training";
-
 		ApplicationsMenu.gotoPortlet(
 			category = "Users",
 			panel = "Control Panel",
@@ -678,45 +676,6 @@ definition {
 		}
 	}
 
-	@priority = 4
-	test BulkDeleteUserSucceed {
-		for (var userNum : list "1,2,3,4,5") {
-			JSONUser.addUser(
-				userEmailAddress = "userea${userNum}@liferay.com",
-				userFirstName = "userfn${userNum}",
-				userLastName = "userln${userNum}",
-				userScreenName = "usersn${userNum}");
-		}
-
-		for (var userNum : list "1,3,5") {
-			JSONUser.updateStatus(
-				userEmailAddress = "userea${userNum}@liferay.com",
-				userStatus = "Inactive");
-		}
-
-		User.openUsersAdmin();
-
-		User.deleteCP(
-			deactivateType = "Management Toolbar",
-			userFirstNameList = "userfn1,userfn3,userfn5");
-
-		for (var rowEntry : list "userfn1 userln1,userfn3 userln3,userfn5 userln5") {
-			LexiconEntry.viewNoEntry(rowEntry = ${rowEntry});
-		}
-
-		User.openUsersAdmin();
-
-		for (var rowEntry : list "userfn1 userln1,userfn3 userln3,userfn5 userln5") {
-			LexiconEntry.viewNoEntry(rowEntry = ${rowEntry});
-		}
-
-		ManagementBar.setFilterAndOrder(filterBy = "Inactive");
-
-		for (var rowEntry : list "userfn1 userln1,userfn3 userln3,userfn5 userln5") {
-			LexiconEntry.viewNoEntry(rowEntry = ${rowEntry});
-		}
-	}
-
 	@description = "This is a use case for can add comment for user."
 	@priority = 4
 	test CanAddComment {
@@ -764,45 +723,6 @@ definition {
 		Navigator.gotoPersonalSite();
 
 		Portlet.viewDefaultTitle(portletName = "Asset Publisher");
-	}
-
-	@priority = 4
-	test CanBulkActivateUsers {
-		for (var userNum : list "1,2,3,4,5") {
-			JSONUser.addUser(
-				userEmailAddress = "userea${userNum}@liferay.com",
-				userFirstName = "userfn${userNum}",
-				userLastName = "userln${userNum}",
-				userScreenName = "usersn${userNum}");
-		}
-
-		User.openUsersAdmin();
-
-		User.deactivateCP(
-			deactivateType = "Management Toolbar",
-			userFirstNameList = "userfn1,userfn3,userfn5");
-
-		ManagementBar.setFilterAndOrder(filterBy = "Inactive");
-
-		for (var rowEntry : list "userfn1 userln1,userfn3 userln3,userfn5 userln5") {
-			LexiconEntry.viewEntryName(rowEntry = ${rowEntry});
-		}
-
-		User.bulkActivateCP(
-			activateType = "Management Toolbar",
-			userFirstNameList = "userfn1,userfn3,userfn5");
-
-		for (var rowEntry : list "userfn1 userln1,userfn3 userln3,userfn5 userln5") {
-			LexiconEntry.viewNoEntry(rowEntry = ${rowEntry});
-		}
-
-		User.openUsersAdmin();
-
-		for (var rowEntry : list "userfn1 userln1,userfn2 userln2,userfn3 userln3,userfn4 userln4,userfn5 userln5") {
-			AssertElementPresent(
-				key_rowEntry = ${rowEntry},
-				locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_NAME");
-		}
 	}
 
 	@description = "This test changes to cards view for users."
@@ -1321,7 +1241,7 @@ definition {
 				method = "patchUserAccount",
 				value1 = 200);
 
-			Masterclass.goBackUsingBrowserButton();
+			ExecuteJavaScript(value1 = "window.history.go(-1)");
 
 			Refresh();
 		}
@@ -1567,7 +1487,6 @@ definition {
 	@priority = 4
 	test EditUserAddresses {
 		property portal.acceptance = "true";
-		property testray.component.names = "Address";
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",
@@ -1763,7 +1682,7 @@ definition {
 
 	@priority = 4
 	test EditUserSite {
-		property app.server.types = "jboss,tcserver,tomcat,weblogic,wildfly";
+		property app.server.types = "jboss,tomcat,weblogic,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 		property environment.acceptance = "true";
 		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
@@ -2844,11 +2763,10 @@ definition {
 
 	@priority = 4
 	test ViewLoginForActivatedUser {
-		property app.server.types = "jboss,tcserver,tomcat,weblogic,wildfly";
+		property app.server.types = "jboss,tomcat,weblogic,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
-		property testray.component.names = "Training";
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",

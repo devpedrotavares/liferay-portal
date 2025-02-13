@@ -5,9 +5,12 @@
 
 package com.liferay.portal.workflow.task.web.internal.notifications;
 
+import com.liferay.change.tracking.service.CTCollectionLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -65,6 +68,7 @@ public class WorkflowTaskUserNotificationHandlerTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
+		_setUpCTCollectionLocalService();
 		_setUpUserNotificationEventLocalService();
 		_setUpWorkflowTaskManagerUtil();
 		_setUpWorkflowTaskPermission();
@@ -139,6 +143,24 @@ public class WorkflowTaskUserNotificationHandlerTest {
 				mockUserNotificationEvent(
 					_VALID_ENTRY_CLASS_NAME, null, _INVALID_WORKFLOW_TASK_ID),
 				_serviceContext));
+	}
+
+	@Test
+	public void testIsApplicable() {
+		Assert.assertTrue(
+			_workflowTaskUserNotificationHandler.isApplicable(
+				mockUserNotificationEvent(null, "Sample Object", 0),
+				_serviceContext));
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					RandomTestUtil.randomInt())) {
+
+			Assert.assertFalse(
+				_workflowTaskUserNotificationHandler.isApplicable(
+					mockUserNotificationEvent(null, "Sample Object", 0),
+					_serviceContext));
+		}
 	}
 
 	@Test
@@ -235,6 +257,12 @@ public class WorkflowTaskUserNotificationHandlerTest {
 			}
 
 		};
+	}
+
+	private static void _setUpCTCollectionLocalService() throws Exception {
+		ReflectionTestUtil.setFieldValue(
+			_workflowTaskUserNotificationHandler, "_ctCollectionLocalService",
+			ProxyFactory.newDummyInstance(CTCollectionLocalService.class));
 	}
 
 	private static void _setUpUserNotificationEventLocalService()

@@ -67,12 +67,11 @@ public class CommerceOrdersCommerceOrderImporterTypeImpl
 		long selectedCommerceOrderId = ParamUtil.getLong(
 			httpServletRequest, getCommerceOrderImporterItemParamName());
 
-		if (selectedCommerceOrderId > 0) {
-			return _commerceOrderService.getCommerceOrder(
-				selectedCommerceOrderId);
+		if (selectedCommerceOrderId <= 0) {
+			return null;
 		}
 
-		return null;
+		return _commerceOrderService.getCommerceOrder(selectedCommerceOrderId);
 	}
 
 	@Override
@@ -167,13 +166,13 @@ public class CommerceOrdersCommerceOrderImporterTypeImpl
 				commerceOrder.getCommerceOrderId(), start, end),
 			commerceOrderItem -> _toCommerceOrderImporterItemImpl(
 				commerceOrder.getCommerceAccountId(), commerceChannelGroupId,
-				commerceOrderItem),
+				commerceOrder.getCommerceOrderTypeId(), commerceOrderItem),
 			CommerceOrderImporterItemImpl.class);
 	}
 
 	private CommerceOrderImporterItemImpl _toCommerceOrderImporterItemImpl(
 			long accountEntryId, long commerceChannelGroupId,
-			CommerceOrderItem commerceOrderItem)
+			long commerceOrderTypeId, CommerceOrderItem commerceOrderItem)
 		throws Exception {
 
 		CommerceOrderImporterItemImpl commerceOrderImporterItemImpl =
@@ -191,7 +190,7 @@ public class CommerceOrdersCommerceOrderImporterTypeImpl
 		else {
 			CPInstance firstAvailableReplacementCPInstance =
 				_cpInstanceHelper.fetchFirstAvailableReplacementCPInstance(
-					accountEntryId, commerceChannelGroupId,
+					accountEntryId, commerceChannelGroupId, commerceOrderTypeId,
 					cpInstance.getCPInstanceId());
 
 			if ((firstAvailableReplacementCPInstance != null) &&

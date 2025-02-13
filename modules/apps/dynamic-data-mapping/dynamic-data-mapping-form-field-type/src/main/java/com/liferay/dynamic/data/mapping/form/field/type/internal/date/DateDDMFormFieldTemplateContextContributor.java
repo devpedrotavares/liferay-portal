@@ -8,8 +8,11 @@ package com.liferay.dynamic.data.mapping.form.field.type.internal.date;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldValueUtil;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.dynamic.data.mapping.util.DDMFormFieldTemplateContextContributorUtil;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.CalendarUtil;
@@ -47,6 +50,10 @@ public class DateDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
+		DDMForm ddmForm = ddmFormField.getDDMForm();
+		boolean localizedObjectField = GetterUtil.getBoolean(
+			ddmFormField.getProperty("localizedObjectField"));
+
 		return HashMapBuilder.<String, Object>put(
 			"firstDayOfWeek",
 			_getFirstDayOfWeek(ddmFormFieldRenderingContext.getLocale())
@@ -54,6 +61,8 @@ public class DateDDMFormFieldTemplateContextContributor
 			"htmlAutocompleteAttribute",
 			GetterUtil.getString(
 				ddmFormField.getProperty("htmlAutocompleteAttribute"))
+		).put(
+			"localizedObjectField", localizedObjectField
 		).put(
 			"months",
 			Arrays.asList(
@@ -70,6 +79,17 @@ public class DateDDMFormFieldTemplateContextContributor
 				ddmFormField, ddmFormFieldRenderingContext.getLocale(),
 				"tooltip")
 		).put(
+			"value",
+			() -> {
+				if (localizedObjectField) {
+					return DDMFormFieldValueUtil.getValueJSONObject(
+						ddmFormFieldRenderingContext);
+				}
+
+				return DDMFormFieldTypeUtil.getValue(
+					ddmFormFieldRenderingContext.getValue());
+			}
+		).put(
 			"weekdaysShort",
 			TransformUtil.transformToList(
 				CalendarUtil.DAYS_ABBREVIATION,
@@ -77,6 +97,9 @@ public class DateDDMFormFieldTemplateContextContributor
 					ddmFormFieldRenderingContext.getLocale(), day))
 		).put(
 			"years", _getYears()
+		).putAll(
+			DDMFormFieldTemplateContextContributorUtil.getLocaleMap(
+				ddmForm.getDefaultLocale())
 		).build();
 	}
 

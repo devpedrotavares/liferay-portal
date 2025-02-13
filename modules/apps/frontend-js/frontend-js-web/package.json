@@ -2,7 +2,7 @@
 	"dependencies": {
 		"@clayui/alert": "3.111.0",
 		"@clayui/button": "3.116.0",
-		"@clayui/form": "3.122.0",
+		"@clayui/form": "3.125.0",
 		"@clayui/icon": "3.111.0",
 		"@clayui/loading-indicator": "3.111.0",
 		"@clayui/modal": "3.122.0",
@@ -14,8 +14,8 @@
 		"lodash.groupby": "4.6.0",
 		"lodash.isequal": "4.5.0",
 		"prop-types": "15.7.2",
-		"react": "16.12.0",
-		"react-dom": "16.12.0",
+		"react": "18.2.0",
+		"react-dom": "18.2.0",
 		"uuid": "9.0.0"
 	},
 	"jest": {
@@ -34,5 +34,5 @@
 		"format": "node-scripts format",
 		"test": "node-scripts test"
 	},
-	"version": "5.0.120"
+	"version": "5.0.122"
 }

@@ -1903,6 +1903,7 @@ public class Mutation {
 	public Response createRolesPageExportBatch(
 			@GraphQLName("search") String search,
 			@GraphQLName("types") Integer[] types,
+			@GraphQLName("filter") String filterString,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("contentType") String contentType,
 			@GraphQLName("fieldNames") String fieldNames)
@@ -1912,7 +1913,9 @@ public class Mutation {
 			_roleResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			roleResource -> roleResource.postRolesPageExportBatch(
-				search, types, callbackURL, contentType, fieldNames));
+				search, types,
+				_filterBiFunction.apply(roleResource, filterString),
+				callbackURL, contentType, fieldNames));
 	}
 
 	@GraphQLField(description = "Creates a new role")
@@ -2600,6 +2603,49 @@ public class Mutation {
 					_filterBiFunction.apply(userAccountResource, filterString),
 					_sortsBiFunction.apply(userAccountResource, sortsString),
 					callbackURL, contentType, fieldNames));
+	}
+
+	@GraphQLField(
+		description = "Updates the selected property of a user assigned to an account for a specific site"
+	)
+	public boolean
+			patchSiteByFriendlyUrlPathAccountByExternalReferenceCodeAccountExternalReferenceCodeUserAccountByExternalReferenceCodeUserAccountExternalReferenceCodeSelected(
+				@GraphQLName("friendlyUrlPath") String friendlyUrlPath,
+				@GraphQLName("accountExternalReferenceCode") String
+					accountExternalReferenceCode,
+				@GraphQLName("userAccountExternalReferenceCode") String
+					userAccountExternalReferenceCode)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_userAccountResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			userAccountResource ->
+				userAccountResource.
+					patchSiteByFriendlyUrlPathAccountByExternalReferenceCodeAccountExternalReferenceCodeUserAccountByExternalReferenceCodeUserAccountExternalReferenceCodeSelected(
+						friendlyUrlPath, accountExternalReferenceCode,
+						userAccountExternalReferenceCode));
+
+		return true;
+	}
+
+	@GraphQLField(
+		description = "Updates the selected property of a user assigned to an account for a specific site"
+	)
+	public boolean patchSiteAccountUserAccountSelected(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("accountId") Long accountId,
+			@GraphQLName("userAccountId") Long userAccountId)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_userAccountResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			userAccountResource ->
+				userAccountResource.patchSiteAccountUserAccountSelected(
+					Long.valueOf(siteKey), accountId, userAccountId));
+
+		return true;
 	}
 
 	@GraphQLField

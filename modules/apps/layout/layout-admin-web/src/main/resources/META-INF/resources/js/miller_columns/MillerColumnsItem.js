@@ -4,7 +4,7 @@
  */
 
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
-import ClayDropDown, {ClayDropDownWithItems} from '@clayui/drop-down';
+import {ClayDropDownWithItems} from '@clayui/drop-down';
 import {ClayCheckbox} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
@@ -120,9 +120,10 @@ const MillerColumnsItem = ({
 }) => {
 	const {
 		active,
+		addChildLayoutURL,
 		bulkActions = [],
 		checked,
-		description,
+		description = '',
 		draggable,
 		hasChild,
 		hasDuplicatedFriendlyURL = false,
@@ -148,7 +149,7 @@ const MillerColumnsItem = ({
 
 	const [dropPosition, setDropPosition] = useState();
 
-	const [layoutActionsActive, setLayoutActionsActive] = useState(false);
+	const [itemActionsActive, setItemActionsActive] = useState(false);
 
 	const [dropdownActions, setDropdownActions] = useState([]);
 
@@ -225,12 +226,6 @@ const MillerColumnsItem = ({
 		}
 	}
 
-	const layoutActions = useMemo(() => {
-		return quickActions.filter(
-			(action) => action.layoutAction && action.url
-		);
-	}, [quickActions]);
-
 	const normalizedQuickActions = useMemo(() => {
 		return quickActions.filter(
 			(action) => action.quickAction && action.url
@@ -243,7 +238,7 @@ const MillerColumnsItem = ({
 			isDragging: !!monitor.isDragging(),
 		}),
 		end: ({initialColumns}, monitor) => {
-			if (!monitor.didDrop() && Liferay.FeatureFlags['LPD-35220']) {
+			if (!monitor.didDrop()) {
 				setLayoutColumns(initialColumns);
 			}
 		},
@@ -271,6 +266,7 @@ const MillerColumnsItem = ({
 
 			return isValidMovement({
 				dropPosition,
+				items,
 				sources: source.items,
 				target: item,
 			});
@@ -313,9 +309,7 @@ const MillerColumnsItem = ({
 		rtl,
 	});
 
-	const tabIndex =
-		isNavigationTarget || !Liferay.FeatureFlags['LPD-35220'] ? 0 : -1;
-
+	const tabIndex = isNavigationTarget || -1;
 	const targetPosition = dropPosition || keyboardMovementPosition;
 	const isSource = isDragSource || isKeyboardMovementSource;
 	const isTarget = isOver || isKeyboardMovementTarget;
@@ -380,7 +374,7 @@ const MillerColumnsItem = ({
 			})}
 			containerElement="li"
 			data-actions={bulkActions}
-			onKeyDown={onKeyDown}
+			onKeyDown={itemActionsActive ? null : onKeyDown}
 			ref={ref}
 			role="none"
 			verticalAlign="center"
@@ -388,15 +382,13 @@ const MillerColumnsItem = ({
 			<a
 				{...ariaProps}
 				aria-current={active}
-				aria-label={item.title}
+				aria-label={`${title} ${description}`.trim()}
 				aria-owns={groupId}
 				className="miller-columns-item-mask"
 				href={url}
 				role="menuitem"
 				tabIndex={tabIndex}
-			>
-				<span className="c-inner sr-only">{title}</span>
-			</a>
+			/>
 
 			<span
 				className="autofit-row autofit-row-center"
@@ -412,10 +404,7 @@ const MillerColumnsItem = ({
 							className="drag-handler"
 							displayType="unstyled"
 							onClick={(event) => {
-								if (
-									Liferay.FeatureFlags['LPD-35220'] &&
-									event.detail === 0
-								) {
+								if (event.detail === 0) {
 									const sources = checked
 										? Array.from(items.values()).filter(
 												(item) => item.checked
@@ -484,10 +473,6 @@ const MillerColumnsItem = ({
 
 									return title;
 								})()}
-								className={classNames({
-									'text-truncate':
-										!Liferay.FeatureFlags['LPD-35220'],
-								})}
 								href={viewUrl}
 								tabIndex={tabIndex}
 								target={target}
@@ -495,14 +480,7 @@ const MillerColumnsItem = ({
 								{title}
 							</ClayLink>
 						) : (
-							<span
-								className={classNames({
-									'text-truncate':
-										!Liferay.FeatureFlags['LPD-35220'],
-								})}
-							>
-								{title}
-							</span>
+							<span>{title}</span>
 						)}
 
 						{!hasGuestViewPermission && (
@@ -527,21 +505,10 @@ const MillerColumnsItem = ({
 
 					{description && (
 						<div className="d-flex flex-wrap h5 list-group-subtitle small">
-							<span
-								className={classNames('mr-2', {
-									'text-truncate':
-										!Liferay.FeatureFlags['LPD-35220'],
-								})}
-							>
-								{description}
-							</span>
+							<span className="mr-2">{description}</span>
 
 							{states.map((state) => (
 								<ClayLabel
-									className={classNames({
-										'text-truncate':
-											!Liferay.FeatureFlags['LPD-35220'],
-									})}
 									displayType={ITEM_STATES_COLORS[state.id]}
 									key={state.id}
 								>
@@ -552,45 +519,21 @@ const MillerColumnsItem = ({
 					)}
 				</ClayLayout.ContentCol>
 
-				{!!layoutActions.length && (
+				{addChildLayoutURL ? (
 					<ClayLayout.ContentCol className="miller-columns-item-actions">
-						<ClayDropDown
-							active={layoutActionsActive}
-							onActiveChange={setLayoutActionsActive}
-							onKeyDown={(event) => event.stopPropagation()}
-							renderMenuOnClick
-							trigger={
-								<ClayButtonWithIcon
-									aria-label={Liferay.Language.get(
-										'add-child-page'
-									)}
-									borderless
-									displayType="secondary"
-									size="sm"
-									symbol="plus"
-									tabIndex={tabIndex}
-									title={Liferay.Language.get(
-										'add-child-page'
-									)}
-								/>
-							}
+						<ClayLink
+							aria-label={Liferay.Language.get('add-child-page')}
+							borderless
+							button={{monospaced: true}}
+							displayType="secondary"
+							href={addChildLayoutURL}
+							tabIndex={tabIndex}
+							title={Liferay.Language.get('add-child-page')}
 						>
-							<ClayDropDown.ItemList>
-								{layoutActions.map((action) => (
-									<ClayDropDown.Item
-										disabled={!action.url}
-										href={action.url}
-										id={action.id}
-										key={action.id}
-										onClick={action.handler}
-									>
-										{action.label}
-									</ClayDropDown.Item>
-								))}
-							</ClayDropDown.ItemList>
-						</ClayDropDown>
+							<ClayIcon symbol="plus" />
+						</ClayLink>
 					</ClayLayout.ContentCol>
-				)}
+				) : null}
 
 				{normalizedQuickActions.map((action) => (
 					<ClayLayout.ContentCol
@@ -612,6 +555,7 @@ const MillerColumnsItem = ({
 				{!!getItemActionsURL && itemId !== '0' ? (
 					<ClayLayout.ContentCol className="miller-columns-item-actions">
 						<ClayDropDownWithItems
+							active={itemActionsActive}
 							caption={
 								!loadPromiseRef.current ? (
 									<ClayLoadingIndicator />
@@ -620,6 +564,7 @@ const MillerColumnsItem = ({
 								)
 							}
 							items={dropdownActions}
+							onActiveChange={setItemActionsActive}
 							onKeyDown={(event) => event.stopPropagation()}
 							trigger={
 								<ClayButtonWithIcon

@@ -4,7 +4,6 @@ definition {
 	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.component.names = "Recycle Bin,Web Content Administration";
 	property testray.main.component.name = "Recycle Bin";
 
 	setUp {
@@ -289,7 +288,7 @@ definition {
 				webContentText = "WC WebContent Text",
 				webContentTitle = "WC WebContent Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Move WC to recycle bin and view in recycle bin") {

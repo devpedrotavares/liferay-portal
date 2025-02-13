@@ -5,32 +5,29 @@
 
 package com.liferay.marketplace;
 
-import com.liferay.client.extension.util.spring.boot.BaseRestController;
-import com.liferay.client.extension.util.spring.boot.LiferayOAuth2AccessTokenManager;
+import com.liferay.client.extension.util.spring.boot3.BaseRestController;
+import com.liferay.client.extension.util.spring.boot3.LiferayOAuth2AccessTokenManager;
 import com.liferay.headless.admin.user.client.dto.v1_0.UserAccount;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.Order;
-import com.liferay.headless.commerce.admin.order.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
 import com.liferay.marketplace.constants.MarketplaceConstants;
 import com.liferay.marketplace.service.ConsoleService;
 import com.liferay.marketplace.service.MarketplaceService;
-import com.liferay.notification.rest.client.dto.v1_0.NotificationQueueEntry;
-import com.liferay.notification.rest.client.dto.v1_0.NotificationTemplate;
-import com.liferay.notification.rest.client.resource.v1_0.NotificationQueueEntryResource;
-import com.liferay.notification.rest.client.resource.v1_0.NotificationTemplateResource;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.net.URL;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,6 +49,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * @author Keven Leone
@@ -69,8 +67,7 @@ public class TrialRestController extends BaseRestController {
 
 	@GetMapping("availability")
 	public String getAvailability() throws Exception {
-		com.liferay.headless.portal.instances.client.pagination.Page
-			<PortalInstance> page = _getPortalInstancesPage();
+		Page<PortalInstance> page = _getPortalInstancesPage();
 
 		return new JSONObject(
 		).put(
@@ -109,7 +106,7 @@ public class TrialRestController extends BaseRestController {
 		Map<String, String> customFields =
 			(Map<String, String>)order.getCustomFields();
 
-		_postNotificationQueueEntry(
+		_marketplaceService.postNotificationQueueEntry(
 			order.getCreatorEmailAddress(), "TRY-IT-NOW-EXPIRING-ORDER",
 			new HashMapBuilder<String, Object>().put(
 				"%TRIAL_CREATOR_FIRST_NAME%", userAccount.getGivenName()
@@ -147,8 +144,7 @@ public class TrialRestController extends BaseRestController {
 			_log.info("Provisioning order " + orderId);
 		}
 
-		com.liferay.headless.portal.instances.client.pagination.Page
-			<PortalInstance> portalInstancesPage = _getPortalInstancesPage();
+		Page<PortalInstance> portalInstancesPage = _getPortalInstancesPage();
 
 		if (portalInstancesPage.getTotalCount() == _TRIAL_MAX_INSTANCES) {
 			_log.error("Order is on hold");
@@ -172,18 +168,31 @@ public class TrialRestController extends BaseRestController {
 		_marketplaceService.updateOrder(
 			null, orderId, MarketplaceConstants.ORDER_STATUS_PROCESSING);
 
-		UserAccount userAccount = _marketplaceService.getUserAccount(
-			modelDTOOrderJSONObject.getString("creatorEmailAddress"));
+		Order order = _marketplaceService.getOrder(orderId);
 
-		_postNotificationQueueEntry(
-			modelDTOOrderJSONObject.getString("creatorEmailAddress"),
-			"TRY-IT-NOW-PROCESSING-ORDER",
-			new HashMapBuilder<String, Object>().put(
-				"[%COMMERCEORDER_AUTHOR_FIRST_NAME%]",
-				userAccount.getGivenName()
-			).put(
-				"[%COMMERCEORDER_ID%]", String.valueOf(orderId)
-			).build());
+		UserAccount userAccount = _marketplaceService.getUserAccount(
+			order.getCreatorEmailAddress());
+
+		Map<String, String> customFields =
+			(Map<String, String>)order.getCustomFields();
+
+		JSONObject trialSettingsJSONObject = new JSONObject(
+			customFields.getOrDefault("trial-settings", "{}"));
+
+		boolean sendNotificationEmail = trialSettingsJSONObject.optBoolean(
+			"sendNotificationEmail", true);
+
+		if (sendNotificationEmail) {
+			_marketplaceService.postNotificationQueueEntry(
+				modelDTOOrderJSONObject.getString("creatorEmailAddress"),
+				"TRY-IT-NOW-PROCESSING-ORDER",
+				new HashMapBuilder<String, Object>().put(
+					"[%COMMERCEORDER_AUTHOR_FIRST_NAME%]",
+					userAccount.getGivenName()
+				).put(
+					"[%COMMERCEORDER_ID%]", String.valueOf(orderId)
+				).build());
+		}
 
 		PortalInstance portalInstance = _postPortalInstance(
 			jwt, modelDTOOrderJSONObject.getString("creatorEmailAddress"),
@@ -191,20 +200,22 @@ public class TrialRestController extends BaseRestController {
 
 		try {
 			_consoleService.setUpProject(
+				_toStringArray(
+					trialSettingsJSONObject.optJSONArray(
+						"consoleInviteEmailAddresses")),
 				portalInstance.getVirtualHost(), orderId);
-		}
-		catch (Exception exception) {
-			_log.error(
-				"Unable to set up project for order " + orderId + ":",
-				exception);
-
-			_deletePortalInstance(orderId);
 
 			_marketplaceService.updateOrder(
 				HashMapBuilder.put(
-					"trial-error", exception.toString()
+					"trial-end-date",
+					ZonedDateTime.now(
+					).plusDays(
+						7
+					).format(
+						DateTimeFormatter.ISO_INSTANT
+					)
 				).put(
-					"trial-error-date",
+					"trial-start-date",
 					ZonedDateTime.now(
 					).format(
 						DateTimeFormatter.ISO_INSTANT
@@ -212,42 +223,30 @@ public class TrialRestController extends BaseRestController {
 				).put(
 					"trial-virtualhost", portalInstance.getVirtualHost()
 				).build(),
-				orderId, MarketplaceConstants.ORDER_STATUS_CANCELLED);
+				orderId, MarketplaceConstants.ORDER_STATUS_IN_PROGRESS);
 
-			return;
+			if (sendNotificationEmail) {
+				_marketplaceService.postNotificationQueueEntry(
+					modelDTOOrderJSONObject.getString("creatorEmailAddress"),
+					"TRY-IT-NOW-COMPLETED-ORDER",
+					new HashMapBuilder<String, Object>().put(
+						"%EMAIL%",
+						modelDTOOrderJSONObject.getString("creatorEmailAddress")
+					).put(
+						"%NAME%", userAccount.getGivenName()
+					).put(
+						"%URL%", portalInstance.getVirtualHost()
+					).build());
+			}
 		}
-
-		_marketplaceService.updateOrder(
-			HashMapBuilder.put(
-				"trial-end-date",
-				ZonedDateTime.now(
-				).plusDays(
-					7
-				).format(
-					DateTimeFormatter.ISO_INSTANT
-				)
-			).put(
-				"trial-start-date",
-				ZonedDateTime.now(
-				).format(
-					DateTimeFormatter.ISO_INSTANT
-				)
-			).put(
-				"trial-virtualhost", portalInstance.getVirtualHost()
-			).build(),
-			orderId, MarketplaceConstants.ORDER_STATUS_IN_PROGRESS);
-
-		_postNotificationQueueEntry(
-			modelDTOOrderJSONObject.getString("creatorEmailAddress"),
-			"TRY-IT-NOW-COMPLETED-ORDER",
-			new HashMapBuilder<String, Object>().put(
-				"%EMAIL%",
-				modelDTOOrderJSONObject.getString("creatorEmailAddress")
-			).put(
-				"%NAME%", userAccount.getGivenName()
-			).put(
-				"%URL%", portalInstance.getVirtualHost()
-			).build());
+		catch (WebClientResponseException webClientResponseException) {
+			_rollBackTrial(
+				webClientResponseException.getResponseBodyAsString(), orderId,
+				portalInstance);
+		}
+		catch (Exception exception) {
+			_rollBackTrial(exception.getMessage(), orderId, portalInstance);
+		}
 	}
 
 	@PostMapping("provisioning/{orderId}")
@@ -279,9 +278,8 @@ public class TrialRestController extends BaseRestController {
 		PortalInstanceResource portalInstanceResource =
 			_getPortalInstanceResource();
 
-		com.liferay.headless.portal.instances.client.pagination.Page
-			<PortalInstance> page =
-				portalInstanceResource.getPortalInstancesPage(true);
+		Page<PortalInstance> page =
+			portalInstanceResource.getPortalInstancesPage(true);
 
 		for (PortalInstance portalInstance : page.getItems()) {
 			if (Objects.equals(
@@ -312,112 +310,11 @@ public class TrialRestController extends BaseRestController {
 		).build();
 	}
 
-	private com.liferay.headless.portal.instances.client.pagination.Page
-		<PortalInstance> _getPortalInstancesPage() throws Exception {
-
+	private Page<PortalInstance> _getPortalInstancesPage() throws Exception {
 		PortalInstanceResource portalInstanceResource =
 			_getPortalInstanceResource();
 
 		return portalInstanceResource.getPortalInstancesPage(true);
-	}
-
-	private void _postNotificationQueueEntry(
-			String emailAddress, String externalReferenceCode,
-			Map<String, String> map)
-		throws Exception {
-
-		String authorization =
-			_liferayOAuth2AccessTokenManager.getAuthorization(
-				"liferay-marketplace-etc-spring-boot-oauth-application-" +
-					"headless-server");
-		URL liferayDXPURL = new URL(
-			lxcDXPServerProtocol + "://" + lxcDXPMainDomain);
-
-		NotificationTemplateResource notificationTemplateResource =
-			NotificationTemplateResource.builder(
-			).endpoint(
-				liferayDXPURL
-			).header(
-				HttpHeaders.AUTHORIZATION, authorization
-			).build();
-
-		NotificationTemplate notificationTemplate;
-
-		try {
-			notificationTemplate =
-				notificationTemplateResource.
-					getNotificationTemplateByExternalReferenceCode(
-						externalReferenceCode);
-		}
-		catch (Exception exception) {
-			_log.error(
-				"Unable to get notification template " + externalReferenceCode,
-				exception);
-
-			return;
-		}
-
-		NotificationQueueEntryResource notificationQueueEntryResource =
-			NotificationQueueEntryResource.builder(
-			).endpoint(
-				liferayDXPURL
-			).header(
-				HttpHeaders.AUTHORIZATION, authorization
-			).build();
-
-		NotificationQueueEntry notificationQueueEntry =
-			new NotificationQueueEntry();
-
-		notificationQueueEntry.setBody(
-			() -> _replace(
-				notificationTemplate.getBody(
-				).get(
-					"en_US"
-				),
-				map));
-
-		JSONArray jsonArray = new JSONObject(
-			String.valueOf(notificationTemplate)
-		).getJSONArray(
-			"recipients"
-		);
-
-		JSONObject jsonObject = jsonArray.getJSONObject(0);
-
-		notificationQueueEntry.setRecipients(
-			() -> new Object[] {
-				new HashMapBuilder<String, Object>().put(
-					"from", jsonObject.getString("from")
-				).put(
-					"fromName",
-					jsonObject.getJSONObject(
-						"fromName"
-					).getString(
-						"en_US"
-					)
-				).put(
-					"to", emailAddress
-				).build()
-			});
-
-		notificationQueueEntry.setSubject(
-			() -> _replace(
-				notificationTemplate.getSubject(
-				).get(
-					"en_US"
-				),
-				map));
-		notificationQueueEntry.setType(notificationTemplate::getType);
-
-		notificationQueueEntryResource.postNotificationQueueEntry(
-			notificationQueueEntry);
-
-		if (_log.isInfoEnabled()) {
-			_log.info(
-				StringBundler.concat(
-					"Sent ", externalReferenceCode, " notification to ",
-					emailAddress));
-		}
 	}
 
 	private PortalInstance _postPortalInstance(
@@ -460,13 +357,40 @@ public class TrialRestController extends BaseRestController {
 		return portalInstance;
 	}
 
-	private String _replace(String string, Map<String, String> map) {
-		for (Map.Entry<String, String> entry : map.entrySet()) {
-			string = StringUtil.replace(
-				string, entry.getKey(), entry.getValue());
+	private void _rollBackTrial(
+			String errorMessage, long orderId, PortalInstance portalInstance)
+		throws Exception {
+
+		_log.error(
+			StringBundler.concat(
+				"Unable to set up project for order ", orderId, ": \n",
+				errorMessage));
+
+		_deletePortalInstance(orderId);
+
+		_marketplaceService.updateOrder(
+			HashMapBuilder.put(
+				"trial-error", errorMessage
+			).put(
+				"trial-error-date",
+				ZonedDateTime.now(
+				).format(
+					DateTimeFormatter.ISO_INSTANT
+				)
+			).put(
+				"trial-virtualhost", portalInstance.getVirtualHost()
+			).build(),
+			orderId, MarketplaceConstants.ORDER_STATUS_CANCELLED);
+	}
+
+	private String[] _toStringArray(JSONArray jsonArray) {
+		List<String> list = new ArrayList<>();
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			list.add(jsonArray.getString(i));
 		}
 
-		return string;
+		return list.toArray(new String[0]);
 	}
 
 	private static final int _TRIAL_MAX_INSTANCES = GetterUtil.getInteger(

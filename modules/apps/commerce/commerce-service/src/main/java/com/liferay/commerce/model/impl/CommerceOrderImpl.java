@@ -95,12 +95,12 @@ public class CommerceOrderImpl extends CommerceOrderBaseImpl {
 	public CommerceAddress getBillingAddress() throws PortalException {
 		long billingAddressId = getBillingAddressId();
 
-		if (billingAddressId > 0) {
-			return CommerceAddressLocalServiceUtil.fetchCommerceAddress(
-				getBillingAddressId());
+		if (billingAddressId <= 0) {
+			return null;
 		}
 
-		return null;
+		return CommerceAddressLocalServiceUtil.fetchCommerceAddress(
+			getBillingAddressId());
 	}
 
 	@Override
@@ -145,12 +145,12 @@ public class CommerceOrderImpl extends CommerceOrderBaseImpl {
 
 		long commerceShippingMethodId = getCommerceShippingMethodId();
 
-		if (commerceShippingMethodId > 0) {
-			return CommerceShippingMethodLocalServiceUtil.
-				getCommerceShippingMethod(commerceShippingMethodId);
+		if (commerceShippingMethodId <= 0) {
+			return null;
 		}
 
-		return null;
+		return CommerceShippingMethodLocalServiceUtil.getCommerceShippingMethod(
+			commerceShippingMethodId);
 	}
 
 	@Override
@@ -203,12 +203,12 @@ public class CommerceOrderImpl extends CommerceOrderBaseImpl {
 	public CommerceAddress getShippingAddress() throws PortalException {
 		long shippingAddressId = getShippingAddressId();
 
-		if (shippingAddressId > 0) {
-			return CommerceAddressLocalServiceUtil.fetchCommerceAddress(
-				getShippingAddressId());
+		if (shippingAddressId <= 0) {
+			return null;
 		}
 
-		return null;
+		return CommerceAddressLocalServiceUtil.fetchCommerceAddress(
+			getShippingAddressId());
 	}
 
 	@Override
@@ -287,11 +287,7 @@ public class CommerceOrderImpl extends CommerceOrderBaseImpl {
 	public boolean isGuestOrder() throws PortalException {
 		AccountEntry accountEntry = getAccountEntry();
 
-		if (accountEntry.isGuestAccount()) {
-			return true;
-		}
-
-		return false;
+		return accountEntry.isGuestAccount();
 	}
 
 	@Override
@@ -337,11 +333,7 @@ public class CommerceOrderImpl extends CommerceOrderBaseImpl {
 
 		CommerceOrderItem commerceOrderItem = commerceOrderItems.get(0);
 
-		if (commerceOrderItem.isSubscription()) {
-			return true;
-		}
-
-		return false;
+		return commerceOrderItem.isSubscription();
 	}
 
 	@Override

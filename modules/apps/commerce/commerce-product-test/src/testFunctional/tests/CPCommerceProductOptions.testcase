@@ -287,6 +287,10 @@ definition {
 
 			CommerceNavigator.gotoOrderEntryViaAdmin(status = "Pending");
 
+			Click(
+				key_cellContent = "ABS Sensor",
+				locator1 = "CommerceEntry#BUNDLE_PRODUCT_EXPAND_BUTTON");
+
 			CommerceOrders.viewOrdersDetails(
 				productListPrice = "20.00",
 				productName = "ABS Sensor",
@@ -494,6 +498,10 @@ definition {
 
 		task ("Then can view the bundled product shown with the correct option values in the placed order") {
 			var productOptions = '''Blue,option-checkbox-key,2023-10-23,10,Text Content,value1,value2,value2''';
+
+			Click(
+				key_cellContent = "ABS Sensor",
+				locator1 = "CommerceEntry#BUNDLE_PRODUCT_EXPAND_BUTTON");
 
 			CommerceOrders.viewOrdersDetails(
 				productListPrice = "20.00",
@@ -1218,6 +1226,10 @@ definition {
 		}
 
 		task ("Then on the order summary the linked product is listed") {
+			Click(
+				key_cellContent = "ABS Sensor",
+				locator1 = "CommerceEntry#BUNDLE_PRODUCT_EXPAND_BUTTON");
+
 			AssertTextEquals(
 				key_productName = "Test Simple Product",
 				locator1 = "CommerceOrders#ORDER_DETAILS_PRODUCT_NAME",
@@ -1547,62 +1559,6 @@ definition {
 			AssertTextEquals.assertPartialText(
 				locator1 = "CommerceAccelerators#MINI_CART_ITEM_BUNDLED_ITEMS",
 				value1 = "1 × Test Simple Product 2");
-		}
-	}
-
-	@description = "COMMERCE-11491. Can delete product option from the option admin page"
-	@priority = 4
-	test CanDeleteProductOptionFromOptionAdminPage {
-		property custom.properties = "company.security.strangers.verify=false${line.separator}jsonws.web.service.paths.excludes=";
-		property portal.acceptance = "false";
-
-		task ("Given a Minium site is created") {
-			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
-		}
-
-		task ("And a simple product with a new option is created") {
-			CommerceJSONProductsAPI._addCommerceProduct(
-				catalogName = "Minium",
-				productName = "Simple T-Shirt",
-				productType = "Simple");
-
-			CommerceProducts.openProductsAdmin();
-
-			CommerceNavigator.searchEntry(entryName = "Simple T-Shirt");
-
-			CommerceNavigator.gotoEntry(entryName = "Simple T-Shirt");
-
-			CommerceEntry.gotoMenuTab(menuTab = "Options");
-
-			CommerceProductOptions.createProductOption(key_optionName = "New Option");
-		}
-
-		task ("And from the Product Management -> Options, the option is deleted") {
-			CommerceNavigator.goToProductOptionsAdminViaURL();
-
-			Click(
-				key_value = "New Option",
-				locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
-
-			CommerceEntry.clickNoError(menuItem = "Delete");
-
-			AssertElementNotPresent(
-				key_value = "New Option",
-				locator1 = "CommerceEntry#BODY_VERTICAL_ELLIPSIS");
-		}
-
-		task ("When the admin goes back to the product") {
-			CommerceProducts.openProductsAdmin();
-
-			CommerceNavigator.searchEntry(entryName = "Simple T-Shirt");
-
-			CommerceNavigator.gotoEntry(entryName = "Simple T-Shirt");
-
-			CommerceEntry.gotoMenuTab(menuTab = "Options");
-		}
-
-		task ("Then the admin can create a new product option") {
-			CommerceProductOptions.createProductOption(key_optionName = "New Option1");
 		}
 	}
 

@@ -14,6 +14,7 @@ import {
 	CURRENT_ACCOUNT_UPDATED,
 	CURRENT_ORDER_DELETED,
 	CURRENT_ORDER_UPDATED,
+	GUEST_ORDER_ENABLED,
 } from '../../utilities/eventsDefinitions';
 import {showErrorNotification} from '../../utilities/notifications';
 import MiniCartContext from './MiniCartContext';
@@ -49,6 +50,8 @@ function MiniCart({
 	channel,
 	displayDiscountLevels,
 	displayTotalItemsQuantity,
+	guestOrderEnabled,
+	hasCommerceOpenOrderContentPortlet,
 	itemsQuantity,
 	labels,
 	onAddToCart,
@@ -127,8 +130,10 @@ function MiniCart({
 						...currentURLs,
 						orderDetailURL: !orderDetailURL
 							? regenerateOrderDetailURL(
-									updatedCart.orderUUID,
-									currentURLs.siteDefaultURL
+									currentURLs.baseOrderDetailURL,
+									hasCommerceOpenOrderContentPortlet,
+									updatedCart.id,
+									updatedCart.orderUUID
 								)
 							: new URL(orderDetailURL),
 					};
@@ -146,13 +151,14 @@ function MiniCart({
 					order: updatedCart,
 					updatedFromCart,
 				});
+
 				onAddToCart(latestActionURLs, latestCartState);
 			}
 			catch (error) {
 				showErrorNotification(error);
 			}
 		},
-		[onAddToCart]
+		[hasCommerceOpenOrderContentPortlet, onAddToCart]
 	);
 
 	const updateReplacedSKUList = useCallback(
@@ -201,6 +207,10 @@ function MiniCart({
 		};
 	}, [resetCartState]);
 
+	useEffect(() => {
+		Liferay.fire(GUEST_ORDER_ENABLED, {guestOrderEnabled});
+	}, [guestOrderEnabled]);
+
 	return (
 		<MiniCartContext.Provider
 			value={{
@@ -211,6 +221,7 @@ function MiniCart({
 				displayDiscountLevels,
 				displayTotalItemsQuantity,
 				editedItem,
+				guestOrderEnabled,
 				isOpen,
 				isUpdating,
 				labels: {...DEFAULT_LABELS, ...labels},
@@ -256,6 +267,7 @@ MiniCart.defaultProps = {
 	cartViews: {},
 	displayDiscountLevels: false,
 	displayTotalItemsQuantity: false,
+	guestOrderEnabled: false,
 	itemsQuantity: 0,
 	labels: DEFAULT_LABELS,
 	onAddToCart: () => {},
@@ -267,9 +279,11 @@ MiniCart.defaultProps = {
 
 MiniCart.propTypes = {
 	cartActionURLs: PropTypes.shape({
+		baseOrderDetailURL: PropTypes.string,
 		checkoutURL: PropTypes.string,
 		orderDetailURL: PropTypes.string,
 		productURLSeparator: PropTypes.string,
+		signInURL: PropTypes.string,
 		siteDefaultURL: PropTypes.string,
 	}).isRequired,
 	cartViews: PropTypes.shape({
@@ -340,6 +354,7 @@ MiniCart.propTypes = {
 	}),
 	displayDiscountLevels: PropTypes.bool,
 	displayTotalItemsQuantity: PropTypes.bool,
+	guestOrderEnabled: PropTypes.bool,
 	itemsQuantity: PropTypes.number,
 	labels: PropTypes.shape({
 		[ADD_PRODUCT]: PropTypes.string,

@@ -21,6 +21,8 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 ).build();
 %>
 
+<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" var="baseResourceURL" />
+
 <liferay-ui:error embed="<%= false %>" exception="<%= AccountEntryStatusException.class %>" message="please-select-a-valid-supplier" />
 <liferay-ui:error embed="<%= false %>" exception="<%= AccountEntryTypeException.class %>" message="please-select-a-valid-supplier" />
 <liferay-ui:error embed="<%= false %>" exception="<%= DuplicateCommerceChannelAccountEntryIdException.class %>" message="a-supplier-account-can-be-linked-only-to-one-channel" />
@@ -166,9 +168,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 						<aui:input checked="<%= commerceChannelDisplayContext.isRequestQuoteEnabled() %>" helpMessage="allow-buyers-to-request-a-quote-when-no-product-in-the-cart-is-priced-as-price-on-application" label="allow-request-a-quote-on-a-fully-priced-cart" labelOff="disabled" labelOn="enabled" name="orderSettings--requestQuoteEnabled--" type="toggle-switch" />
 					</div>
 
-					<div class="col-lg-6">
-						<aui:input checked="<%= commerceChannelDisplayContext.isQuickCheckoutEnabled() %>" helpMessage="allow-customers-to-complete-purchases-with-a-single-click-if-all-required-information-is-provided-in-the-order-streamlining-the-checkout-process" label="quick-checkout" labelOff="disabled" labelOn="enabled" name="settings--quickCheckoutEnabled--" type="toggle-switch" />
-					</div>
+					<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-20379") %>'>
+						<div class="col-lg-6">
+							<aui:input checked="<%= commerceChannelDisplayContext.isQuickCheckoutEnabled() %>" helpMessage="allow-customers-to-complete-purchases-with-a-single-click-if-all-required-information-is-provided-in-the-order-streamlining-the-checkout-process" label="quick-checkout" labelOff="disabled" labelOn="enabled" name="settings--quickCheckoutEnabled--" type="toggle-switch" />
+						</div>
+					</c:if>
 				</div>
 
 				<div class="row">
@@ -183,9 +187,11 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 						<aui:input label="order-importer-date-format" labelOff="disabled" labelOn="enabled" name="format--orderImporterDateFormat--" type="text" value="<%= commerceChannelDisplayContext.getOrderImporterDateFormat() %>" />
 					</div>
 
-					<div class="col-lg-6">
-						<aui:input checked="<%= commerceChannelDisplayContext.isMultishippingEnabled() %>" helpMessage="configures-whether-a-buyer-can-initiate-from-an-order-shipments-to-multiple-delivery-groups" label="allow-multishipping" labelOff="disabled" labelOn="enabled" name="settings--multishippingEnabled--" type="toggle-switch" />
-					</div>
+					<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-20379") %>'>
+						<div class="col-lg-6">
+							<aui:input checked="<%= commerceChannelDisplayContext.isMultishippingEnabled() %>" helpMessage="configures-whether-a-buyer-can-initiate-from-an-order-shipments-to-multiple-delivery-groups" label="allow-multishipping" labelOff="disabled" labelOn="enabled" name="settings--multishippingEnabled--" type="toggle-switch" />
+						</div>
+					</c:if>
 
 					<div class="col-lg-6">
 						<aui:input checked="<%= commerceChannelDisplayContext.isShowSeparateOrderItems() %>" helpMessage="show-separate-order-items-help" label="show-separate-order-items" labelOff="disabled" labelOn="enabled" name="settings--showSeparateOrderItems--" type="toggle-switch" />
@@ -251,14 +257,29 @@ Map<String, String> contextParams = HashMapBuilder.<String, String>put(
 	bodyClasses="p-0"
 	title='<%= LanguageUtil.get(request, "payment-methods") %>'
 >
-	<frontend-data-set:classic-display
-		contextParams="<%= contextParams %>"
-		dataProviderKey="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
-		id="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
-		itemsPerPage="<%= 10 %>"
-		selectedItemsKey="key"
-		showManagementBar="<%= false %>"
-	/>
+	<div>
+		<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-35941") %>'>
+			<div>
+				<react:component
+					module="{CommerceChannelAddPaymentMethod} from commerce-channel-web"
+					props='<%=
+						HashMapBuilder.<String, Object>put(
+							"baseResourceURL", baseResourceURL
+						).build()
+					%>'
+				/>
+			</div>
+		</c:if>
+
+		<frontend-data-set:classic-display
+			contextParams="<%= contextParams %>"
+			dataProviderKey="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
+			id="<%= CommerceChannelFDSNames.PAYMENT_METHOD %>"
+			itemsPerPage="<%= 10 %>"
+			selectedItemsKey="key"
+			showManagementBar="<%= false %>"
+		/>
+	</div>
 </commerce-ui:panel>
 
 <commerce-ui:panel

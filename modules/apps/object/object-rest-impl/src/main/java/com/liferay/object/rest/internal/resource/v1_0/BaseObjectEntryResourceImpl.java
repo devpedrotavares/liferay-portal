@@ -416,9 +416,24 @@ public abstract class BaseObjectEntryResourceImpl
 			existingObjectEntry.setDateModified(objectEntry.getDateModified());
 		}
 
+		if (objectEntry.getDefaultLanguageId() != null) {
+			existingObjectEntry.setDefaultLanguageId(
+				objectEntry.getDefaultLanguageId());
+		}
+
 		if (objectEntry.getExternalReferenceCode() != null) {
 			existingObjectEntry.setExternalReferenceCode(
 				objectEntry.getExternalReferenceCode());
+		}
+
+		if (objectEntry.getFriendlyUrlPath() != null) {
+			existingObjectEntry.setFriendlyUrlPath(
+				objectEntry.getFriendlyUrlPath());
+		}
+
+		if (objectEntry.getFriendlyUrlPath_i18n() != null) {
+			existingObjectEntry.setFriendlyUrlPath_i18n(
+				objectEntry.getFriendlyUrlPath_i18n());
 		}
 
 		if (objectEntry.getKeywords() != null) {
@@ -636,9 +651,24 @@ public abstract class BaseObjectEntryResourceImpl
 			existingObjectEntry.setDateModified(objectEntry.getDateModified());
 		}
 
+		if (objectEntry.getDefaultLanguageId() != null) {
+			existingObjectEntry.setDefaultLanguageId(
+				objectEntry.getDefaultLanguageId());
+		}
+
 		if (objectEntry.getExternalReferenceCode() != null) {
 			existingObjectEntry.setExternalReferenceCode(
 				objectEntry.getExternalReferenceCode());
+		}
+
+		if (objectEntry.getFriendlyUrlPath() != null) {
+			existingObjectEntry.setFriendlyUrlPath(
+				objectEntry.getFriendlyUrlPath());
+		}
+
+		if (objectEntry.getFriendlyUrlPath_i18n() != null) {
+			existingObjectEntry.setFriendlyUrlPath_i18n(
+				objectEntry.getFriendlyUrlPath_i18n());
 		}
 
 		if (objectEntry.getKeywords() != null) {
@@ -880,9 +910,24 @@ public abstract class BaseObjectEntryResourceImpl
 			existingObjectEntry.setDateModified(objectEntry.getDateModified());
 		}
 
+		if (objectEntry.getDefaultLanguageId() != null) {
+			existingObjectEntry.setDefaultLanguageId(
+				objectEntry.getDefaultLanguageId());
+		}
+
 		if (objectEntry.getExternalReferenceCode() != null) {
 			existingObjectEntry.setExternalReferenceCode(
 				objectEntry.getExternalReferenceCode());
+		}
+
+		if (objectEntry.getFriendlyUrlPath() != null) {
+			existingObjectEntry.setFriendlyUrlPath(
+				objectEntry.getFriendlyUrlPath());
+		}
+
+		if (objectEntry.getFriendlyUrlPath_i18n() != null) {
+			existingObjectEntry.setFriendlyUrlPath_i18n(
+				objectEntry.getFriendlyUrlPath_i18n());
 		}
 
 		if (objectEntry.getKeywords() != null) {

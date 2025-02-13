@@ -376,7 +376,7 @@ public class ObjectValidationRuleLocalServiceTest {
 			_objectDefinition.getObjectDefinitionId());
 
 		_objectEntryLocalService.addObjectEntry(
-			TestPropsValues.getUserId(), 0,
+			TestPropsValues.getUserId(), 0, null,
 			_objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectField", RandomTestUtil.randomString()
@@ -481,7 +481,7 @@ public class ObjectValidationRuleLocalServiceTest {
 			Assert.assertEquals(0, _argumentsList.size());
 
 			_objectEntryLocalService.addObjectEntry(
-				TestPropsValues.getUserId(), 0,
+				TestPropsValues.getUserId(), 0, null,
 				_objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"textObjectField", RandomTestUtil.randomString()
@@ -737,7 +737,8 @@ public class ObjectValidationRuleLocalServiceTest {
 
 		try {
 			_objectEntryLocalService.addObjectEntry(
-				user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
+				user.getUserId(), 0, null,
+				_objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"textObjectField", RandomTestUtil.randomString()
 				).build(),
@@ -1102,17 +1103,17 @@ public class ObjectValidationRuleLocalServiceTest {
 				(proxy, method, arguments) -> {
 					_argumentsList.add(arguments);
 
-					if (Objects.equals(
+					if (!Objects.equals(
 							method.getDeclaringClass(),
-							ObjectScriptingExecutor.class) &&
-						Objects.equals(method.getName(), "execute")) {
+							ObjectScriptingExecutor.class) ||
+						!Objects.equals(method.getName(), "execute")) {
 
-						return HashMapBuilder.<String, Object>put(
-							"validationCriteriaMet", true
-						).build();
+						return null;
 					}
 
-					return null;
+					return HashMapBuilder.<String, Object>put(
+						"validationCriteriaMet", true
+					).build();
 				}));
 	}
 

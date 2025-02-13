@@ -153,6 +153,7 @@ export type TestrayStatusMetric = {
 	blocked: number;
 	failed: number;
 	inProgress: number;
+	incomplete: number;
 	passed: number;
 	testfix: number;
 	total: number;
@@ -335,6 +336,7 @@ export type TestraySubtask = {
 	dateCreated: string;
 	dateModified: string;
 	dueStatus: PickList;
+	error?: string;
 	errors: string;
 	id: number;
 	issues: string;

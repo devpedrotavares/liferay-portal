@@ -109,7 +109,9 @@ definition {
 
 		Staging.viewSitePagesVariationActiveCP(sitePagesVariationName = "Summer");
 
-		PagesAdmin.addPageUnderSitePagesVariation(pageName = "Test Page Name");
+		PagesAdmin.addPage(
+			pageName = "Test Page Name",
+			sitePageType = "Widget Page");
 
 		PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
@@ -410,7 +412,7 @@ definition {
 
 		Workflow.gotoPreviewView(pageRevision = "true");
 
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
+		Page.viewWithWorkflowPG(workflowStatus = "Pending");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Page Revision Page",
@@ -438,13 +440,13 @@ definition {
 
 		Workflow.gotoPreviewView(pageRevision = "true");
 
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
+		Page.viewWithWorkflowPG(workflowStatus = "Pending");
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Page Revision Page",
 			siteName = "Site Name");
 
-		Page.viewWithWorkflowPG(workflowStatus = "Pending (Review)");
+		Page.viewWithWorkflowPG(workflowStatus = "Pending");
 
 		UserBar.gotoDropdownItem(dropdownItem = "My Workflow Tasks");
 
@@ -862,7 +864,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "Web Content Title");
 
@@ -884,7 +886,7 @@ definition {
 
 	@priority = 4
 	test StagingPublishLast {
-		property app.server.types = "jboss,tcserver,tomcat,weblogic,wildfly";
+		property app.server.types = "jboss,tomcat,weblogic,wildfly";
 		property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 		property environment.acceptance = "true";
 		property operating.system.types = "alpine,amazonlinux,centos,debian,fedora,orcllinux,osx,redhat,rockylinux,solaris,suse,ubuntu,windows";
@@ -906,7 +908,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoStagedSitePage(
 			pageName = "Staging Test Page",
@@ -1033,7 +1035,13 @@ definition {
 			menuItem = "Configure",
 			pageName = "Test Page Name");
 
-		PagesAdmin.viewSelectedLayoutColumn(columnName = "1 Column");
+		AssertElementPresent(
+			key_card = "1 Column",
+			locator1 = "Card#CARD_SELECTED");
+
+		AssertElementPresent(
+			key_card = "1 Column",
+			locator1 = "Card#CARD_SELECTED");
 	}
 
 	@priority = 3

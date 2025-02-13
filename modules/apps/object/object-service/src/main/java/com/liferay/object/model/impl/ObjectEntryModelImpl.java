@@ -70,8 +70,10 @@ public class ObjectEntryModelImpl
 		{"objectEntryId", Types.BIGINT}, {"groupId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
 		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
-		{"modifiedDate", Types.TIMESTAMP}, {"objectDefinitionId", Types.BIGINT},
-		{"rootObjectEntryId", Types.BIGINT},
+		{"modifiedDate", Types.TIMESTAMP}, {"defaultLanguageId", Types.VARCHAR},
+		{"objectDefinitionId", Types.BIGINT},
+		{"objectEntryFolderId", Types.BIGINT},
+		{"rootObjectEntryId", Types.BIGINT}, {"treePath", Types.VARCHAR},
 		{"lastPublishDate", Types.TIMESTAMP}, {"status", Types.INTEGER},
 		{"statusByUserId", Types.BIGINT}, {"statusByUserName", Types.VARCHAR},
 		{"statusDate", Types.TIMESTAMP}
@@ -91,8 +93,11 @@ public class ObjectEntryModelImpl
 		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
+		TABLE_COLUMNS_MAP.put("defaultLanguageId", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("objectDefinitionId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("objectEntryFolderId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("rootObjectEntryId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("treePath", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("lastPublishDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("status", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("statusByUserId", Types.BIGINT);
@@ -101,7 +106,7 @@ public class ObjectEntryModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,objectEntryId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectDefinitionId LONG,rootObjectEntryId LONG,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
+		"create table ObjectEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(1000) null,objectEntryId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,defaultLanguageId VARCHAR(75) null,objectDefinitionId LONG,objectEntryFolderId LONG,rootObjectEntryId LONG,treePath STRING null,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectEntry";
 
@@ -298,9 +303,14 @@ public class ObjectEntryModelImpl
 			attributeGetterFunctions.put(
 				"modifiedDate", ObjectEntry::getModifiedDate);
 			attributeGetterFunctions.put(
+				"defaultLanguageId", ObjectEntry::getDefaultLanguageId);
+			attributeGetterFunctions.put(
 				"objectDefinitionId", ObjectEntry::getObjectDefinitionId);
 			attributeGetterFunctions.put(
+				"objectEntryFolderId", ObjectEntry::getObjectEntryFolderId);
+			attributeGetterFunctions.put(
 				"rootObjectEntryId", ObjectEntry::getRootObjectEntryId);
+			attributeGetterFunctions.put("treePath", ObjectEntry::getTreePath);
 			attributeGetterFunctions.put(
 				"lastPublishDate", ObjectEntry::getLastPublishDate);
 			attributeGetterFunctions.put("status", ObjectEntry::getStatus);
@@ -357,13 +367,24 @@ public class ObjectEntryModelImpl
 				"modifiedDate",
 				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setModifiedDate);
 			attributeSetterBiConsumers.put(
+				"defaultLanguageId",
+				(BiConsumer<ObjectEntry, String>)
+					ObjectEntry::setDefaultLanguageId);
+			attributeSetterBiConsumers.put(
 				"objectDefinitionId",
 				(BiConsumer<ObjectEntry, Long>)
 					ObjectEntry::setObjectDefinitionId);
 			attributeSetterBiConsumers.put(
+				"objectEntryFolderId",
+				(BiConsumer<ObjectEntry, Long>)
+					ObjectEntry::setObjectEntryFolderId);
+			attributeSetterBiConsumers.put(
 				"rootObjectEntryId",
 				(BiConsumer<ObjectEntry, Long>)
 					ObjectEntry::setRootObjectEntryId);
+			attributeSetterBiConsumers.put(
+				"treePath",
+				(BiConsumer<ObjectEntry, String>)ObjectEntry::setTreePath);
 			attributeSetterBiConsumers.put(
 				"lastPublishDate",
 				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setLastPublishDate);
@@ -631,6 +652,26 @@ public class ObjectEntryModelImpl
 
 	@JSON
 	@Override
+	public String getDefaultLanguageId() {
+		if (_defaultLanguageId == null) {
+			return "";
+		}
+		else {
+			return _defaultLanguageId;
+		}
+	}
+
+	@Override
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_defaultLanguageId = defaultLanguageId;
+	}
+
+	@JSON
+	@Override
 	public long getObjectDefinitionId() {
 		return _objectDefinitionId;
 	}
@@ -656,6 +697,21 @@ public class ObjectEntryModelImpl
 
 	@JSON
 	@Override
+	public long getObjectEntryFolderId() {
+		return _objectEntryFolderId;
+	}
+
+	@Override
+	public void setObjectEntryFolderId(long objectEntryFolderId) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_objectEntryFolderId = objectEntryFolderId;
+	}
+
+	@JSON
+	@Override
 	public long getRootObjectEntryId() {
 		return _rootObjectEntryId;
 	}
@@ -667,6 +723,26 @@ public class ObjectEntryModelImpl
 		}
 
 		_rootObjectEntryId = rootObjectEntryId;
+	}
+
+	@JSON
+	@Override
+	public String getTreePath() {
+		if (_treePath == null) {
+			return "";
+		}
+		else {
+			return _treePath;
+		}
+	}
+
+	@Override
+	public void setTreePath(String treePath) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_treePath = treePath;
 	}
 
 	@JSON
@@ -927,8 +1003,11 @@ public class ObjectEntryModelImpl
 		objectEntryImpl.setUserName(getUserName());
 		objectEntryImpl.setCreateDate(getCreateDate());
 		objectEntryImpl.setModifiedDate(getModifiedDate());
+		objectEntryImpl.setDefaultLanguageId(getDefaultLanguageId());
 		objectEntryImpl.setObjectDefinitionId(getObjectDefinitionId());
+		objectEntryImpl.setObjectEntryFolderId(getObjectEntryFolderId());
 		objectEntryImpl.setRootObjectEntryId(getRootObjectEntryId());
+		objectEntryImpl.setTreePath(getTreePath());
 		objectEntryImpl.setLastPublishDate(getLastPublishDate());
 		objectEntryImpl.setStatus(getStatus());
 		objectEntryImpl.setStatusByUserId(getStatusByUserId());
@@ -962,10 +1041,16 @@ public class ObjectEntryModelImpl
 			this.<Date>getColumnOriginalValue("createDate"));
 		objectEntryImpl.setModifiedDate(
 			this.<Date>getColumnOriginalValue("modifiedDate"));
+		objectEntryImpl.setDefaultLanguageId(
+			this.<String>getColumnOriginalValue("defaultLanguageId"));
 		objectEntryImpl.setObjectDefinitionId(
 			this.<Long>getColumnOriginalValue("objectDefinitionId"));
+		objectEntryImpl.setObjectEntryFolderId(
+			this.<Long>getColumnOriginalValue("objectEntryFolderId"));
 		objectEntryImpl.setRootObjectEntryId(
 			this.<Long>getColumnOriginalValue("rootObjectEntryId"));
+		objectEntryImpl.setTreePath(
+			this.<String>getColumnOriginalValue("treePath"));
 		objectEntryImpl.setLastPublishDate(
 			this.<Date>getColumnOriginalValue("lastPublishDate"));
 		objectEntryImpl.setStatus(
@@ -1116,9 +1201,27 @@ public class ObjectEntryModelImpl
 			objectEntryCacheModel.modifiedDate = Long.MIN_VALUE;
 		}
 
+		objectEntryCacheModel.defaultLanguageId = getDefaultLanguageId();
+
+		String defaultLanguageId = objectEntryCacheModel.defaultLanguageId;
+
+		if ((defaultLanguageId != null) && (defaultLanguageId.length() == 0)) {
+			objectEntryCacheModel.defaultLanguageId = null;
+		}
+
 		objectEntryCacheModel.objectDefinitionId = getObjectDefinitionId();
 
+		objectEntryCacheModel.objectEntryFolderId = getObjectEntryFolderId();
+
 		objectEntryCacheModel.rootObjectEntryId = getRootObjectEntryId();
+
+		objectEntryCacheModel.treePath = getTreePath();
+
+		String treePath = objectEntryCacheModel.treePath;
+
+		if ((treePath != null) && (treePath.length() == 0)) {
+			objectEntryCacheModel.treePath = null;
+		}
 
 		Date lastPublishDate = getLastPublishDate();
 
@@ -1222,8 +1325,11 @@ public class ObjectEntryModelImpl
 	private Date _createDate;
 	private Date _modifiedDate;
 	private boolean _setModifiedDate;
+	private String _defaultLanguageId;
 	private long _objectDefinitionId;
+	private long _objectEntryFolderId;
 	private long _rootObjectEntryId;
+	private String _treePath;
 	private Date _lastPublishDate;
 	private int _status;
 	private long _statusByUserId;
@@ -1271,8 +1377,11 @@ public class ObjectEntryModelImpl
 		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
+		_columnOriginalValues.put("defaultLanguageId", _defaultLanguageId);
 		_columnOriginalValues.put("objectDefinitionId", _objectDefinitionId);
+		_columnOriginalValues.put("objectEntryFolderId", _objectEntryFolderId);
 		_columnOriginalValues.put("rootObjectEntryId", _rootObjectEntryId);
+		_columnOriginalValues.put("treePath", _treePath);
 		_columnOriginalValues.put("lastPublishDate", _lastPublishDate);
 		_columnOriginalValues.put("status", _status);
 		_columnOriginalValues.put("statusByUserId", _statusByUserId);
@@ -1321,19 +1430,25 @@ public class ObjectEntryModelImpl
 
 		columnBitmasks.put("modifiedDate", 512L);
 
-		columnBitmasks.put("objectDefinitionId", 1024L);
+		columnBitmasks.put("defaultLanguageId", 1024L);
 
-		columnBitmasks.put("rootObjectEntryId", 2048L);
+		columnBitmasks.put("objectDefinitionId", 2048L);
 
-		columnBitmasks.put("lastPublishDate", 4096L);
+		columnBitmasks.put("objectEntryFolderId", 4096L);
 
-		columnBitmasks.put("status", 8192L);
+		columnBitmasks.put("rootObjectEntryId", 8192L);
 
-		columnBitmasks.put("statusByUserId", 16384L);
+		columnBitmasks.put("treePath", 16384L);
 
-		columnBitmasks.put("statusByUserName", 32768L);
+		columnBitmasks.put("lastPublishDate", 32768L);
 
-		columnBitmasks.put("statusDate", 65536L);
+		columnBitmasks.put("status", 65536L);
+
+		columnBitmasks.put("statusByUserId", 131072L);
+
+		columnBitmasks.put("statusByUserName", 262144L);
+
+		columnBitmasks.put("statusDate", 524288L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

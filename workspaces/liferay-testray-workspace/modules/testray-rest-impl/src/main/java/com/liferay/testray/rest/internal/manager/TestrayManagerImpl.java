@@ -519,6 +519,8 @@ public class TestrayManagerImpl implements TestrayManager {
 			).put(
 				"caseResultFailed", 0
 			).put(
+				"caseResultIncomplete", 0
+			).put(
 				"caseResultPassed", 0
 			).put(
 				"caseResultTestFix", 0
@@ -639,6 +641,9 @@ public class TestrayManagerImpl implements TestrayManager {
 					}
 					else if (testrayTestcaseStatus.equals("failed")) {
 						return "FAILED";
+					}
+					else if (testrayTestcaseStatus.equals("incomplete")) {
+						return "INCOMPLETE";
 					}
 					else if (testrayTestcaseStatus.equals("in-progress")) {
 						return "INPROGRESS";
@@ -1170,8 +1175,7 @@ public class TestrayManagerImpl implements TestrayManager {
 		for (Map<String, Serializable> values :
 				_objectEntryLocalService.getValuesList(
 					0, companyId, userId,
-					objectDefinition.getObjectDefinitionId(),
-					new String[] {"r_caseToCaseResult_c_caseId"},
+					objectDefinition.getObjectDefinitionId(), null,
 					_filterFactory.create(
 						"buildId eq '" + testrayBuildId1 + "' and errors ne ''",
 						objectDefinition),

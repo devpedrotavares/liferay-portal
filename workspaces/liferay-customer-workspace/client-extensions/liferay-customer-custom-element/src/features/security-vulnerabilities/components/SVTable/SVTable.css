@@ -1,0 +1,29 @@
+.sv-table {
+	.sv-name-link {
+		text-decoration: none;
+	}
+
+	.sv-row {
+		cursor: pointer;
+	}
+
+	.sv-severity {
+		background-color: var(--color-neutral-5);
+		border-radius: var(--border-radius-sm);
+		color: var(--color-neutral-0);
+		font-size: var(--font-size-sm);
+		min-width: var(--spacer-6);
+	}
+
+	.sv-severity-critical {
+		background-color: var(--color-state-error);
+	}
+
+	.sv-severity-high {
+		background-color: var(--color-state-warning);
+	}
+
+	.sv-severity-medium {
+		background-color: var(--color-state-info);
+	}
+}

@@ -105,25 +105,6 @@ definition {
 		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-client-sh-disconnect");
 	}
 
-	@description = "LPS-158522: Upgrade client only upgrades core"
-	@priority = 2
-	test CheckUpgradeClientUpgradeCoreOnly {
-		property custom.upgrade.properties = "upgrade.database.auto.run=false";
-		property skip.get.testcase.database.properties = "true";
-		property skip.upgrade-legacy-database = "true";
-		property timeout.explicit.wait = "600";
-
-		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "run-upgrade-client");
-
-		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-status -Dupgrade.status=unresolved");
-
-		var schemaVersion = ValidateSmokeUpgrade.getSchemaVersion(mysqlStatement = "SELECT schemaVersion FROM Release_ WHERE servletContextName = 'com.liferay.journal.service';");
-
-		if (!(contains(${schemaVersion}, "4.1.0"))) {
-			fail("The upgrade client upgrades core and modules.");
-		}
-	}
-
 	@description = "LPS-158522: Upgrade client contains necessary files"
 	@priority = 3
 	test CheckUpgradeClientZipContents {
@@ -165,15 +146,6 @@ definition {
 	@priority = 4
 	test CheckUpgradePropertiesNoneSet {
 		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-properties-none-set");
-	}
-
-	@description = "LPS-163243: The user can execute the upgrade:executeAll command on Gogo shell to execute all remaining upgrade processes"
-	@priority = 3
-	test ExecuteAllPendingUpgradesFromGogoShell {
-		property skip.get.testcase.database.properties = "true";
-		property skip.upgrade-legacy-database = "true";
-
-		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "execute-all-pending-upgrades-from-gogo-shell");
 	}
 
 	@description = "LPS-168551:  Upgrade client throws error when portal-ext.properties exists in home directory"

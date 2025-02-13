@@ -125,7 +125,7 @@ public class MappedProductDTOConverter
 		CPInstance firstAvailableReplacementCPInstance =
 			_cpInstanceHelper.fetchFirstAvailableReplacementCPInstance(
 				accountEntry.getAccountEntryId(),
-				commerceContext.getCommerceChannelGroupId(), cpInstanceId);
+				commerceContext.getCommerceChannelGroupId(), 0, cpInstanceId);
 
 		return new MappedProduct() {
 			{
@@ -140,6 +140,8 @@ public class MappedProductDTOConverter
 							accountEntry.getAccountEntryId(),
 							commerceContext.getCommerceChannelGroupId(),
 							mappedProductDTOConverterContext.getCompanyId(),
+							commerceContext.getCPConfigurationListId(
+								cpInstance.getGroupId()),
 							cpInstance,
 							mappedProductDTOConverterContext.getLocale(),
 							cpInstance.getSku(), StringPool.BLANK);
@@ -295,22 +297,22 @@ public class MappedProductDTOConverter
 					});
 				setReplacementMessage(
 					() -> {
-						if ((cpInstance != null) &&
-							cpInstance.isDiscontinued() &&
-							(firstAvailableReplacementCPInstance != null) &&
-							(cpInstance.getCPInstanceId() ==
+						if ((cpInstance == null) ||
+							!cpInstance.isDiscontinued() ||
+							(firstAvailableReplacementCPInstance == null) ||
+							(cpInstance.getCPInstanceId() !=
 								csDiagramEntry.getCPInstanceId())) {
 
-							return _language.format(
-								mappedProductDTOConverterContext.getLocale(),
-								"x-has-been-replaced-by-x",
-								new String[] {
-									csDiagramEntry.getSku(),
-									firstAvailableReplacementCPInstance.getSku()
-								});
+							return null;
 						}
 
-						return null;
+						return _language.format(
+							mappedProductDTOConverterContext.getLocale(),
+							"x-has-been-replaced-by-x",
+							new String[] {
+								csDiagramEntry.getSku(),
+								firstAvailableReplacementCPInstance.getSku()
+							});
 					});
 				setSequence(csDiagramEntry::getSequence);
 				setSku(
@@ -395,19 +397,21 @@ public class MappedProductDTOConverter
 
 	private Availability _getAvailability(
 			long accountEntryId, long commerceChannelGroupId, long companyId,
-			CPInstance cpInstance, Locale locale, String sku,
-			String unitOfMeasureKey)
+			long cpConfigurationListId, CPInstance cpInstance, Locale locale,
+			String sku, String unitOfMeasureKey)
 		throws Exception {
 
 		Availability availability = new Availability();
 
-		if (_cpDefinitionInventoryEngine.isDisplayAvailability(cpInstance)) {
+		if (_cpDefinitionInventoryEngine.isDisplayAvailability(
+				cpConfigurationListId, cpInstance)) {
+
 			if (Objects.equals(
 					_commerceInventoryEngine.getAvailabilityStatus(
 						cpInstance.getCompanyId(), accountEntryId,
 						cpInstance.getGroupId(), commerceChannelGroupId,
 						_cpDefinitionInventoryEngine.getMinStockQuantity(
-							cpInstance),
+							cpConfigurationListId, cpInstance),
 						cpInstance.getSku(), unitOfMeasureKey),
 					CommerceInventoryAvailabilityConstants.AVAILABLE)) {
 
@@ -422,7 +426,9 @@ public class MappedProductDTOConverter
 			}
 		}
 
-		if (_cpDefinitionInventoryEngine.isDisplayStockQuantity(cpInstance)) {
+		if (_cpDefinitionInventoryEngine.isDisplayStockQuantity(
+				cpConfigurationListId, cpInstance)) {
+
 			availability.setStockQuantity(
 				() -> BigDecimalUtil.stripTrailingZeros(
 					_commerceInventoryEngine.getStockQuantity(

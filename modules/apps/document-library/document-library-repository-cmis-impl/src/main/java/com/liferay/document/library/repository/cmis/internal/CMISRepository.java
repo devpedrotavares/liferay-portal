@@ -2057,18 +2057,18 @@ public class CMISRepository extends BaseCmisRepository {
 
 		Iterator<QueryResult> iterator = queryResults.iterator();
 
-		if (iterator.hasNext()) {
-			QueryResult queryResult = iterator.next();
-
-			PropertyData<String> propertyData = queryResult.getPropertyById(
-				PropertyIds.OBJECT_ID);
-
-			List<String> values = propertyData.getValues();
-
-			return values.get(0);
+		if (!iterator.hasNext()) {
+			return null;
 		}
 
-		return null;
+		QueryResult queryResult = iterator.next();
+
+		PropertyData<String> propertyData = queryResult.getPropertyById(
+			PropertyIds.OBJECT_ID);
+
+		List<String> values = propertyData.getValues();
+
+		return values.get(0);
 	}
 
 	private boolean _isActionAllowable(String objectId, Action action)
@@ -2083,11 +2083,7 @@ public class CMISRepository extends BaseCmisRepository {
 		Set<Action> allowableActionsSet =
 			allowableActions.getAllowableActions();
 
-		if (allowableActionsSet.contains(action)) {
-			return true;
-		}
-
-		return false;
+		return allowableActionsSet.contains(action);
 	}
 
 	private boolean _isAllVersionsSearchableSupported(Session session) {

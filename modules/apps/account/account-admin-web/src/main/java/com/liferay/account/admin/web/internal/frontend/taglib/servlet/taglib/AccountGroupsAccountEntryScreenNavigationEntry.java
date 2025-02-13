@@ -17,7 +17,7 @@ import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUti
 import org.osgi.service.component.annotations.Component;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @Component(
 	property = "screen.navigation.entry.order:Integer=10",
@@ -46,14 +46,9 @@ public class AccountGroupsAccountEntryScreenNavigationEntry
 		PermissionChecker permissionChecker =
 			PermissionCheckerFactoryUtil.create(user);
 
-		if (AccountEntryPermission.contains(
-				permissionChecker, accountEntry.getAccountEntryId(),
-				AccountActionKeys.VIEW_ACCOUNT_GROUPS)) {
-
-			return true;
-		}
-
-		return false;
+		return AccountEntryPermission.contains(
+			permissionChecker, accountEntry.getAccountEntryId(),
+			AccountActionKeys.VIEW_ACCOUNT_GROUPS);
 	}
 
 }

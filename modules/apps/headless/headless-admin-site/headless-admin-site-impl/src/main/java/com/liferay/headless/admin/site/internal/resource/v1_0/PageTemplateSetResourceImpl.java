@@ -6,7 +6,7 @@
 package com.liferay.headless.admin.site.internal.resource.v1_0;
 
 import com.liferay.headless.admin.site.dto.v1_0.PageTemplateSet;
-import com.liferay.headless.admin.site.internal.resource.util.GroupUtil;
+import com.liferay.headless.admin.site.internal.resource.v1_0.util.GroupUtil;
 import com.liferay.headless.admin.site.resource.v1_0.PageTemplateSetResource;
 import com.liferay.headless.common.spi.service.context.ServiceContextBuilder;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateCollectionTypeConstants;
@@ -91,15 +91,16 @@ public class PageTemplateSetResourceImpl
 			transform(
 				_layoutPageTemplateCollectionService.
 					getLayoutPageTemplateCollections(
-						groupId,
+						groupId, search,
 						LayoutPageTemplateCollectionTypeConstants.BASIC,
 						pagination.getStartPosition(),
-						pagination.getEndPosition()),
+						pagination.getEndPosition(), null),
 				this::_toPageTemplateSet),
 			pagination,
 			_layoutPageTemplateCollectionService.
 				getLayoutPageTemplateCollectionsCount(
-					groupId, LayoutPageTemplateCollectionTypeConstants.BASIC));
+					groupId, search,
+					LayoutPageTemplateCollectionTypeConstants.BASIC));
 	}
 
 	@Override
@@ -161,7 +162,8 @@ public class PageTemplateSetResourceImpl
 				pageTemplateSet.getExternalReferenceCode(), groupId,
 				LayoutPageTemplateConstants.
 					PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
-				pageTemplateSet.getName(), pageTemplateSet.getDescription(),
+				pageTemplateSet.getKey(), pageTemplateSet.getName(),
+				pageTemplateSet.getDescription(),
 				LayoutPageTemplateCollectionTypeConstants.BASIC,
 				_getServiceContext(groupId, pageTemplateSet));
 	}

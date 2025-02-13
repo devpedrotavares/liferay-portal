@@ -27,7 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @Component(
 	property = "screen.navigation.entry.order:Integer=20",
@@ -50,11 +50,7 @@ public class CPDefinitionCPTypeGroupedScreenNavigationEntry
 
 		String productTypeName = cpDefinition.getProductTypeName();
 
-		if (productTypeName.equals(getCategoryKey())) {
-			return true;
-		}
-
-		return false;
+		return productTypeName.equals(getCategoryKey());
 	}
 
 	@Override

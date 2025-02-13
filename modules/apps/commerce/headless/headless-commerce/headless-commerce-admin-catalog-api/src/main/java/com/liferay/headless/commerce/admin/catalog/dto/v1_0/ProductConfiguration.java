@@ -271,6 +271,47 @@ public class ProductConfiguration implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _availabilityEstimateNameSupplier;
 
+	@Schema
+	public String[] getDifferences() {
+		if (_differencesSupplier != null) {
+			differences = _differencesSupplier.get();
+
+			_differencesSupplier = null;
+		}
+
+		return differences;
+	}
+
+	public void setDifferences(String[] differences) {
+		this.differences = differences;
+
+		_differencesSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setDifferences(
+		UnsafeSupplier<String[], Exception> differencesUnsafeSupplier) {
+
+		_differencesSupplier = () -> {
+			try {
+				return differencesUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String[] differences;
+
+	@JsonIgnore
+	private Supplier<String[]> _differencesSupplier;
+
 	@Schema(example = "true")
 	public Boolean getDisplayAvailability() {
 		if (_displayAvailabilitySupplier != null) {
@@ -439,6 +480,47 @@ public class ProductConfiguration implements Serializable {
 
 	@JsonIgnore
 	private Supplier<Long> _entityIdSupplier;
+
+	@Schema(example = "ABS Sensor")
+	public String getEntityName() {
+		if (_entityNameSupplier != null) {
+			entityName = _entityNameSupplier.get();
+
+			_entityNameSupplier = null;
+		}
+
+		return entityName;
+	}
+
+	public void setEntityName(String entityName) {
+		this.entityName = entityName;
+
+		_entityNameSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setEntityName(
+		UnsafeSupplier<String, Exception> entityNameUnsafeSupplier) {
+
+		_entityNameSupplier = () -> {
+			try {
+				return entityNameUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String entityName;
+
+	@JsonIgnore
+	private Supplier<String> _entityNameSupplier;
 
 	@JsonGetter("entityType")
 	@Schema(example = "product")
@@ -834,6 +916,180 @@ public class ProductConfiguration implements Serializable {
 	@JsonIgnore
 	private Supplier<BigDecimal> _multipleOrderQuantitySupplier;
 
+	@Schema
+	@Valid
+	public ProductShippingConfiguration getProductShippingConfiguration() {
+		if (_productShippingConfigurationSupplier != null) {
+			productShippingConfiguration =
+				_productShippingConfigurationSupplier.get();
+
+			_productShippingConfigurationSupplier = null;
+		}
+
+		return productShippingConfiguration;
+	}
+
+	public void setProductShippingConfiguration(
+		ProductShippingConfiguration productShippingConfiguration) {
+
+		this.productShippingConfiguration = productShippingConfiguration;
+
+		_productShippingConfigurationSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setProductShippingConfiguration(
+		UnsafeSupplier<ProductShippingConfiguration, Exception>
+			productShippingConfigurationUnsafeSupplier) {
+
+		_productShippingConfigurationSupplier = () -> {
+			try {
+				return productShippingConfigurationUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected ProductShippingConfiguration productShippingConfiguration;
+
+	@JsonIgnore
+	private Supplier<ProductShippingConfiguration>
+		_productShippingConfigurationSupplier;
+
+	@Schema
+	@Valid
+	public ProductTaxConfiguration getProductTaxConfiguration() {
+		if (_productTaxConfigurationSupplier != null) {
+			productTaxConfiguration = _productTaxConfigurationSupplier.get();
+
+			_productTaxConfigurationSupplier = null;
+		}
+
+		return productTaxConfiguration;
+	}
+
+	public void setProductTaxConfiguration(
+		ProductTaxConfiguration productTaxConfiguration) {
+
+		this.productTaxConfiguration = productTaxConfiguration;
+
+		_productTaxConfigurationSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setProductTaxConfiguration(
+		UnsafeSupplier<ProductTaxConfiguration, Exception>
+			productTaxConfigurationUnsafeSupplier) {
+
+		_productTaxConfigurationSupplier = () -> {
+			try {
+				return productTaxConfigurationUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected ProductTaxConfiguration productTaxConfiguration;
+
+	@JsonIgnore
+	private Supplier<ProductTaxConfiguration> _productTaxConfigurationSupplier;
+
+	@Schema(example = "true")
+	public Boolean getPurchasable() {
+		if (_purchasableSupplier != null) {
+			purchasable = _purchasableSupplier.get();
+
+			_purchasableSupplier = null;
+		}
+
+		return purchasable;
+	}
+
+	public void setPurchasable(Boolean purchasable) {
+		this.purchasable = purchasable;
+
+		_purchasableSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setPurchasable(
+		UnsafeSupplier<Boolean, Exception> purchasableUnsafeSupplier) {
+
+		_purchasableSupplier = () -> {
+			try {
+				return purchasableUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean purchasable;
+
+	@JsonIgnore
+	private Supplier<Boolean> _purchasableSupplier;
+
+	@Schema(example = "true")
+	public Boolean getVisible() {
+		if (_visibleSupplier != null) {
+			visible = _visibleSupplier.get();
+
+			_visibleSupplier = null;
+		}
+
+		return visible;
+	}
+
+	public void setVisible(Boolean visible) {
+		this.visible = visible;
+
+		_visibleSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setVisible(
+		UnsafeSupplier<Boolean, Exception> visibleUnsafeSupplier) {
+
+		_visibleSupplier = () -> {
+			try {
+				return visibleUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean visible;
+
+	@JsonIgnore
+	private Supplier<Boolean> _visibleSupplier;
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -933,6 +1189,32 @@ public class ProductConfiguration implements Serializable {
 			sb.append(_toJSON(availabilityEstimateName));
 		}
 
+		String[] differences = getDifferences();
+
+		if (differences != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"differences\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < differences.length; i++) {
+				sb.append("\"");
+
+				sb.append(_escape(differences[i]));
+
+				sb.append("\"");
+
+				if ((i + 1) < differences.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		Boolean displayAvailability = getDisplayAvailability();
 
 		if (displayAvailability != null) {
@@ -983,6 +1265,22 @@ public class ProductConfiguration implements Serializable {
 			sb.append("\"entityId\": ");
 
 			sb.append(entityId);
+		}
+
+		String entityName = getEntityName();
+
+		if (entityName != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"entityName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(entityName));
+
+			sb.append("\"");
 		}
 
 		EntityType entityType = getEntityType();
@@ -1109,6 +1407,56 @@ public class ProductConfiguration implements Serializable {
 			sb.append(multipleOrderQuantity);
 		}
 
+		ProductShippingConfiguration productShippingConfiguration =
+			getProductShippingConfiguration();
+
+		if (productShippingConfiguration != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"productShippingConfiguration\": ");
+
+			sb.append(String.valueOf(productShippingConfiguration));
+		}
+
+		ProductTaxConfiguration productTaxConfiguration =
+			getProductTaxConfiguration();
+
+		if (productTaxConfiguration != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"productTaxConfiguration\": ");
+
+			sb.append(String.valueOf(productTaxConfiguration));
+		}
+
+		Boolean purchasable = getPurchasable();
+
+		if (purchasable != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"purchasable\": ");
+
+			sb.append(purchasable);
+		}
+
+		Boolean visible = getVisible();
+
+		if (visible != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"visible\": ");
+
+			sb.append(visible);
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -1124,7 +1472,7 @@ public class ProductConfiguration implements Serializable {
 	@GraphQLName("EntityType")
 	public static enum EntityType {
 
-		PRODUCT("product");
+		PRODUCT("product"), TEMPLATE("template");
 
 		@JsonCreator
 		public static EntityType create(String value) {

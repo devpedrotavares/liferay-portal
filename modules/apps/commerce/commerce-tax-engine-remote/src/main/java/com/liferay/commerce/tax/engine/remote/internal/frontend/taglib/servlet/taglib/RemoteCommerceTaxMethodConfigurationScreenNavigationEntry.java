@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @Component(
 	property = "screen.navigation.entry.order:Integer=10",
@@ -53,11 +53,7 @@ public class RemoteCommerceTaxMethodConfigurationScreenNavigationEntry
 
 		String engineKey = commerceTaxMethod.getEngineKey();
 
-		if (engineKey.equals(RemoteCommerceTaxEngine.KEY)) {
-			return true;
-		}
-
-		return false;
+		return engineKey.equals(RemoteCommerceTaxEngine.KEY);
 	}
 
 	@Override

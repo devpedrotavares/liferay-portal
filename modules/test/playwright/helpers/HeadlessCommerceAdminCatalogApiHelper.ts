@@ -5,6 +5,7 @@
 
 import {getRandomDouble} from '../utils/getRandomDouble';
 import {getRandomInt} from '../utils/getRandomInt';
+import getRandomString from '../utils/getRandomString';
 import {ApiHelpers, DataApiHelpers} from './ApiHelpers';
 
 export type TAttachmentBase64 = {
@@ -41,6 +42,10 @@ type TCategory = {
 	vocabulary?: string;
 };
 
+type TCurrency = {
+	active?: boolean;
+};
+
 export type TDiagram = {
 	attachmentBase64: TAttachmentBase64;
 };
@@ -64,15 +69,18 @@ export type TProduct = {
 	active?: boolean;
 	catalogId: number;
 	categories?: TCategory[];
+	createDate?: string;
 	description?: {
 		[key: string]: string;
 	};
 	diagram?: TDiagram;
+	expirationDate?: string;
 	externalReferenceCode?: string;
 	id?: number;
 	name?: {
 		[key: string]: string;
 	};
+	neverExpire?: boolean;
 	productAccountGroupFilter?: boolean;
 	productAccountGroups?: {
 		accountGroupId: number;
@@ -80,11 +88,7 @@ export type TProduct = {
 	}[];
 	productChannelFilter?: boolean;
 	productChannels?: TChannel[];
-	productConfiguration?: {
-		allowBackOrder?: boolean;
-		minOrderQuantity?: number;
-		multipleOrderQuantity?: number;
-	};
+	productConfiguration?: TProductConfiguration;
 	productId?: number;
 	productOptions?: any[];
 	productSpecifications?: any[];
@@ -102,6 +106,49 @@ export type TProduct = {
 	skus?: TSku[];
 	tags?: [string];
 	version?: number;
+};
+
+export type TProductConfiguration = {
+	allowBackOrder?: boolean;
+	allowedOrderQuantities?: Array<number>;
+	availabilityEstimateId?: number;
+	availabilityEstimateName?: any;
+	displayAvailability?: boolean;
+	displayStockQuantity?: boolean;
+	entityExternalReferenceCode?: string;
+	entityId?: number;
+	entityName?: string;
+	entityType?: string;
+	externalReferenceCode?: string;
+	id?: number;
+	inventoryEngine?: string;
+	lowStockAction?: string;
+	maxOrderQuantity?: number;
+	minOrderQuantity?: number;
+	minStockQuantity?: number;
+	multipleOrderQuantity?: number;
+	productShippingConfiguration?: any;
+	productTaxConfiguration?: TProductTaxConfiguration;
+	purchasable?: boolean;
+	visible?: boolean;
+};
+
+export type TProductConfigurationList = {
+	catalogExternalReferenceCode?: string;
+	catalogId: number;
+	externalReferenceCode?: string;
+	id?: number;
+	masterProductConfigurationList?: boolean;
+	name?: string;
+	neverExpire?: boolean;
+	parentProductConfigurationListId?: number;
+	priority?: number;
+	productConfigurations?: TProductConfiguration[];
+};
+
+export type TProductTaxConfiguration = {
+	id: number;
+	taxable: boolean;
 };
 
 type TProductVirtualSettings = {
@@ -207,6 +254,18 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 		);
 	}
 
+	async deleteProductConfiguration(productConfigurationId: number) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configurations/${productConfigurationId}`
+		);
+	}
+
+	async deleteProductConfigurationList(productConfigurationListId: number) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists/${productConfigurationListId}`
+		);
+	}
+
 	async deleteProductByVersion(productId: number, version: number) {
 		return this.apiHelpers.delete(
 			`${this.apiHelpers.baseUrl}${this.basePath}/products/${productId}/by-version/${version}`
@@ -243,6 +302,12 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 		);
 	}
 
+	async getCurrenciesPage(search: string) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/currencies?search=${search}`
+		);
+	}
+
 	async getOptionCategory(optionCategoryId: string) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/optionCategories/${optionCategoryId}`
@@ -264,6 +329,12 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 	async getProduct(productId: number) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/products/${productId}?nestedFields=skus`
+		);
+	}
+
+	async getProductConfigurationListsPage(search: string = '') {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists?search=${search}`
 		);
 	}
 
@@ -311,6 +382,15 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 		);
 	}
 
+	async patchCurrency(currencyId: string, currency?: TCurrency) {
+		return this.apiHelpers.patch(
+			`${this.apiHelpers.baseUrl}${this.basePath}/currencies/${currencyId}`,
+			{
+				...(currency || {}),
+			}
+		);
+	}
+
 	async patchProduct(productId: string, product?: DataObject) {
 		return this.apiHelpers.patch(
 			`${this.apiHelpers.baseUrl}${this.basePath}/products/${productId}`,
@@ -319,6 +399,18 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 					en_US: 'Product' + getRandomInt(),
 				},
 				...(product || {}),
+			}
+		);
+	}
+
+	async patchProductTaxConfiguration(
+		productId: number,
+		productTaxConfiguration: TProductTaxConfiguration
+	) {
+		return this.apiHelpers.patch(
+			`${this.apiHelpers.baseUrl}${this.basePath}/products/${productId}/taxConfiguration`,
+			{
+				...(productTaxConfiguration || {}),
 			}
 		);
 	}
@@ -526,6 +618,111 @@ export class HeadlessCommerceAdminCatalogApiHelper {
 		}
 
 		return product;
+	}
+
+	async postProductConfiguration(
+		productConfigurationListId: number,
+		productConfiguration: TProductConfiguration
+	): Promise<TProductConfiguration> {
+		productConfiguration = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists/${productConfigurationListId}/product-configurations`,
+			{
+				data: {
+					allowBackOrder: true,
+					entityType: 'product',
+					maxOrderQuantity: 10000,
+					minOrderQuantity: 1,
+					multipleOrderQuantity: 1,
+					purchasable: true,
+					visible: true,
+					...productConfiguration,
+				},
+			}
+		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: productConfiguration.id,
+				type: 'productConfiguration',
+			});
+		}
+
+		return productConfiguration;
+	}
+
+	async postProductConfigurationList(
+		productConfigurationList: TProductConfigurationList
+	): Promise<TProductConfigurationList> {
+		productConfigurationList = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists?nestedFields=productConfigurations`,
+			{
+				data: {
+					catalogId: getRandomInt(),
+					name: getRandomString(),
+					...productConfigurationList,
+				},
+			}
+		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: productConfigurationList.id,
+				type: 'productConfigurationList',
+			});
+		}
+
+		return productConfigurationList;
+	}
+
+	async postProductConfigurationListAccountGroup(
+		accountGroupId: number,
+		productConfigurationListId: number
+	): Promise<TProductConfigurationList> {
+		const productConfigurationList = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists/${productConfigurationListId}/product-configuration-list-account-groups`,
+			{
+				data: {
+					accountGroupId,
+					productConfigurationListId,
+				},
+			}
+		);
+
+		return productConfigurationList;
+	}
+
+	async postProductConfigurationListChannel(
+		channelId: number,
+		productConfigurationListId: number
+	): Promise<TProductConfigurationList> {
+		const productConfigurationList = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists/${productConfigurationListId}/product-configuration-list-channels`,
+			{
+				data: {
+					channelId,
+					productConfigurationListId,
+				},
+			}
+		);
+
+		return productConfigurationList;
+	}
+
+	async postProductConfigurationListOrderType(
+		orderTypeId: number,
+		productConfigurationListId: number
+	): Promise<TProductConfigurationList> {
+		const productConfigurationList = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/product-configuration-lists/${productConfigurationListId}/product-configuration-list-order-types`,
+			{
+				data: {
+					orderTypeId,
+					productConfigurationListId,
+				},
+			}
+		);
+
+		return productConfigurationList;
 	}
 
 	async postProductRelatedProduct(

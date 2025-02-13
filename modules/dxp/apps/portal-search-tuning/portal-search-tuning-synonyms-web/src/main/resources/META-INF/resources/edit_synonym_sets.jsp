@@ -33,6 +33,7 @@ portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 
 <liferay-frontend:edit-form
 	action="<%= editSynonymSetURL %>"
+	fluid="<%= true %>"
 	name="<%= editSynonymSetsDisplayContext.getFormName() %>"
 >
 	<aui:input name="<%= editSynonymSetsDisplayContext.getInputName() %>" type="hidden" value="" />

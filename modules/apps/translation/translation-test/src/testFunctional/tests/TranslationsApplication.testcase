@@ -337,7 +337,7 @@ definition {
 			webContentText = "WC WebContent Text",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Translations.gotoTranslate(webContentTitle = "WC WebContent Title");
 

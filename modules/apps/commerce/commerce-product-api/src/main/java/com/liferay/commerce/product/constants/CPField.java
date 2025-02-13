@@ -49,6 +49,9 @@ public class CPField {
 	public static final String CP_CONFIGURATION_LIST_ID =
 		"CPConfigurationListId";
 
+	public static final String CP_CONFIGURATION_LIST_IDS =
+		"CPConfigurationListIds";
+
 	public static final String CP_DEFINITION_ID = "CPDefinitionId";
 
 	public static final String CP_DEFINITION_OPTION_REL_ID =
@@ -98,11 +101,18 @@ public class CPField {
 
 	public static final String KEY = "key";
 
+	public static final String MAXIMUM_ORDER_QUANTITY = "maximumOrderQuantity";
+
 	public static final String META_DESCRIPTION = "metaDescription";
 
 	public static final String META_KEYWORDS = "metaKeywords";
 
 	public static final String META_TITLE = "metaTitle";
+
+	public static final String MINIMUM_ORDER_QUANTITY = "minimumOrderQuantity";
+
+	public static final String MULTIPLE_ORDER_QUANTITY =
+		"multipleOrderQuantity";
 
 	public static final String OPTION_IDS = "optionsIds";
 
@@ -128,6 +138,8 @@ public class CPField {
 
 	public static final String REPLACEMENT_CPRODUCT_ID =
 		"replacementCProductId";
+
+	public static final String SHIPPABLE = "shippable";
 
 	public static final String SHORT_DESCRIPTION = "shortDescription";
 

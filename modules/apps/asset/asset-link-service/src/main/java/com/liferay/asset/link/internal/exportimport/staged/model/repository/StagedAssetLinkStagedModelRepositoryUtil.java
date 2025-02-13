@@ -21,7 +21,7 @@ import com.liferay.portal.model.adapter.util.ModelAdapterUtil;
 import java.util.List;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 public class StagedAssetLinkStagedModelRepositoryUtil {
 
@@ -50,12 +50,12 @@ public class StagedAssetLinkStagedModelRepositoryUtil {
 		List<AssetLink> assetLinks = assetLinkLocalService.dynamicQuery(
 			dynamicQuery);
 
-		if (ListUtil.isNotEmpty(assetLinks)) {
-			return ModelAdapterUtil.adapt(
-				assetLinks.get(0), AssetLink.class, StagedAssetLink.class);
+		if (ListUtil.isEmpty(assetLinks)) {
+			return null;
 		}
 
-		return null;
+		return ModelAdapterUtil.adapt(
+			assetLinks.get(0), AssetLink.class, StagedAssetLink.class);
 	}
 
 	private static DynamicQuery _getAssetLinkDynamicQuery(

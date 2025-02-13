@@ -156,24 +156,28 @@ public class FragmentDisplayContext {
 	}
 
 	public String getAvailableActions(Object object) {
-		if (!FragmentPermission.contains(
+		List<String> availableActions = new ArrayList<>();
+
+		boolean marketplace = _isMarketplace(object);
+
+		if (!marketplace) {
+			availableActions.add(
+				"exportFragmentCompositionsAndFragmentEntries");
+		}
+
+		if (FragmentPermission.contains(
 				_themeDisplay.getPermissionChecker(),
 				_themeDisplay.getScopeGroupId(),
 				FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES)) {
 
-			return "exportFragmentCompositionsAndFragmentEntries";
+			if (!marketplace && (object instanceof FragmentEntry)) {
+				availableActions.add("copySelectedFragmentEntries");
+			}
+
+			availableActions.add(
+				"deleteFragmentCompositionsAndFragmentEntries");
+			availableActions.add("moveFragmentCompositionsAndFragmentEntries");
 		}
-
-		List<String> availableActions = new ArrayList<>();
-
-		availableActions.add("exportFragmentCompositionsAndFragmentEntries");
-
-		if (object instanceof FragmentEntry) {
-			availableActions.add("copySelectedFragmentEntries");
-		}
-
-		availableActions.add("deleteFragmentCompositionsAndFragmentEntries");
-		availableActions.add("moveFragmentCompositionsAndFragmentEntries");
 
 		return StringUtil.merge(availableActions, StringPool.COMMA);
 	}
@@ -657,12 +661,13 @@ public class FragmentDisplayContext {
 				verticalNavItem -> {
 					verticalNavItem.addIcon(
 						IconItem.of("lock", StringPool.BLANK));
-
 					verticalNavItem.setActive(
 						Objects.equals(
 							fragmentCollectionContributor.
 								getFragmentCollectionKey(),
 							getFragmentCollectionKey()));
+					verticalNavItem.setDeprecated(
+						fragmentCollectionContributor.isDeprecated());
 
 					String fragmentCollectionKey =
 						fragmentCollectionContributor.
@@ -742,19 +747,11 @@ public class FragmentDisplayContext {
 	}
 
 	public boolean isSearch() {
-		if (Validator.isNotNull(_getKeywords())) {
-			return true;
-		}
-
-		return false;
+		return Validator.isNotNull(_getKeywords());
 	}
 
 	public boolean isSelectedFragmentCollectionContributor() {
-		if (Validator.isNotNull(getFragmentCollectionKey())) {
-			return true;
-		}
-
-		return false;
+		return Validator.isNotNull(getFragmentCollectionKey());
 	}
 
 	public boolean isViewResources() {
@@ -766,11 +763,7 @@ public class FragmentDisplayContext {
 	}
 
 	public boolean showFragmentCollectionActions() {
-		if (!isSelectedFragmentCollectionContributor()) {
-			return true;
-		}
-
-		return false;
+		return !isSelectedFragmentCollectionContributor();
 	}
 
 	private long _getDefaultFragmentCollectionId() {
@@ -944,6 +937,19 @@ public class FragmentDisplayContext {
 		_tabs1 = ParamUtil.getString(_httpServletRequest, "tabs1", "fragments");
 
 		return _tabs1;
+	}
+
+	private boolean _isMarketplace(Object object) {
+		if (object instanceof FragmentComposition) {
+			FragmentComposition fragmentComposition =
+				(FragmentComposition)object;
+
+			return fragmentComposition.isMarketplace();
+		}
+
+		FragmentEntry fragmentEntry = (FragmentEntry)object;
+
+		return fragmentEntry.isMarketplace();
 	}
 
 	private boolean _isScopeGroup() {

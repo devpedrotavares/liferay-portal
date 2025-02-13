@@ -432,6 +432,13 @@ public class CPConfigurationEntryWrapper
 		return model.getCPDefinitionInventoryEngine();
 	}
 
+	@Override
+	public CPTaxCategory getCPTaxCategory()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getCPTaxCategory();
+	}
+
 	/**
 	 * Returns the cp tax category ID of this cp configuration entry.
 	 *
@@ -600,6 +607,13 @@ public class CPConfigurationEntryWrapper
 	@Override
 	public long getMvccVersion() {
 		return model.getMvccVersion();
+	}
+
+	@Override
+	public CPConfigurationList getParentCPConfigurationList()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getParentCPConfigurationList();
 	}
 
 	/**

@@ -95,7 +95,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Marco Leo
  */
-@FeatureFlags("LPS-187142")
+@FeatureFlags("LPD-34594")
 @RunWith(Arquillian.class)
 public class ObjectEntryServiceTest {
 
@@ -167,7 +167,7 @@ public class ObjectEntryServiceTest {
 
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -182,7 +182,7 @@ public class ObjectEntryServiceTest {
 				"User ", _guestUser.getUserId(), " must have ADD_OBJECT_ENTRY ",
 				"permission for ", _objectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -195,7 +195,7 @@ public class ObjectEntryServiceTest {
 				"User ", _user.getUserId(), " must have ADD_OBJECT_ENTRY ",
 				"permission for ", _objectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _user.getUserId())));
@@ -213,7 +213,7 @@ public class ObjectEntryServiceTest {
 
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -231,7 +231,7 @@ public class ObjectEntryServiceTest {
 
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -264,7 +264,7 @@ public class ObjectEntryServiceTest {
 			HashMapBuilder.<Long, ObjectEntry>put(
 				rootNode.getPrimaryKey(),
 				_objectEntryService.addObjectEntry(
-					0, rootNode.getPrimaryKey(), Collections.emptyMap(),
+					0, null, rootNode.getPrimaryKey(), Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _adminUser.getUserId()))
 			).build();
@@ -275,7 +275,7 @@ public class ObjectEntryServiceTest {
 			objectEntries.put(
 				node.getPrimaryKey(),
 				_objectEntryService.addObjectEntry(
-					0, node.getPrimaryKey(),
+					0, null, node.getPrimaryKey(),
 					HashMapBuilder.<String, Serializable>put(
 						() -> {
 							Edge edge = node.getEdge();
@@ -336,7 +336,7 @@ public class ObjectEntryServiceTest {
 
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
-					0, node.getPrimaryKey(),
+					0, null, node.getPrimaryKey(),
 					HashMapBuilder.<String, Serializable>put(
 						() -> {
 							Edge edge = node.getEdge();
@@ -375,7 +375,7 @@ public class ObjectEntryServiceTest {
 				" must have ADD_OBJECT_ENTRY permission for ",
 				_rootObjectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
-				0, _rootObjectDefinition.getObjectDefinitionId(),
+				0, null, _rootObjectDefinition.getObjectDefinitionId(),
 				Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _user.getUserId())));
@@ -408,7 +408,7 @@ public class ObjectEntryServiceTest {
 
 		Node objectDefinitionRootNode = _tree.getRootNode();
 
-		Tree objectEntryTree = TreeTestUtil.createObjectEntryTree(
+		Tree tree = TreeTestUtil.createObjectEntryTree(
 			"1", _objectDefinitionLocalService, _objectEntryLocalService,
 			_objectFieldLocalService, _objectRelationshipLocalService,
 			objectDefinitionRootNode.getPrimaryKey());
@@ -426,7 +426,7 @@ public class ObjectEntryServiceTest {
 			ActionKeys.DELETE);
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
+			tree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
 			_objectEntryLocalService,
 			objectEntry -> Assert.assertNotNull(
 				_objectEntryService.deleteObjectEntry(
@@ -441,12 +441,12 @@ public class ObjectEntryServiceTest {
 
 		// Root individual permissions must be inherited
 
-		objectEntryTree = TreeTestUtil.createObjectEntryTree(
+		tree = TreeTestUtil.createObjectEntryTree(
 			"1", _objectDefinitionLocalService, _objectEntryLocalService,
 			_objectFieldLocalService, _objectRelationshipLocalService,
 			objectDefinitionRootNode.getPrimaryKey());
 
-		Node objectEntryRootNode = objectEntryTree.getRootNode();
+		Node objectEntryRootNode = tree.getRootNode();
 
 		_resourcePermissionLocalService.setResourcePermissions(
 			TestPropsValues.getCompanyId(),
@@ -456,7 +456,7 @@ public class ObjectEntryServiceTest {
 			role.getRoleId(), new String[] {ActionKeys.DELETE});
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
+			tree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
 			_objectEntryLocalService,
 			objectEntry -> Assert.assertNotNull(
 				_objectEntryService.deleteObjectEntry(
@@ -467,12 +467,12 @@ public class ObjectEntryServiceTest {
 
 		_setUser(_adminUser);
 
-		objectEntryTree = TreeTestUtil.createObjectEntryTree(
+		tree = TreeTestUtil.createObjectEntryTree(
 			"1", _objectDefinitionLocalService, _objectEntryLocalService,
 			_objectFieldLocalService, _objectRelationshipLocalService,
 			_rootObjectDefinition.getRootObjectDefinitionId());
 
-		objectEntryRootNode = objectEntryTree.getRootNode();
+		objectEntryRootNode = tree.getRootNode();
 
 		_resourcePermissionLocalService.setResourcePermissions(
 			TestPropsValues.getCompanyId(),
@@ -484,7 +484,7 @@ public class ObjectEntryServiceTest {
 		_setUser(_user);
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
+			tree.iterator(TreeConstants.ITERATOR_TYPE_POST_ORDER),
 			_objectEntryLocalService,
 			objectEntry -> {
 				if (objectEntry.getRootObjectEntryId() ==
@@ -581,7 +581,7 @@ public class ObjectEntryServiceTest {
 
 		Node objectDefinitionRootNode = _tree.getRootNode();
 
-		Tree objectEntryTree = TreeTestUtil.createObjectEntryTree(
+		Tree tree = TreeTestUtil.createObjectEntryTree(
 			"1", _objectDefinitionLocalService, _objectEntryLocalService,
 			_objectFieldLocalService, _objectRelationshipLocalService,
 			objectDefinitionRootNode.getPrimaryKey());
@@ -599,7 +599,7 @@ public class ObjectEntryServiceTest {
 			ActionKeys.VIEW);
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(), _objectEntryLocalService,
+			tree.iterator(), _objectEntryLocalService,
 			objectEntry -> Assert.assertNotNull(
 				_objectEntryService.getObjectEntry(
 					objectEntry.getObjectEntryId())));
@@ -613,7 +613,7 @@ public class ObjectEntryServiceTest {
 
 		// Root individual permissions must be inherited
 
-		Node objectEntryRootNode = objectEntryTree.getRootNode();
+		Node objectEntryRootNode = tree.getRootNode();
 
 		_resourcePermissionLocalService.setResourcePermissions(
 			TestPropsValues.getCompanyId(),
@@ -623,7 +623,7 @@ public class ObjectEntryServiceTest {
 			role.getRoleId(), new String[] {ActionKeys.VIEW});
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(), _objectEntryLocalService,
+			tree.iterator(), _objectEntryLocalService,
 			objectEntry -> Assert.assertNotNull(
 				_objectEntryService.getObjectEntry(
 					objectEntry.getObjectEntryId())));
@@ -643,7 +643,7 @@ public class ObjectEntryServiceTest {
 		_setUser(_user);
 
 		TreeTestUtil.forEachNodeObjectEntry(
-			objectEntryTree.iterator(), _objectEntryLocalService,
+			tree.iterator(), _objectEntryLocalService,
 			objectEntry -> {
 				if (objectEntry.getRootObjectEntryId() ==
 						objectEntry.getObjectEntryId()) {
@@ -706,7 +706,7 @@ public class ObjectEntryServiceTest {
 			ServiceContextTestUtil.getServiceContext());
 
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			TestPropsValues.getUserId(), 0,
+			TestPropsValues.getUserId(), 0, null,
 			_objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"r_relationship_accountEntryId",
@@ -791,7 +791,7 @@ public class ObjectEntryServiceTest {
 		_setUser(_adminUser);
 
 		_objectEntryService.addObjectEntry(
-			0, _objectDefinition.getObjectDefinitionId(),
+			0, null, _objectDefinition.getObjectDefinitionId(),
 			Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), _adminUser.getUserId()));
@@ -802,7 +802,7 @@ public class ObjectEntryServiceTest {
 
 		try {
 			ObjectEntry objectEntry = _objectEntryService.addObjectEntry(
-				0, _objectDefinition.getObjectDefinitionId(),
+				0, null, _objectDefinition.getObjectDefinitionId(),
 				Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId()));
@@ -817,7 +817,7 @@ public class ObjectEntryServiceTest {
 						_objectDefinition.getDefaultLanguageId()),
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, null, _objectDefinition.getObjectDefinitionId(),
 					Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -837,7 +837,7 @@ public class ObjectEntryServiceTest {
 
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, null, _objectDefinition.getObjectDefinitionId(),
 					Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -850,7 +850,7 @@ public class ObjectEntryServiceTest {
 						_objectDefinition.getDefaultLanguageId()),
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, null, _objectDefinition.getObjectDefinitionId(),
 					Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -886,7 +886,7 @@ public class ObjectEntryServiceTest {
 		_addResourcePermissionToGuestUser();
 
 		ObjectEntry objectEntry = _objectEntryService.addObjectEntry(
-			0, _objectDefinition.getObjectDefinitionId(),
+			0, null, _objectDefinition.getObjectDefinitionId(),
 			Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), _guestUser.getUserId()));
@@ -905,7 +905,7 @@ public class ObjectEntryServiceTest {
 		try {
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, null, _objectDefinition.getObjectDefinitionId(),
 					Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -918,7 +918,7 @@ public class ObjectEntryServiceTest {
 						_objectDefinition.getDefaultLanguageId()),
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
-					0, _objectDefinition.getObjectDefinitionId(),
+					0, null, _objectDefinition.getObjectDefinitionId(),
 					Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
@@ -933,7 +933,8 @@ public class ObjectEntryServiceTest {
 
 	private ObjectEntry _addObjectEntry(User user) throws Exception {
 		return _objectEntryLocalService.addObjectEntry(
-			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
+			user.getUserId(), 0, null,
+			_objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", RandomStringUtils.randomAlphabetic(5)
 			).put(

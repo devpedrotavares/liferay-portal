@@ -175,6 +175,18 @@
 		.scheduler-event {
 			opacity: 1;
 			z-index: 99;
+
+			&::before {
+				border-left: 1px solid #f9f9f9;
+				border-radius: 6.5px;
+				bottom: -1px;
+				content: '';
+				left: 0;
+				pointer-events: none;
+				position: absolute;
+				top: -1px;
+				width: 0.5rem;
+			}
 		}
 	}
 
@@ -245,6 +257,12 @@
 
 	.scheduler-view-table-data-col-title-today {
 		color: $primary-d2;
+	}
+
+	.taglib-custom-attributes-list {
+		.control-label {
+			font-weight: 700;
+		}
 	}
 }
 
@@ -460,10 +478,6 @@
 	}
 }
 
-.col-md-4 .calendar-portlet .popover.scheduler-event-recorder-popover {
-	max-width: 232px;
-}
-
 .portal-popup .calendar-portlet .fieldset {
 	margin-bottom: 2em;
 }
@@ -547,10 +561,6 @@
 		background: #ffc;
 		border-color: #fc0;
 	}
-}
-
-.scheduler-view-agenda {
-	margin-top: -13px;
 }
 
 .scheduler-view-day .scheduler-view-table .scheduler-view-table-data-col {

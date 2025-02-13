@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @Component(
 	property = "screen.navigation.entry.order:Integer=10",
@@ -62,11 +62,7 @@ public class CommerceShippingMethodFixedOptionSettingsScreenNavigationEntry
 
 		String engineKey = commerceShippingMethod.getEngineKey();
 
-		if (engineKey.equals(ByWeightCommerceShippingEngine.KEY)) {
-			return true;
-		}
-
-		return false;
+		return engineKey.equals(ByWeightCommerceShippingEngine.KEY);
 	}
 
 	@Override

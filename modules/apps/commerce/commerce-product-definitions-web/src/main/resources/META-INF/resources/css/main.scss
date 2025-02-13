@@ -168,6 +168,21 @@
 	}
 }
 
+.product-configuration {
+	a.sheet-subtitle {
+		margin-bottom: 0.3rem;
+	}
+}
+
+.product-configuration-value {
+	.icon {
+		background-color: var(--primary);
+		height: 0.5rem;
+		rotate: 45deg;
+		width: 0.5rem;
+	}
+}
+
 #termsOfUseContent {
 	.input-localized-content[role='menu'],
 	.text-default {

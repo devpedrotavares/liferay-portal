@@ -33,13 +33,13 @@ public class FileEntryDisplayContextHelper {
 	}
 
 	public DLFileEntryType getDLFileEntryType() throws PortalException {
-		if (isDLFileEntry()) {
-			DLFileEntry dlFileEntry = (DLFileEntry)_fileEntry.getModel();
-
-			return dlFileEntry.getDLFileEntryType();
+		if (!isDLFileEntry()) {
+			return null;
 		}
 
-		return null;
+		DLFileEntry dlFileEntry = (DLFileEntry)_fileEntry.getModel();
+
+		return dlFileEntry.getDLFileEntryType();
 	}
 
 	public FileEntry getFileEntry() {
@@ -98,6 +98,15 @@ public class FileEntryDisplayContextHelper {
 		}
 
 		return _hasPermissionsPermission;
+	}
+
+	public boolean hasSubscribePermission() throws PortalException {
+		if (_hasSubscribePermission == null) {
+			_hasSubscribePermission = DLFileEntryPermission.contains(
+				_permissionChecker, _fileEntry, ActionKeys.SUBSCRIBE);
+		}
+
+		return _hasSubscribePermission;
 	}
 
 	public boolean hasUpdatePermission() throws PortalException {
@@ -172,8 +181,8 @@ public class FileEntryDisplayContextHelper {
 	}
 
 	public boolean isCopyActionAvailable() throws PortalException {
-		if (hasViewPermission() && hasDownloadPermission() &&
-			!_isExternalRepository()) {
+		if (_permissionChecker.isSignedIn() && hasViewPermission() &&
+			hasDownloadPermission() && !_isExternalRepository()) {
 
 			return true;
 		}
@@ -215,11 +224,7 @@ public class FileEntryDisplayContextHelper {
 	}
 
 	public boolean isLockedByMe() {
-		if (hasLock()) {
-			return true;
-		}
-
-		return false;
+		return hasLock();
 	}
 
 	public boolean isMoveActionAvailable() throws PortalException {
@@ -290,6 +295,7 @@ public class FileEntryDisplayContextHelper {
 	private Boolean _hasLock;
 	private Boolean _hasOverrideCheckoutPermission;
 	private Boolean _hasPermissionsPermission;
+	private Boolean _hasSubscribePermission;
 	private Boolean _hasUpdatePermission;
 	private Boolean _hasViewPermission;
 	private final PermissionChecker _permissionChecker;

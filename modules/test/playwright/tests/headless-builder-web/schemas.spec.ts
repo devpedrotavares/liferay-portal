@@ -19,7 +19,7 @@ import {headlessBuilderPagesTest} from './fixtures/headlessBuilderPagesTest';
 export const testFeatureFlagsEnabled = mergeTests(
 	dataApiHelpersTest,
 	headlessBuilderPagesTest({
-		'LPD-21414': true,
+		'LPD-21414': {enabled: true},
 	}),
 	loginTest()
 );
@@ -27,7 +27,7 @@ export const testFeatureFlagsEnabled = mergeTests(
 export const testFeatureFlagsDisabled = mergeTests(
 	dataApiHelpersTest,
 	headlessBuilderPagesTest({
-		'LPD-21414': false,
+		'LPD-21414': {enabled: false},
 	}),
 	loginTest()
 );
@@ -195,7 +195,7 @@ testFeatureFlagsDisabled(
 			await apiHelpers.buildRestClient(ObjectDefinitionApi);
 
 		for (let i = 0; i <= 21; i++) {
-			objectDefinitions.push(
+			const objectDefinition = (
 				await objectDefinitionAPIClient.postObjectDefinition({
 					active: true,
 					externalReferenceCode: `objectDefinition${i}`,
@@ -231,15 +231,15 @@ testFeatureFlagsDisabled(
 						code: 0,
 					},
 				})
-			);
-		}
+			).body;
 
-		objectDefinitions.forEach((objectDefinition) => {
+			objectDefinitions.push(objectDefinition);
+
 			apiHelpers.data.push({
 				id: objectDefinition.id,
 				type: 'objectDefinition',
 			});
-		});
+		}
 
 		const application = await apiHelpers.objectEntry.postObjectEntry(
 			applicationData,

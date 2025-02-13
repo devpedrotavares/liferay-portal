@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -63,11 +64,11 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				StringBundler.concat(
-					"select DDMFieldAttribute.companyId, ",
-					"DDMFieldAttribute.ctCollectionId, ",
+					"select DDMFieldAttribute.ctCollectionId, ",
 					"DDMFieldAttribute.fieldAttributeId, ",
-					"DDMFieldAttribute.smallAttributeValue, ",
-					"DDMFieldAttribute.largeAttributeValue from DDMStructure ",
+					"DDMFieldAttribute.companyId, ",
+					"DDMFieldAttribute.largeAttributeValue, ",
+					"DDMFieldAttribute.smallAttributeValue from DDMStructure ",
 					"inner join DDMStructureVersion on ",
 					"DDMStructure.ctCollectionId = ",
 					"DDMStructureVersion.ctCollectionId and ",
@@ -84,8 +85,8 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.autoBatch(
 					connection,
-					"update DDMFieldAttribute set smallAttributeValue = ?, " +
-						"largeAttributeValue = ? where ctCollectionId = ? " +
+					"update DDMFieldAttribute set largeAttributeValue = ?, " +
+						"smallAttributeValue = ? where ctCollectionId = ? " +
 							"and fieldAttributeId = ?")) {
 
 			preparedStatement1.setLong(1, classNameId);
@@ -93,15 +94,26 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 			ResultSet resultSet = preparedStatement1.executeQuery();
 
 			while (resultSet.next()) {
-				long companyId = resultSet.getLong(1);
+				long companyId = resultSet.getLong(3);
 
-				preparedStatement2.setString(
-					1, _transform(companyId, resultSet.getString(4)));
-				preparedStatement2.setString(
-					2, _transform(companyId, resultSet.getString(5)));
+				String largeAttributeValue = _transform(
+					companyId, resultSet.getString(4));
+				String smallAttributeValue = _transform(
+					companyId, resultSet.getString(5));
 
-				preparedStatement2.setLong(3, resultSet.getLong(2));
-				preparedStatement2.setLong(4, resultSet.getLong(3));
+				if ((smallAttributeValue != null) &&
+					(smallAttributeValue.length() > 255)) {
+
+					largeAttributeValue = smallAttributeValue;
+
+					smallAttributeValue = null;
+				}
+
+				preparedStatement2.setString(1, largeAttributeValue);
+				preparedStatement2.setString(2, smallAttributeValue);
+
+				preparedStatement2.setLong(3, resultSet.getLong(1));
+				preparedStatement2.setLong(4, resultSet.getLong(2));
 
 				preparedStatement2.addBatch();
 			}
@@ -127,6 +139,10 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 				_fileEntryFriendlyURLResolver.resolveFriendlyURL(
 					group.getGroupId(), friendlyURL);
 
+			if (fileEntry == null) {
+				return null;
+			}
+
 			return (DLFileEntry)fileEntry.getModel();
 		}
 
@@ -141,7 +157,7 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 
 		long groupId = GetterUtil.getLong(matcher.group(2));
 		long folderId = GetterUtil.getLong(matcher.group(3));
-		String title = matcher.group(4);
+		String title = HttpComponentsUtil.decodeURL(matcher.group(4));
 
 		try {
 			return _dlFileEntryLocalService.getFileEntry(
@@ -184,6 +200,14 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 		if (matcher.find()) {
 			try {
 				DLFileEntry dlFileEntry = _getDLFileEntry(companyId, matcher);
+
+				if (dlFileEntry == null) {
+					if (_log.isWarnEnabled()) {
+						_log.warn("Missing file entry for URL " + src);
+					}
+
+					return 0;
+				}
 
 				return dlFileEntry.getFileEntryId();
 			}

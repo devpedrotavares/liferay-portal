@@ -3,30 +3,36 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Locator, Page, expect, mergeTests} from '@playwright/test';
+import {Locator, expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
-import {loginTest} from '../../../../fixtures/loginTest';
 import {liferayConfig} from '../../../../liferay.config';
 import getRandomString from '../../../../utils/getRandomString';
-import performLogin, {
-	performLogout,
-	performUserSwitch,
-} from '../../../../utils/performLogin';
+import performLogin, {performUserSwitch} from '../../../../utils/performLogin';
 import {waitForAlert} from '../../../../utils/waitForAlert';
 import {dataSetManagerApiHelpersTest} from '../../fixtures/dataSetManagerApiHelpersTest';
+import clickRowAction from '../../utils/clickRowAction';
+import getRowByText from '../../utils/getRowByText';
+import saveFromModal from '../../utils/saveFromModal';
 import {setupUserRoleAndLoginAsUser} from '../../utils/setupUserRoleAndLoginAsUser';
+import {EItemActionTarget} from '../../utils/types';
+import {actionsPageTest} from './fixtures/actionsPageTest';
 import {customDataSetsPageTest} from './fixtures/customDataSetsPageTest';
+import {filtersPageTest} from './fixtures/filtersPageTest';
+import {sortingPageTest} from './fixtures/sortingPageTest';
+import {CustomDataSetsPage} from './pages/CustomDataSetsPage';
 
 export const test = mergeTests(
+	actionsPageTest,
 	customDataSetsPageTest,
 	dataApiHelpersTest,
 	dataSetManagerApiHelpersTest,
 	featureFlagsTest({
-		'LPS-178052': true,
+		'LPS-178052': {enabled: true},
 	}),
-	loginTest()
+	filtersPageTest,
+	sortingPageTest
 );
 
 const createdDataSetERCs = [];
@@ -41,12 +47,16 @@ const blogPostsDataSetConfig = {
 	restSchema: 'BlogPosting',
 };
 
-async function openActionsDropdown({page, text}: {page: Page; text: string}) {
-	const table: Locator = page.locator('.data-set-content-wrapper');
-
-	const row = table.locator('.dnd-tbody .dnd-tr').filter({
-		has: page.getByText(text, {exact: true}).first(),
-	});
+async function openActionsDropdown({
+	customDataSetsPage,
+	text,
+}: {
+	customDataSetsPage: CustomDataSetsPage;
+	text: string;
+}) {
+	const row = customDataSetsPage.table.bodyRows
+		.filter({hasText: text})
+		.first();
 
 	const actionsButton = row.locator('.cell-item-actions button');
 
@@ -56,33 +66,11 @@ async function openActionsDropdown({page, text}: {page: Page; text: string}) {
 }
 
 test.beforeEach(async ({page}) => {
-	if (
-		await page
-			.getByRole('button', {
-				name: 'Sign In',
-			})
-			.isVisible()
-	) {
-		await test.step('Sign in as admin', async () => {
-			await performLogin(page, 'test');
-		});
-	}
+	await performLogin(page, 'test');
 });
 
 test.afterEach(async ({apiHelpers, dataSetManagerApiHelpers, page}) => {
-	if (await page.getByLabel('Test Test User Profile').isHidden()) {
-		if (
-			await page
-				.getByRole('button', {
-					name: 'Sign In',
-				})
-				.isHidden()
-		) {
-			await performLogout(page);
-		}
-
-		await performLogin(page, 'test');
-	}
+	await performUserSwitch(page, 'test');
 
 	for (const erc of createdDataSetERCs) {
 		await dataSetManagerApiHelpers.deleteDataSet({
@@ -155,6 +143,10 @@ test('A user with "View" and "Permissions" permission', async ({
 		await expect(
 			customDataSetsPage.permissionsModal.locator('#guest_ACTION_VIEW')
 		).not.toBeChecked();
+
+		// wait for hydration
+
+		await page.waitForTimeout(200);
 	});
 
 	await test.step('Enable "View" permission for "User" role', async () => {
@@ -237,9 +229,7 @@ test('A user with only "View" permission', async ({
 	});
 
 	await test.step('Check that there is no actions dropdown', async () => {
-		const table: Locator = page.locator('.data-set-content-wrapper');
-
-		const row = table.locator('.dnd-tbody .dnd-tr').filter({
+		const row = customDataSetsPage.table.bodyRows.filter({
 			has: page
 				.getByText(blogPostsDataSetConfig.name, {exact: true})
 				.first(),
@@ -344,7 +334,7 @@ test('A user with "Delete" permission', async ({
 
 	await test.step('Open actions dropdown', async () => {
 		await openActionsDropdown({
-			page,
+			customDataSetsPage,
 			text: blogPostsDataSetConfig.name,
 		});
 	});
@@ -357,12 +347,18 @@ test('A user with "Delete" permission', async ({
 });
 
 test('Check "Edit" permission', async ({
+	actionsPage,
 	apiHelpers,
 	customDataSetsPage,
 	dataSetManagerApiHelpers,
+	filtersPage,
 	page,
+	sortingPage,
 }) => {
+	const actionLabel = getRandomString();
 	const blogPostDataSetERC = getRandomString();
+	const filterLabel = getRandomString();
+	const sortingLabel = getRandomString();
 	let userAccount;
 
 	await test.step('Create a data set', async () => {
@@ -372,6 +368,28 @@ test('Check "Edit" permission', async ({
 			...blogPostsDataSetConfig,
 			erc: blogPostDataSetERC,
 			label: blogPostsDataSetConfig.name,
+		});
+	});
+
+	await test.step('Create data set filters, sorting and actions', async () => {
+		await dataSetManagerApiHelpers.createDataSetDateFilter({
+			dataSetERC: blogPostDataSetERC,
+			fieldName: 'dateCreated',
+			label_i18n: {en_US: filterLabel},
+			type: 'date',
+		});
+
+		await dataSetManagerApiHelpers.createDataSetSort({
+			dataSetERC: blogPostDataSetERC,
+			fieldName: 'id',
+			label_i18n: {en_US: sortingLabel},
+		});
+
+		await dataSetManagerApiHelpers.createDataSetItemAction({
+			dataSetERC: blogPostDataSetERC,
+			icon: 'pencil',
+			label_i18n: {en_US: actionLabel},
+			target: EItemActionTarget.LINK,
 		});
 	});
 
@@ -398,9 +416,7 @@ test('Check "Edit" permission', async ({
 	});
 
 	await test.step('Check that there is no actions dropdown', async () => {
-		const table: Locator = page.locator('.data-set-content-wrapper');
-
-		const row = table.locator('.dnd-tbody .dnd-tr').filter({
+		const row = customDataSetsPage.table.bodyRows.filter({
 			has: page
 				.getByText(blogPostsDataSetConfig.name, {exact: true})
 				.first(),
@@ -412,11 +428,9 @@ test('Check "Edit" permission', async ({
 	});
 
 	await test.step('Check that the user can not enter to Data Set details pages', async () => {
-		const dataSetRows = page
-			.locator('.data-set-content-wrapper .dnd-tbody .dnd-tr')
-			.filter({
-				hasText: blogPostsDataSetConfig.name,
-			});
+		const dataSetRows = customDataSetsPage.table.bodyRows.filter({
+			hasText: blogPostsDataSetConfig.name,
+		});
 
 		await dataSetRows
 			.first()
@@ -444,7 +458,7 @@ test('Check "Edit" permission', async ({
 		await customDataSetsPage.goto({checkTabVisibility: false});
 
 		await openActionsDropdown({
-			page,
+			customDataSetsPage,
 			text: blogPostsDataSetConfig.name,
 		});
 
@@ -455,6 +469,10 @@ test('Check "Edit" permission', async ({
 				`#${dataSetUserRoleName}_ACTION_UPDATE`
 			)
 		).not.toBeChecked();
+
+		// wait for hydration
+
+		await page.waitForTimeout(200);
 
 		await customDataSetsPage.permissionsModal
 			.locator(`#${dataSetUserRoleName}_ACTION_UPDATE`)
@@ -488,6 +506,127 @@ test('Check "Edit" permission', async ({
 			page.getByRole('heading', {name: 'Details'})
 		).toBeVisible();
 	});
+
+	const confirmDeleteButton = page.getByRole('button', {
+		name: 'Delete',
+	});
+
+	let filtersTableRow: Locator;
+
+	await test.step('Check that the user can edit data set filters', async () => {
+		await filtersPage.selectTab('Filters');
+
+		filtersTableRow = await getRowByText({
+			page,
+			table: filtersPage.filterTable,
+			text: filterLabel,
+		});
+
+		await clickRowAction({
+			actionLabel: 'Edit',
+			page,
+			row: filtersTableRow,
+		});
+
+		const nameInput = filtersPage.newDateRangeFilterForm.nameInput;
+
+		await expect(nameInput).toBeInViewport();
+
+		await filtersPage.saveAddFilterForm();
+
+		await waitForAlert(page);
+	});
+
+	await test.step('Check that the user can delete data set filters', async () => {
+		await clickRowAction({
+			actionLabel: 'Delete',
+			page,
+			row: filtersTableRow,
+		});
+
+		await confirmDeleteButton.waitFor();
+
+		await confirmDeleteButton.click();
+
+		await waitForAlert(page);
+	});
+
+	let sortingsTableRow: Locator;
+
+	await test.step('Check that the user can edit data set sortings', async () => {
+		await sortingPage.selectTab('Sorting');
+
+		sortingsTableRow = await getRowByText({
+			page,
+			table: sortingPage.sortingTable,
+			text: sortingLabel,
+		});
+
+		await clickRowAction({
+			actionLabel: 'Edit',
+			page,
+			row: sortingsTableRow,
+		});
+
+		await expect(
+			sortingPage.page.getByLabel('Use as Default Sorting')
+		).toBeInViewport();
+
+		await saveFromModal({page: sortingPage.page});
+	});
+
+	await test.step('Check that the user can delete data set sortings', async () => {
+		await clickRowAction({
+			actionLabel: 'Delete',
+			page,
+			row: sortingsTableRow,
+		});
+
+		await confirmDeleteButton.waitFor();
+
+		await confirmDeleteButton.click();
+
+		await waitForAlert(page);
+	});
+
+	let actionsTableRow: Locator;
+
+	await test.step('Check that the user can edit data set actions', async () => {
+		await actionsPage.dataSetPage.selectTab('Actions');
+		await expect(actionsPage.itemActionsTab).toBeInViewport();
+
+		actionsTableRow = await getRowByText({
+			page,
+			table: actionsPage.itemActionsTable,
+			text: actionLabel,
+		});
+
+		await clickRowAction({
+			actionLabel: 'Edit',
+			page,
+			row: actionsTableRow,
+		});
+
+		await expect(actionsPage.actionForm.changeIconButton).toBeInViewport();
+
+		await actionsPage.actionForm.saveButton.click();
+
+		await waitForAlert(actionsPage.page);
+	});
+
+	await test.step('Check that the user can delete data set actions', async () => {
+		await clickRowAction({
+			actionLabel: 'Delete',
+			page,
+			row: actionsTableRow,
+		});
+
+		await confirmDeleteButton.waitFor();
+
+		await confirmDeleteButton.click();
+
+		await waitForAlert(page);
+	});
 });
 
 test('A user with "Add Object Entry" permission', async ({
@@ -520,13 +659,11 @@ test('A user with "Add Object Entry" permission', async ({
 		await expect(customDataSetsPage.newDataSetButton).toBeVisible();
 
 		await customDataSetsPage.createDataSet(blogPostsDataSetConfig);
-
-		await waitForAlert(page);
 	});
 
 	await test.step('Delete Data Set', async () => {
 		await openActionsDropdown({
-			page,
+			customDataSetsPage,
 			text: blogPostsDataSetConfig.name,
 		});
 

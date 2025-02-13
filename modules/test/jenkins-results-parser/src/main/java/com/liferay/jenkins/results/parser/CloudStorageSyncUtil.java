@@ -5,6 +5,7 @@
 
 package com.liferay.jenkins.results.parser;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -26,42 +27,33 @@ public class CloudStorageSyncUtil {
 	public static final String GCP_BUCKET_PATH_TESTRAY_RESULTS =
 		"gs://testray-results";
 
-	public static void syncGCPFiles(String source, String destination) {
+	public static void copyGCPFile(String source, String destination)
+		throws IOException {
+
 		List<String> commands = new ArrayList<>();
+
+		commands.add(_getGCPAuthenticationCommand(source, destination));
 
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("gcloud auth activate-service-account --key-file ");
+		sb.append("gcloud storage cp ");
+		sb.append(source);
+		sb.append(" ");
+		sb.append(destination);
 
-		if (source.startsWith(GCP_BUCKET_PATH_JENKINS_CI_DATA) ||
-			destination.startsWith(GCP_BUCKET_PATH_JENKINS_CI_DATA)) {
+		commands.add(sb.toString());
 
-			sb.append(
-				_buildProperties.getProperty(
-					"google.application.crendential.file[jenkins]"));
+		_executeCommands(commands.toArray(new String[0]));
+	}
 
-			commands.add(sb.toString());
-		}
-		else if (source.startsWith(GCP_BUCKET_PATH_PATCHER_SHARED) ||
-				 destination.startsWith(GCP_BUCKET_PATH_PATCHER_SHARED)) {
+	public static void syncGCPFiles(String source, String destination)
+		throws IOException {
 
-			sb.append(
-				_buildProperties.getProperty(
-					"google.application.crendential.file[patcher]"));
+		List<String> commands = new ArrayList<>();
 
-			commands.add(sb.toString());
-		}
-		else if (source.startsWith(GCP_BUCKET_PATH_TESTRAY_RESULTS) ||
-				 destination.startsWith(GCP_BUCKET_PATH_TESTRAY_RESULTS)) {
+		commands.add(_getGCPAuthenticationCommand(source, destination));
 
-			sb.append(
-				_buildProperties.getProperty(
-					"google.application.crendential.file[testray]"));
-
-			commands.add(sb.toString());
-		}
-
-		sb.setLength(0);
+		StringBuilder sb = new StringBuilder();
 
 		sb.append("gcloud storage rsync --recursive ");
 		sb.append(source);
@@ -95,6 +87,49 @@ public class CloudStorageSyncUtil {
 
 			throw new RuntimeException(exception);
 		}
+	}
+
+	private static String _getGCPAuthenticationCommand(
+			String source, String destination)
+		throws IOException {
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("gcloud auth activate-service-account --key-file ");
+
+		String gcpApplicationCredentialFilePath = null;
+
+		if (source.startsWith(GCP_BUCKET_PATH_JENKINS_CI_DATA) ||
+			destination.startsWith(GCP_BUCKET_PATH_JENKINS_CI_DATA)) {
+
+			gcpApplicationCredentialFilePath = _buildProperties.getProperty(
+				"google.application.crendential.file[jenkins]");
+		}
+		else if (source.startsWith(GCP_BUCKET_PATH_PATCHER_SHARED) ||
+				 destination.startsWith(GCP_BUCKET_PATH_PATCHER_SHARED)) {
+
+			gcpApplicationCredentialFilePath = _buildProperties.getProperty(
+				"google.application.crendential.file[patcher]");
+		}
+		else if (source.startsWith(GCP_BUCKET_PATH_TESTRAY_RESULTS) ||
+				 destination.startsWith(GCP_BUCKET_PATH_TESTRAY_RESULTS)) {
+
+			gcpApplicationCredentialFilePath = _buildProperties.getProperty(
+				"google.application.crendential.file[testray]");
+		}
+
+		if (gcpApplicationCredentialFilePath != null) {
+			File gcpApplicationCredentialFile = new File(
+				gcpApplicationCredentialFilePath);
+
+			if (gcpApplicationCredentialFile.exists()) {
+				sb.append(gcpApplicationCredentialFilePath);
+
+				return sb.toString();
+			}
+		}
+
+		throw new IOException("Unable to find GCP application credential file");
 	}
 
 	private static final Properties _buildProperties;

@@ -5,6 +5,7 @@
 
 package com.liferay.commerce.internal.product.content.contributor;
 
+import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.commerce.constants.CommerceWebKeys;
 import com.liferay.commerce.context.CommerceContext;
@@ -75,16 +76,22 @@ public class AvailabilityEstimateCPContentContributor
 
 		boolean available = false;
 
+		long accountEntryId = AccountConstants.ACCOUNT_ENTRY_ID_GUEST;
+
 		CommerceContext commerceContext =
 			(CommerceContext)httpServletRequest.getAttribute(
 				CommerceWebKeys.COMMERCE_CONTEXT);
 
 		AccountEntry accountEntry = commerceContext.getAccountEntry();
 
+		if (accountEntry != null) {
+			accountEntryId = accountEntry.getAccountEntryId();
+		}
+
 		BigDecimal stockQuantity = _commerceInventoryEngine.getStockQuantity(
-			cpInstance.getCompanyId(), accountEntry.getAccountEntryId(),
-			cpInstance.getGroupId(), commerceChannel.getGroupId(),
-			cpInstance.getSku(), StringPool.BLANK);
+			cpInstance.getCompanyId(), accountEntryId, cpInstance.getGroupId(),
+			commerceChannel.getGroupId(), cpInstance.getSku(),
+			StringPool.BLANK);
 
 		CPDefinitionInventory cpDefinitionInventory =
 			_cpDefinitionInventoryLocalService.
@@ -97,7 +104,10 @@ public class AvailabilityEstimateCPContentContributor
 
 		if (BigDecimalUtil.gt(
 				stockQuantity,
-				cpDefinitionInventoryEngine.getMinStockQuantity(cpInstance))) {
+				cpDefinitionInventoryEngine.getMinStockQuantity(
+					commerceContext.getCPConfigurationListId(
+						cpDefinitionInventory.getGroupId()),
+					cpInstance))) {
 
 			available = true;
 		}
@@ -112,6 +122,8 @@ public class AvailabilityEstimateCPContentContributor
 				_getAvailabilityEstimateLabel(
 					themeDisplay.getLocale(),
 					cpDefinitionInventoryEngine.getAvailabilityEstimate(
+						commerceContext.getCPConfigurationListId(
+							cpInstance.getGroupId()),
 						cpInstance, themeDisplay.getLocale())));
 		}
 

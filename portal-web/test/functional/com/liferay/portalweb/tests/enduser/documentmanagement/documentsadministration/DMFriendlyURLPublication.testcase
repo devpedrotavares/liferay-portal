@@ -5,7 +5,6 @@ definition {
 	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.component.names = "Document Management";
 	property testray.main.component.name = "Document Management";
 
 	setUp {
@@ -61,7 +60,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Publications.publishPublication(
 			gotoPublicationsAdmin = "true",
@@ -104,7 +103,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Publications.publishPublication(
 			gotoPublicationsAdmin = "true",

@@ -92,7 +92,8 @@ public class ProductConfigurationListResourceImpl
 
 	@Override
 	public Page<ProductConfigurationList> getProductConfigurationListsPage(
-			String search, Filter filter, Pagination pagination, Sort[] sorts)
+			Long catalogId, String search, Filter filter, Pagination pagination,
+			Sort[] sorts)
 		throws Exception {
 
 		return SearchUtil.search(
@@ -105,15 +106,20 @@ public class ProductConfigurationListResourceImpl
 
 				searchContext.setCompanyId(contextCompany.getCompanyId());
 
-				long[] commerceCatalogGroupIds = transformToLongArray(
-					_commerceCatalogLocalService.search(
-						contextCompany.getCompanyId()),
-					CommerceCatalog::getGroupId);
+				if (GetterUtil.getLong(catalogId) > 0) {
+					CommerceCatalog commerceCatalog =
+						_commerceCatalogLocalService.getCommerceCatalog(
+							catalogId);
 
-				if ((commerceCatalogGroupIds != null) &&
-					(commerceCatalogGroupIds.length > 0)) {
-
-					searchContext.setGroupIds(commerceCatalogGroupIds);
+					searchContext.setGroupIds(
+						new long[] {commerceCatalog.getGroupId()});
+				}
+				else {
+					searchContext.setGroupIds(
+						transformToLongArray(
+							_commerceCatalogLocalService.search(
+								contextCompany.getCompanyId()),
+							CommerceCatalog::getGroupId));
 				}
 			},
 			sorts,
@@ -157,7 +163,7 @@ public class ProductConfigurationListResourceImpl
 				cpConfigurationList.getCPConfigurationListId(),
 				cpConfigurationList.getGroupId(),
 				cpConfigurationList.getParentCPConfigurationListId(),
-				cpConfigurationList.isMasterCPConfigurationList(),
+				cpConfigurationList.isMaster(),
 				GetterUtil.getString(
 					productConfigurationList.getName(),
 					cpConfigurationList.getName()),
@@ -248,9 +254,7 @@ public class ProductConfigurationListResourceImpl
 				GetterUtil.getLong(
 					productConfigurationList.
 						getParentProductConfigurationListId()),
-				GetterUtil.getBoolean(
-					productConfigurationList.
-						getMasterProductConfigurationList()),
+				GetterUtil.getBoolean(productConfigurationList.getMaster()),
 				GetterUtil.getString(productConfigurationList.getName()),
 				GetterUtil.getDouble(productConfigurationList.getPriority()),
 				displayDateConfig.getMonth(), displayDateConfig.getDay(),
@@ -292,7 +296,7 @@ public class ProductConfigurationListResourceImpl
 		return HashMapBuilder.<String, Map<String, String>>put(
 			"delete",
 			() -> {
-				if (cpConfigurationList.isMasterCPConfigurationList()) {
+				if (cpConfigurationList.isMaster()) {
 					return null;
 				}
 

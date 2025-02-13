@@ -70,7 +70,7 @@ definition {
 				pageName = "Display Page Name",
 				pageType = "Display Page Templates");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Add a widget page") {
@@ -137,7 +137,12 @@ definition {
 				pageName = "Display Page Name",
 				pageType = "Display Page Templates");
 
-			PortletEntry.saveAsDraft();
+			WebContent.saveAsDraftWithPermissions();
+
+			AssertTextEquals(
+				key_status = "Draft",
+				locator1 = "WCEditWebContent#WORKFLOW_STATUS",
+				value1 = "Draft");
 		}
 
 		task ("Preview the draft web content") {
@@ -209,7 +214,7 @@ definition {
 				pageName = "Display Page Name",
 				pageType = "Display Page Templates");
 
-			PortletEntry.submitForWorkflow();
+			WebContent.submitForWorkflowWithPermission();
 		}
 
 		task ("Preview the pending web content") {
@@ -340,7 +345,7 @@ definition {
 				pageName = "Display Page Name",
 				pageType = "Display Page Templates");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Preview the web content article") {
@@ -803,7 +808,7 @@ definition {
 				displayPageTemplateType = "None",
 				pageType = "Display Page Templates");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Navigate to the display page template via friendly URL") {
@@ -886,7 +891,7 @@ definition {
 					pageName = "Display Page Name",
 					pageType = "Display Page Templates");
 
-				PortletEntry.publish();
+				WebContent.publishExistingWCArticleWithPermissions();
 			}
 		}
 

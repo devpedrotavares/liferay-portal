@@ -43,6 +43,7 @@ import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.message.boards.service.MBMessageLocalService;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.Criterion;
@@ -801,22 +802,15 @@ public class CalendarBookingLocalServiceImpl
 	public List<CalendarBooking> getRecurringCalendarBookings(
 		CalendarBooking calendarBooking, long startTime) {
 
-		List<CalendarBooking> recurringCalendarBookings =
-			getRecurringCalendarBookings(calendarBooking);
+		return TransformUtil.transform(
+			getRecurringCalendarBookings(calendarBooking),
+			recurringCalendarBooking -> {
+				if (recurringCalendarBooking.getStartTime() > startTime) {
+					return recurringCalendarBooking;
+				}
 
-		List<CalendarBooking> followingRecurringCalendarBookings =
-			new ArrayList<>();
-
-		for (CalendarBooking recurringCalendarBooking :
-				recurringCalendarBookings) {
-
-			if (recurringCalendarBooking.getStartTime() > startTime) {
-				followingRecurringCalendarBookings.add(
-					recurringCalendarBooking);
-			}
-		}
-
-		return followingRecurringCalendarBookings;
+				return null;
+			});
 	}
 
 	@Override
@@ -838,11 +832,7 @@ public class CalendarBookingLocalServiceImpl
 					WorkflowConstants.STATUS_PENDING
 				});
 
-		if (!calendarBookings.isEmpty()) {
-			return true;
-		}
-
-		return false;
+		return !calendarBookings.isEmpty();
 	}
 
 	@Override
@@ -1207,7 +1197,7 @@ public class CalendarBookingLocalServiceImpl
 			(calendar.getGroupId() != calendarBooking.getGroupId())) {
 
 			systemEventLocalService.addSystemEvent(
-				userId, calendarBooking.getGroupId(),
+				userId, calendarBooking.getGroupId(), StringPool.BLANK,
 				CalendarBooking.class.getName(),
 				calendarBooking.getCalendarBookingId(),
 				calendarBooking.getUuid(), null,

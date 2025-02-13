@@ -140,6 +140,31 @@ export type TSort = {
 	label?: string;
 };
 
+export interface IField {
+	actionId?: string;
+	contentRenderer?: string;
+	expand?: boolean;
+	fieldName: string | [];
+	label: string;
+	localizeLabel?: boolean;
+	sortable?: boolean;
+	truncate?: boolean;
+}
+export interface ITableSchema {
+	fields: Array<IField>;
+}
+
+export interface ICardSchema {
+	description: string;
+	image?: string;
+	link?: string;
+	sticker?: string;
+	symbol: string;
+	title: string;
+}
+
+export type ISchema = ITableSchema | ICardSchema;
+
 type TViews = {
 	component?: any;
 	contentRenderer?: string;
@@ -147,7 +172,7 @@ type TViews = {
 	contentRendererModuleURL?: string;
 	label?: string;
 	name?: string;
-	schema?: object;
+	schema?: ISchema;
 	thumbnail?: string;
 };
 
@@ -193,7 +218,7 @@ export interface IFrontendDataSetProps {
 	nestedItemsReferenceKey?: string;
 	onActionDropdownItemClick?: any;
 	onBulkActionItemClick?: any;
-	onSelect?: Function;
+	onSelect?: ({selectedItems}: {selectedItems: Array<any>}) => void;
 	overrideEmptyResultView?: boolean;
 	pagination?: {
 		deltas?: TDelta[];
@@ -225,3 +250,5 @@ export {
 	FDS_NESTED_FIELD_NAME_DELIMITER,
 	FDS_NESTED_FIELD_NAME_PARENT_SUFFIX,
 } from './constants';
+
+export {Card} from './views/cards/Cards';

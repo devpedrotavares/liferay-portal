@@ -1,4 +1,4 @@
-@component-name = "data-engine"
+@component-name = "portal-bpm"
 definition {
 
 	property portal.release = "true";
@@ -185,7 +185,7 @@ definition {
 			webContentText = "This is Text Field",
 			webContentTitle = "WC Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentNumeric = 12345,
@@ -290,7 +290,7 @@ definition {
 			webContentTextFieldLabel = "Edited Text",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentColor = "FF0D0D",
@@ -313,7 +313,7 @@ definition {
 			webContentText = "This is a Text field - edited",
 			webContentTextFieldLabel = "Edited Text");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentColor = "7F26FF",
@@ -631,7 +631,7 @@ definition {
 			}
 		}
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentText = "This is a Text field - 1",
@@ -657,7 +657,7 @@ definition {
 			}
 		}
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentText = "This is a Text field - 1",
@@ -676,7 +676,7 @@ definition {
 
 		WebContent.removeDuplicatedFieldsGroup(index = 1);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -710,7 +710,7 @@ definition {
 				value = "This is a Text field - ${labelCount}");
 		}
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentText = "This is a Text field - 1",
@@ -735,7 +735,7 @@ definition {
 
 		WebContent.removeDuplicatedFieldsGroup(index = 2);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContent.viewWithStructureCP(
 			webContentText = "This is a Text field - 1",
@@ -926,7 +926,7 @@ definition {
 				index = 2,
 				value = 2);
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When the user re-orders the repeatable fields groups using drag and drop") {
@@ -941,7 +941,7 @@ definition {
 				locator1 = "DDMEditStructure#FORM_FIELD_CONTAINER_LABEL_ANY",
 				locator2 = "DDMEditStructure#FORM_FIELD_GROUP_TARGET_SPACE");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Then the field groups are re-ordered") {
@@ -1022,7 +1022,7 @@ definition {
 
 		DataEngine.addRepeatableField(fieldLabel = "Fields Group");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
 

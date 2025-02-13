@@ -104,10 +104,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		com.liferay.portal.kernel.model.User testCompanyAdminUser =
 			UserTestUtil.getAdminUser(testCompany.getCompanyId());
 
-		ProductConfigurationResource.Builder builder =
-			ProductConfigurationResource.builder();
-
-		productConfigurationResource = builder.authentication(
+		productConfigurationResource = ProductConfigurationResource.builder(
+		).authentication(
 			testCompanyAdminUser.getEmailAddress(),
 			PropsValues.DEFAULT_ADMIN_PASSWORD
 		).endpoint(
@@ -178,6 +176,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			randomProductConfiguration();
 
 		productConfiguration.setEntityExternalReferenceCode(regex);
+		productConfiguration.setEntityName(regex);
 		productConfiguration.setExternalReferenceCode(regex);
 		productConfiguration.setInventoryEngine(regex);
 		productConfiguration.setLowStockAction(regex);
@@ -190,6 +189,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 
 		Assert.assertEquals(
 			regex, productConfiguration.getEntityExternalReferenceCode());
+		Assert.assertEquals(regex, productConfiguration.getEntityName());
 		Assert.assertEquals(
 			regex, productConfiguration.getExternalReferenceCode());
 		Assert.assertEquals(regex, productConfiguration.getInventoryEngine());
@@ -208,8 +208,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> page =
 			productConfigurationResource.
 				getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-					externalReferenceCode, null, null, Pagination.of(1, 10),
-					null);
+					externalReferenceCode, null, null, null,
+					Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -222,7 +222,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			page =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						irrelevantExternalReferenceCode, null, null,
+						irrelevantExternalReferenceCode, null, null, null,
 						Pagination.of(1, (int)totalCount + 1), null);
 
 			Assert.assertEquals(totalCount + 1, page.getTotalCount());
@@ -247,8 +247,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		page =
 			productConfigurationResource.
 				getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-					externalReferenceCode, null, null, Pagination.of(1, 10),
-					null);
+					externalReferenceCode, null, null, null,
+					Pagination.of(1, 10), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -303,7 +303,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null,
+						externalReferenceCode, null, null,
 						getFilterString(
 							entityField, "between", productConfiguration1),
 						Pagination.of(1, 2), null);
@@ -373,7 +373,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null,
+						externalReferenceCode, null, null,
 						getFilterString(
 							entityField, operator, productConfiguration1),
 						Pagination.of(1, 2), null);
@@ -394,7 +394,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> productConfigurationPage =
 			productConfigurationResource.
 				getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-					externalReferenceCode, null, null, null, null);
+					externalReferenceCode, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(
 			productConfigurationPage.getTotalCount());
@@ -419,7 +419,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page1 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -434,7 +434,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page2 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -447,7 +447,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page3 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -461,7 +461,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page1 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(1, totalCount + 2), null);
 
 			List<ProductConfiguration> productConfigurations1 =
@@ -474,7 +474,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page2 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(2, totalCount + 2), null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
@@ -489,7 +489,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page3 =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(1, (int)totalCount + 3), null);
 
 			assertContains(
@@ -636,13 +636,13 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> page =
 			productConfigurationResource.
 				getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-					externalReferenceCode, null, null, null, null);
+					externalReferenceCode, null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<ProductConfiguration> ascPage =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(1, (int)page.getTotalCount() + 1),
 						entityField.getName() + ":asc");
 
@@ -656,7 +656,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> descPage =
 				productConfigurationResource.
 					getProductConfigurationListByExternalReferenceCodeProductConfigurationsPage(
-						externalReferenceCode, null, null,
+						externalReferenceCode, null, null, null,
 						Pagination.of(1, (int)page.getTotalCount() + 1),
 						entityField.getName() + ":desc");
 
@@ -730,7 +730,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> page =
 			productConfigurationResource.
 				getProductConfigurationListIdProductConfigurationsPage(
-					id, null, null, Pagination.of(1, 10), null);
+					id, null, null, null, Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -742,7 +742,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			page =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						irrelevantId, null, null,
+						irrelevantId, null, null, null,
 						Pagination.of(1, (int)totalCount + 1), null);
 
 			Assert.assertEquals(totalCount + 1, page.getTotalCount());
@@ -767,7 +767,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		page =
 			productConfigurationResource.
 				getProductConfigurationListIdProductConfigurationsPage(
-					id, null, null, Pagination.of(1, 10), null);
+					id, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -822,7 +822,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null,
+						id, null, null,
 						getFilterString(
 							entityField, "between", productConfiguration1),
 						Pagination.of(1, 2), null);
@@ -892,7 +892,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null,
+						id, null, null,
 						getFilterString(
 							entityField, operator, productConfiguration1),
 						Pagination.of(1, 2), null);
@@ -913,7 +913,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> productConfigurationPage =
 			productConfigurationResource.
 				getProductConfigurationListIdProductConfigurationsPage(
-					id, null, null, null, null);
+					id, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(
 			productConfigurationPage.getTotalCount());
@@ -938,7 +938,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page1 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null,
+						id, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -953,7 +953,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page2 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null,
+						id, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -966,7 +966,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page3 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null,
+						id, null, null, null,
 						Pagination.of(
 							(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 							pageSizeLimit),
@@ -980,7 +980,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page1 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null, Pagination.of(1, totalCount + 2), null);
+						id, null, null, null, Pagination.of(1, totalCount + 2),
+						null);
 
 			List<ProductConfiguration> productConfigurations1 =
 				(List<ProductConfiguration>)page1.getItems();
@@ -992,7 +993,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page2 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null, Pagination.of(2, totalCount + 2), null);
+						id, null, null, null, Pagination.of(2, totalCount + 2),
+						null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
 
@@ -1006,8 +1008,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> page3 =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null, Pagination.of(1, (int)totalCount + 3),
-						null);
+						id, null, null, null,
+						Pagination.of(1, (int)totalCount + 3), null);
 
 			assertContains(
 				productConfiguration1,
@@ -1153,13 +1155,13 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		Page<ProductConfiguration> page =
 			productConfigurationResource.
 				getProductConfigurationListIdProductConfigurationsPage(
-					id, null, null, null, null);
+					id, null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<ProductConfiguration> ascPage =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null,
+						id, null, null, null,
 						Pagination.of(1, (int)page.getTotalCount() + 1),
 						entityField.getName() + ":asc");
 
@@ -1173,7 +1175,7 @@ public abstract class BaseProductConfigurationResourceTestCase {
 			Page<ProductConfiguration> descPage =
 				productConfigurationResource.
 					getProductConfigurationListIdProductConfigurationsPage(
-						id, null, null,
+						id, null, null, null,
 						Pagination.of(1, (int)page.getTotalCount() + 1),
 						entityField.getName() + ":desc");
 
@@ -2168,6 +2170,14 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("differences", additionalAssertFieldName)) {
+				if (productConfiguration.getDifferences() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals(
 					"displayAvailability", additionalAssertFieldName)) {
 
@@ -2202,6 +2212,14 @@ public abstract class BaseProductConfigurationResourceTestCase {
 
 			if (Objects.equals("entityId", additionalAssertFieldName)) {
 				if (productConfiguration.getEntityId() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("entityName", additionalAssertFieldName)) {
+				if (productConfiguration.getEntityName() == null) {
 					valid = false;
 				}
 
@@ -2270,6 +2288,45 @@ public abstract class BaseProductConfigurationResourceTestCase {
 					"multipleOrderQuantity", additionalAssertFieldName)) {
 
 				if (productConfiguration.getMultipleOrderQuantity() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"productShippingConfiguration",
+					additionalAssertFieldName)) {
+
+				if (productConfiguration.getProductShippingConfiguration() ==
+						null) {
+
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"productTaxConfiguration", additionalAssertFieldName)) {
+
+				if (productConfiguration.getProductTaxConfiguration() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("purchasable", additionalAssertFieldName)) {
+				if (productConfiguration.getPurchasable() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("visible", additionalAssertFieldName)) {
+				if (productConfiguration.getVisible() == null) {
 					valid = false;
 				}
 
@@ -2461,6 +2518,17 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("differences", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						productConfiguration1.getDifferences(),
+						productConfiguration2.getDifferences())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals(
 					"displayAvailability", additionalAssertFieldName)) {
 
@@ -2505,6 +2573,17 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				if (!Objects.deepEquals(
 						productConfiguration1.getEntityId(),
 						productConfiguration2.getEntityId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("entityName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						productConfiguration1.getEntityName(),
+						productConfiguration2.getEntityName())) {
 
 					return false;
 				}
@@ -2608,6 +2687,56 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				if (!Objects.deepEquals(
 						productConfiguration1.getMultipleOrderQuantity(),
 						productConfiguration2.getMultipleOrderQuantity())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"productShippingConfiguration",
+					additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						productConfiguration1.getProductShippingConfiguration(),
+						productConfiguration2.
+							getProductShippingConfiguration())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"productTaxConfiguration", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						productConfiguration1.getProductTaxConfiguration(),
+						productConfiguration2.getProductTaxConfiguration())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("purchasable", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						productConfiguration1.getPurchasable(),
+						productConfiguration2.getPurchasable())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("visible", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						productConfiguration1.getVisible(),
+						productConfiguration2.getVisible())) {
 
 					return false;
 				}
@@ -2748,6 +2877,11 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("differences")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("displayAvailability")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -2808,6 +2942,52 @@ public abstract class BaseProductConfigurationResourceTestCase {
 		if (entityFieldName.equals("entityId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("entityName")) {
+			Object object = productConfiguration.getEntityName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("entityType")) {
@@ -2978,6 +3158,26 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("productShippingConfiguration")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("productTaxConfiguration")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("purchasable")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("visible")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		throw new IllegalArgumentException(
 			"Invalid entity field " + entityFieldName);
 	}
@@ -3032,6 +3232,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 				entityExternalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				entityId = RandomTestUtil.randomLong();
+				entityName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				externalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
@@ -3039,6 +3241,8 @@ public abstract class BaseProductConfigurationResourceTestCase {
 					RandomTestUtil.randomString());
 				lowStockAction = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
+				purchasable = RandomTestUtil.randomBoolean();
+				visible = RandomTestUtil.randomBoolean();
 			}
 		};
 	}

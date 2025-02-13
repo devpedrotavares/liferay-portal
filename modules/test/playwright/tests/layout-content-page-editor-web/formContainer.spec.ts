@@ -6,6 +6,7 @@
 import {
 	ObjectDefinitionApi,
 	ObjectField,
+	ObjectFieldApi,
 	ObjectValidationRule,
 	ObjectValidationRuleApi,
 } from '@liferay/object-admin-rest-client-js';
@@ -17,13 +18,16 @@ import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {displayPageTemplatesPagesTest} from '../../fixtures/displayPageTemplatesPagesTest';
 import {documentLibraryPagesTest} from '../../fixtures/documentLibraryPages.fixtures';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
+import {masterPagesPagesTest} from '../../fixtures/masterPagesPagesTest';
 import {objectPagesTest} from '../../fixtures/objectPagesTest';
 import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
 import {pageManagementSiteTest} from '../../fixtures/pageManagementSiteTest';
 import {PageEditorPage} from '../../pages/layout-content-page-editor-web/PageEditorPage';
 import {clickAndExpectToBeHidden} from '../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
+import {expandSection} from '../../utils/expandSection';
 import fillAndClickOutside from '../../utils/fillAndClickOutside';
 import getRandomString from '../../utils/getRandomString';
 import {waitForAlert} from '../../utils/waitForAlert';
@@ -41,11 +45,15 @@ const test = mergeTests(
 	displayPageTemplatesPagesTest,
 	documentLibraryPagesTest,
 	featureFlagsTest({
-		'LPD-10727': true,
-		'LPD-37927': true,
-		'LPS-178052': true,
+		'LPD-31772': {enabled: true},
+		'LPD-32050': {enabled: true},
+		'LPD-37927': {enabled: true},
+		'LPD-46393': {enabled: true},
+		'LPS-178052': {enabled: true},
 	}),
+	isolatedSiteTest,
 	loginTest(),
+	masterPagesPagesTest,
 	objectPagesTest,
 	pageEditorPagesTest,
 	pageManagementSiteTest
@@ -151,7 +159,7 @@ test.describe('Form Configuration', () => {
 	test(
 		'Show success message only one time',
 		{
-			tag: '@LPD-37435',
+			tag: ['@LPD-37435', '@LPS-188036'],
 		},
 		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
 
@@ -247,6 +255,269 @@ test.describe('Form Configuration', () => {
 				expect(firstAlertDisappears).toBe(true);
 				expect(moreAlertsAppear).toBe(false);
 			}).toPass();
+		}
+	);
+
+	test(
+		'Success notification with toast message must be compatible with go to entry display page redirect option',
+		{
+			tag: '@LPS-188036',
+		},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a default display page for lemon object
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon')
+				)
+			).body;
+
+			const className =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					objectDefinitionClassName
+				);
+
+			const displayPage =
+				await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
+					{
+						classNameId: className.classNameId,
+						groupId: pageManagementSite.id,
+						name: getRandomString(),
+					}
+				);
+
+			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.markAsDefaultDisplayPageLayoutPageTemplateEntry(
+				{
+					layoutPageTemplateEntryId:
+						displayPage.layoutPageTemplateEntryId,
+				}
+			);
+
+			// Create a page with a form fragment
+
+			const formId = getRandomString();
+
+			const textDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_lemonSize',
+				},
+				id: getRandomString(),
+				key: 'INPUTS-text-input',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+				objectDefinitionClassName,
+				pageElements: [textDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode and change form configuration
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Success Action',
+				fragmentId: formId,
+				tab: 'General',
+				value: 'Go to Entry Display Page',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Display Page',
+				fragmentId: formId,
+				tab: 'General',
+				value: 'Default',
+			});
+
+			await page
+				.getByLabel('Show Notification After Submit', {exact: true})
+				.check();
+
+			await page
+				.getByLabel('Success Notification Text', {exact: true})
+				.fill('Request received correctly');
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Assert form is not redirected if there are validation errors
+
+			const input = page.getByRole('textbox', {name: 'Lemon Size'});
+
+			await input.click();
+
+			await page.keyboard.type('a'.repeat(290));
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			await expect(
+				page.getByText(
+					'Value exceeds maximum length of 280 for field Lemon Size.'
+				)
+			).toBeVisible();
+
+			// Clear input and assert success notification
+
+			await input.clear();
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			await waitForAlert(page, 'Request received correctly');
+
+			// Delete the display page
+
+			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.deleteLayoutPageTemplateEntry(
+				{
+					layoutPageTemplateEntryId:
+						displayPage.layoutPageTemplateEntryId,
+				}
+			);
+		}
+	);
+
+	test(
+		'Form Fragment redirect to correct success page',
+		{tag: '@LPS-155529'},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Create a success page with a heading fragment
+
+			const successLayoutTitle = getRandomString();
+
+			const succesLayout =
+				await apiHelpers.headlessDelivery.createSitePage({
+					pageDefinition: getPageDefinition([
+						getFragmentDefinition({
+							fragmentFields: [
+								{
+									id: 'element-text',
+									value: {
+										text: {
+											value_i18n: {
+												en_US: 'Success Page',
+											},
+										},
+									},
+								},
+							],
+							id: getRandomString(),
+							key: 'BASIC_COMPONENT-heading',
+						}),
+					]),
+					siteId: pageManagementSite.id,
+					title: successLayoutTitle,
+				});
+
+			// Go to edit mode and map the form to Lemon object
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await pageEditorPage.mapFormFragment(formId, 'Lemon', [
+				'Lemon Weight',
+			]);
+
+			// Change the success action to go to the success page
+
+			await pageEditorPage.selectFragment(formId);
+
+			await pageEditorPage.changeConfiguration({
+				fieldLabel: 'Success Action',
+				tab: 'General',
+				value: 'Go to Page',
+			});
+
+			const layoutTreeItem = page
+				.frameLocator('iframe[title="Select"]')
+				.getByLabel(successLayoutTitle);
+
+			await clickAndExpectToBeVisible({
+				target: layoutTreeItem,
+				timeout: 3000,
+				trigger: page.getByLabel('Select Page', {exact: true}),
+			});
+
+			await clickAndExpectToBeHidden({
+				target: page.locator('.modal-dialog'),
+				trigger: layoutTreeItem,
+			});
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode and submit form
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page.getByLabel('Lemon Weight', {exact: true}).fill('100');
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			// Assert that the success page is displayed
+
+			await expect(page.getByText('Success Page')).toBeVisible();
+
+			// Delete the success page
+
+			await apiHelpers.jsonWebServicesLayout.deleteLayout(
+				succesLayout.id
+			);
+
+			// Publish the form again and check that the default message is displayed
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page.getByLabel('Lemon Weight', {exact: true}).fill('100');
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
 		}
 	);
 });
@@ -849,7 +1120,7 @@ test.describe('Date and Time Fragment', () => {
 
 			// Check the date and time of the object entry
 
-			const row = page.locator('.dnd-tbody .dnd-tr').first();
+			const row = page.locator('.fds tbody tr').first();
 
 			await expect(row).toContainText('Oct 10, 2022, 10:10 AM');
 		}
@@ -1413,150 +1684,1473 @@ test.describe('File Upload Fragment', () => {
 });
 
 test.describe('Form Localization', () => {
-	test('Can translate form fields', async ({
-		apiHelpers,
-		page,
-		pageEditorPage,
-		pageManagementSite,
-	}) => {
+	test(
+		'Can translate text form fields',
+		{tag: '@LPD-37927'},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
 
-		// Create a page with a Form fragment and a Localization Select fragment
+			// Create a page with a Form fragment
 
-		const fragmentDefinition = getFragmentDefinition({
-			id: getRandomString(),
-			key: 'localization-select',
-		});
+			const formId = getRandomString();
 
-		const formId = getRandomString();
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
 
-		const formDefinition = getFormContainerDefinition({
-			id: formId,
-		});
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
 
-		const layout = await apiHelpers.headlessDelivery.createSitePage({
-			pageDefinition: getPageDefinition([
-				fragmentDefinition,
-				formDefinition,
-			]),
-			siteId: pageManagementSite.id,
-			title: getRandomString(),
-		});
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
 
-		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+			// Map the form to the All Fields object and publish the page
 
-		// Map the form to the All Fields object and publish the page
+			await pageEditorPage.mapFormFragment(formId, 'All Fields', 'all', {
+				addLocalizationSelect: true,
+			});
 
-		await pageEditorPage.mapFormFragment(formId, 'All Fields');
+			await expect(
+				page.locator('[data-name="Localization Select"]')
+			).toBeAttached();
 
-		await pageEditorPage.publishPage();
+			await pageEditorPage.publishPage();
 
-		// Go to view mode and fill the form
+			// Go to view mode and fill the form
 
-		await page.goto(
-			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
-		);
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
 
-		await page.locator('iframe[title="editor"]').waitFor();
+			await page.locator('iframe[title="editor"]').waitFor();
 
-		await page.getByLabel('Long Text').fill('long text english');
+			await page.getByLabel('Long Text').fill('long text english');
 
-		await page.getByLabel('Text', {exact: true}).fill('text english');
-		await page.evaluate(() =>
-			(window as any).CKEDITOR.instances['richText'].setData(
-				'rich text english'
-			)
-		);
+			await page
+				.getByRole('textbox', {exact: true, name: 'Text'})
+				.fill('text english');
 
-		// Add translations and check translation status
+			await page.evaluate(() => {
+				Object.values((window as any).CKEDITOR.instances).forEach(
+					(editor: any) => editor.setData('rich text english')
+				);
+			});
 
-		const translationSelector = page.getByLabel(
-			'Select a language, current language:'
-		);
+			// Add translations and check translation status
 
-		await translationSelector.click();
+			const translationSelector = page.getByLabel(
+				'Select a language, current language:'
+			);
 
-		const option = page.getByRole('option', {
-			name: 'español (España) Language',
-		});
+			await translationSelector.click();
 
-		await expect(option).toContainText(/Not Translated/);
+			const option = page.getByRole('option', {
+				name: 'Spanish (Spain) Language',
+			});
 
-		await option.click();
+			await expect(option).toContainText(/Not Translated/);
 
-		await page.getByLabel('Long Text').fill('long text español');
+			await option.click();
 
-		await page.getByLabel('Text', {exact: true}).fill('text español');
+			await page.getByLabel('Long Text').fill('long text español');
 
-		await translationSelector.click();
+			await page
+				.getByRole('textbox', {exact: true, name: 'Text'})
+				.fill('text español');
 
-		await expect(option).toContainText(/Translating 2\/3/);
+			await translationSelector.click();
 
-		await option.click();
+			await expect(option).toContainText(/Translating 2\/3/);
 
-		await page.evaluate(() =>
-			(window as any).CKEDITOR.instances['richText'].setData(
-				'rich text español'
-			)
-		);
+			await option.click();
 
-		await translationSelector.click();
+			await page.evaluate(() => {
+				Object.values((window as any).CKEDITOR.instances).forEach(
+					(editor: any) => editor.setData('rich text español')
+				);
+			});
 
-		await expect(option).toContainText(/Translated/);
+			await translationSelector.click();
 
-		await option.click();
+			await expect(option).toContainText(/Translated/);
 
-		// Publish the form
+			await option.click();
 
-		await page.getByRole('button', {name: 'Submit'}).click();
+			// Publish the form
 
-		await expect(
-			page.getByText(
-				'Thank you. Your information was successfully received.'
-			)
-		).toBeVisible();
+			await page.getByRole('button', {name: 'Submit'}).click();
 
-		// Go to custom object admin an check the values
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
 
-		await goToObjectEntity({
-			entityName: 'All Fields',
+			// Go to custom object admin an check the values
+
+			await goToObjectEntity({
+				entityName: 'All Fields',
+				page,
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {
+					exact: true,
+					name: 'View',
+				}),
+				trigger: page
+					.locator('.fds tbody .cell-item-actions .dropdown-toggle')
+					.last(),
+			});
+
+			await page.getByRole('textbox', {name: 'Long Text'}).waitFor();
+
+			await expect(page.getByText('long text english')).toBeVisible();
+			await expect(
+				page
+					.frameLocator('iframe[title="editor"]')
+					.getByText('rich text english')
+			).toBeVisible();
+
+			await expect(page.locator('input.ddm-field-text')).toHaveValue(
+				'text english'
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {
+					name: 'Español',
+				}),
+				trigger: page.getByTestId('triggerButton').first(),
+			});
+
+			await expect(page.getByText('long text español')).toBeVisible();
+			await expect(
+				page
+					.frameLocator('iframe[title="editor"]')
+					.getByText('rich text español')
+			).toBeVisible();
+			await expect(page.locator('input.ddm-field-text')).toHaveValue(
+				'text español'
+			);
+		}
+	);
+
+	test(
+		'Can translate numeric form fields',
+		{tag: '@LPD-43808'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'numericERC',
+					label: {
+						en_US: 'Numeric',
+					},
+					name: 'Numeric',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.Long,
+							businessType:
+								ObjectField.BusinessTypeEnum.LongInteger,
+							externalReferenceCode: 'longIntegerERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Long Integer',
+							},
+							localized: true,
+							name: 'longInteger',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Integer,
+							businessType: ObjectField.BusinessTypeEnum.Integer,
+							externalReferenceCode: 'integerERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Integer',
+							},
+							localized: true,
+							name: 'integer',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.BigDecimal,
+							businessType:
+								ObjectField.BusinessTypeEnum.PrecisionDecimal,
+							externalReferenceCode: 'precisionDecimalERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Precision Decimal',
+							},
+							localized: true,
+							name: 'precisionDecimal',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Double,
+							businessType: ObjectField.BusinessTypeEnum.Decimal,
+							externalReferenceCode: 'decimalERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Decimal',
+							},
+							localized: true,
+							name: 'decimal',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Numerics',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Plant object and publish the page
+
+			await pageEditorPage.mapFormFragment(formId, 'Numeric', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page
+				.getByLabel('Long Integer', {exact: true})
+				.fill('11111111111');
+			await page.getByLabel('Integer', {exact: true}).fill('1111');
+			await page
+				.getByLabel('Precision Decimal', {exact: true})
+				.fill('111.11');
+			await page.getByLabel('Decimal', {exact: true}).fill('1111.22222');
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await page
+				.getByLabel('Long Integer', {exact: true})
+				.fill('22222222222');
+			await page.getByLabel('Integer', {exact: true}).fill('2222');
+			await page
+				.getByLabel('Precision Decimal', {exact: true})
+				.fill('222.22');
+			await page.getByLabel('Decimal', {exact: true}).fill('2222.33333');
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/numerics'
+				);
+
+			const item = items[0];
+
+			expect(item.precisionDecimal_i18n).toStrictEqual({
+				en_US: 111.11,
+				es_ES: 222.22,
+			});
+
+			expect(item.decimal_i18n).toStrictEqual({
+				en_US: 1111.22222,
+				es_ES: 2222.33333,
+			});
+
+			expect(item.integer_i18n).toStrictEqual({
+				en_US: 1111,
+				es_ES: 2222,
+			});
+
+			expect(item.longInteger_i18n).toStrictEqual({
+				en_US: 11111111111,
+				es_ES: 22222222222,
+			});
+		}
+	);
+
+	test(
+		'Can translate checkbox form field',
+		{tag: '@LPD-46483'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition with a localized boolean
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'booleanERC',
+					label: {
+						en_US: 'Boolean',
+					},
+					name: 'Boolean',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.Boolean,
+							businessType: ObjectField.BusinessTypeEnum.Boolean,
+							externalReferenceCode: 'legalThingsERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Legal Things',
+							},
+							localized: true,
+							name: 'legalThings',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Booleans',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Boolean object
+
+			await pageEditorPage.mapFormFragment(formId, 'Boolean', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page.getByLabel('Legal Things').check();
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await page.getByLabel('Legal Things').uncheck();
+
+			// Check the translation in the localization select
+
+			await page
+				.getByLabel('Select a language, current language:')
+				.click();
+
+			expect(
+				page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				})
+			).toContainText(/Translated/);
+
+			await page.keyboard.press('Escape');
+
+			// Save the form and publish the page
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/booleans'
+				);
+
+			const item = items[0];
+
+			expect(item.legalThings_i18n).toStrictEqual({
+				en_US: true,
+				es_ES: false,
+			});
+		}
+	);
+
+	test(
+		'Can translate select form field',
+		{tag: '@LPD-46485'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition with a localized select
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			const options = ['Spain', 'Italy', 'Germany', 'Brasil'];
+
+			for (const option of options) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					option
+				);
+			}
+
+			const {body: objectDefinition} =
+				await objectDefinitionApiClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'SelectERC',
+					label: {
+						en_US: 'Select',
+					},
+					name: 'Select',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Picklist,
+							externalReferenceCode: 'selectCountryERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Select a Country',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: true,
+							name: 'selectCountry',
+							required: false,
+						},
+					],
+					panelCategoryKey: 'control_panel.object',
+					pluralLabel: {
+						en_US: 'Select',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Boolean object
+
+			await pageEditorPage.mapFormFragment(formId, 'Select', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Italy',
+				}),
+				trigger: page.getByPlaceholder('Choose an Option'),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Germany',
+				}),
+				trigger: page.getByPlaceholder('Choose an Option'),
+			});
+
+			// Check the translation in the localization select
+
+			await page
+				.getByLabel('Select a language, current language:')
+				.click();
+
+			expect(
+				page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				})
+			).toContainText(/Translated/);
+
+			await page.keyboard.press('Escape');
+
+			// Save the form and publish the page
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/selects'
+				);
+
+			const item = items[0];
+
+			expect(item.selectCountry_i18n).toStrictEqual({
+				en_US: {key: 'italy', name: 'Italy'},
+				es_ES: {key: 'germany', name: 'Germany'},
+			});
+		}
+	);
+
+	test(
+		'Can translate date and date time form fields',
+		{tag: '@LPD-43805'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'calendarERC',
+					label: {
+						en_US: 'Calendar',
+					},
+					name: 'Calendar',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.Date,
+							businessType: ObjectField.BusinessTypeEnum.Date,
+							externalReferenceCode: 'dateERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Date',
+							},
+							localized: true,
+							name: 'date',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.DateTime,
+							businessType: ObjectField.BusinessTypeEnum.DateTime,
+							externalReferenceCode: 'dateTimeERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Date Time',
+							},
+							localized: true,
+							name: 'dateTime',
+							objectFieldSettings: [
+								{
+									name: 'timeStorage',
+									value: 'convertToUTC',
+								} as any,
+							],
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Calendars',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Calendar object and publish the page
+
+			await pageEditorPage.mapFormFragment(formId, 'Calendar', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode and fill the form
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Fill the form in spanish
+
+			await fillAndClickOutside(
+				page,
+				page.getByLabel('Date', {exact: true}),
+				'1970-01-01'
+			);
+
+			await fillAndClickOutside(
+				page,
+				page.getByLabel('Date Time', {exact: true}),
+				'1971-01-01T00:00'
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await fillAndClickOutside(
+				page,
+				page.getByLabel('Date', {exact: true}),
+				'1970-01-02'
+			);
+			await fillAndClickOutside(
+				page,
+				page.getByLabel('Date Time', {exact: true}),
+				'1971-01-02T01:01'
+			);
+
+			// Submit the form
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/calendars'
+				);
+
+			const item = items[0];
+
+			expect(item.date_i18n).toStrictEqual({
+				en_US: '1970-01-01T00:00:00.000Z',
+				es_ES: '1970-01-02T00:00:00.000Z',
+			});
+
+			expect(item.dateTime_i18n).toStrictEqual({
+				en_US: '1971-01-01T00:00:00.000Z',
+				es_ES: '1971-01-02T01:01:00.000Z',
+			});
+		}
+	);
+
+	test(
+		'Shows a warning modal when the page is published and there is a Localization Select fragment but no localizable fields',
+		{tag: '@LPD-37927'},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a page with a Form fragment and Localication Select
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const localizationSelectDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'localization-select',
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					localizationSelectDefinition,
+					formDefinition,
+				]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Map the form to the All Fields, only the Boolean field
+
+			await pageEditorPage.mapFormFragment(formId, 'All Fields', [
+				'Boolean',
+			]);
+
+			// Publish and check the warning modal
+
+			await pageEditorPage.publishButton.click();
+
+			await expect(
+				page.getByText('Localizable Fields Hidden or Missing')
+			).toBeVisible();
+		}
+	);
+
+	test(
+		'Set unlocalized fields to disabled or readonly when changing language',
+		{tag: '@LPD-37927'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition
+
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			for (const option of ['Spain', 'Italy']) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					option
+				);
+			}
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'plantERC',
+					label: {
+						en_US: 'Plant',
+					},
+					name: 'Plant',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Text,
+							externalReferenceCode: 'countryERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Country',
+							},
+							localized: false,
+							name: 'country',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Clob,
+							businessType: ObjectField.BusinessTypeEnum.RichText,
+							externalReferenceCode: 'descriptionERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Description',
+							},
+							localized: false,
+							name: 'description',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Text,
+							externalReferenceCode: 'nameERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Name',
+							},
+							localized: true,
+							name: 'name',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Clob,
+							businessType: ObjectField.BusinessTypeEnum.LongText,
+							externalReferenceCode: 'scientificName',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Scientific Name',
+							},
+							localized: false,
+							name: 'scientificName',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Boolean,
+							businessType: ObjectField.BusinessTypeEnum.Boolean,
+							externalReferenceCode: 'evergreen',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Evergreen',
+							},
+							localized: false,
+							name: 'evergreen',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Picklist,
+							externalReferenceCode: 'selectOriginERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Select Origin',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: false,
+							name: 'selectOrigin',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Plants',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Plant object and publish the page
+
+			await pageEditorPage.mapFormFragment(formId, 'Plant', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Change the translation language to spanish
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			// Check the tooltip when the unlocalized fields are disabled
+
+			await expect(
+				page.getByLabel('Evergreen field cannot be localized')
+			).toBeVisible();
+
+			await expect(
+				page.getByLabel('Country field cannot be localized')
+			).toBeVisible();
+
+			await expect(
+				page.getByLabel('Description field cannot be localized')
+			).toBeVisible();
+
+			await expect(
+				page.getByLabel('Scientific Name field cannot be localized')
+			).toBeVisible();
+
+			await expect(
+				page.getByLabel('Select Origin field cannot be localized')
+			).toBeVisible();
+
+			// Check that unlocalized fields are disabled
+
+			await expect(
+				page.getByRole('checkbox', {
+					name: 'Evergreen',
+				})
+			).toBeDisabled();
+
+			await expect(
+				page.getByRole('textbox', {name: 'Country'})
+			).toBeDisabled();
+
+			await expect(
+				page
+					.locator('.rich-text-input', {
+						hasText: 'Description',
+					})
+					.frameLocator('iframe[title="editor"]')
+					.locator('body')
+			).toHaveAttribute('aria-disabled', 'true');
+
+			await expect(
+				page.locator('.rich-text-input--disabled')
+			).toBeAttached();
+
+			await expect(
+				page.getByRole('textbox', {name: 'Scientific Name'})
+			).toBeDisabled();
+
+			await expect(
+				page.getByPlaceholder('Choose an option')
+			).toBeDisabled();
+
+			// Check that the read only labels are not visibles
+
+			const checkboxReadOnlyLabel = page
+				.getByText('Evergreen')
+				.getByText('(Read Only)');
+
+			const inputTextReadOnlyLabel = page
+				.getByText('Country')
+				.getByText('(Read Only)');
+
+			const textareaReadOnlyLabel = page
+				.getByText('Scientific Name')
+				.getByText('(Read Only)');
+
+			const selectReadOnlyLabel = page
+				.getByText('Select Origin')
+				.getByText('(Read Only)');
+
+			await expect(checkboxReadOnlyLabel).not.toBeVisible();
+			await expect(inputTextReadOnlyLabel).not.toBeVisible();
+			await expect(textareaReadOnlyLabel).not.toBeVisible();
+			await expect(selectReadOnlyLabel).not.toBeVisible();
+
+			// Go to edit mode and change unlocalized field configuration to read only
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			await pageEditorPage.selectFragment(
+				await pageEditorPage.getFragmentId('Form Container')
+			);
+
+			await pageEditorPage.changeConfiguration({
+				fieldLabel: 'Unlocalizable Fields State',
+				tab: 'General',
+				value: 'read-only',
+			});
+
+			await pageEditorPage.changeConfiguration({
+				fieldLabel: 'Unlocalizable Fields Message',
+				tab: 'General',
+				value: 'field is not localizable message',
+			});
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode and check that the config is applied
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			// Check the read only unlocalized fields
+
+			await expect(
+				page.getByLabel('field is not localizable message')
+			).toHaveCount(5);
+
+			await expect(checkboxReadOnlyLabel).toBeVisible();
+			await expect(inputTextReadOnlyLabel).toBeVisible();
+			await expect(textareaReadOnlyLabel).toBeVisible();
+			await expect(selectReadOnlyLabel).toBeVisible();
+
+			await expect(page.getByLabel('Country')).toHaveAttribute(
+				'readonly'
+			);
+
+			await expect(
+				page
+					.locator('.rich-text-input', {
+						hasText: 'Description (Read Only)',
+					})
+					.frameLocator('iframe')
+					.locator('body')
+			).toHaveAttribute('aria-readonly', 'true');
+
+			await expect(page.getByLabel('Scientific Name')).toHaveAttribute(
+				'readonly'
+			);
+
+			await expect(page.getByLabel('Select Origin')).toHaveAttribute(
+				'readonly'
+			);
+		}
+	);
+
+	test(
+		'Can visualize and edit translations',
+		{tag: '@LPD-37927'},
+		async ({
+			apiHelpers,
+			displayPageTemplatesPage,
 			page,
-		});
+			pageEditorPage,
+			site,
+		}) => {
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('menuitem', {
+			// Create an object with translations
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionApiClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'translationFieldsGroupERC',
+					label: {
+						en_US: 'Translation Fields Group',
+					},
+					name: 'TranslationFieldsGroup',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.Clob,
+							businessType: ObjectField.BusinessTypeEnum.RichText,
+							externalReferenceCode: 'richTextERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Rich Text',
+							},
+							localized: true,
+							name: 'richText',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Clob,
+							businessType: ObjectField.BusinessTypeEnum.LongText,
+							externalReferenceCode: 'longTextERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Long Text',
+							},
+							localized: true,
+							name: 'longText',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Text,
+							externalReferenceCode: 'text',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Text',
+							},
+							localized: true,
+							name: 'text',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.Boolean,
+							businessType: ObjectField.BusinessTypeEnum.Boolean,
+							externalReferenceCode: 'booleanERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Boolean',
+							},
+							localized: true,
+							name: 'boolean',
+							required: false,
+						},
+					],
+					panelCategoryKey: 'control_panel.object',
+					pluralLabel: {
+						en_US: 'Translation Fields Groups',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					boolean_i18n: {
+						en_US: true,
+						es_ES: false,
+					},
+					longText_i18n: {
+						en_US: 'long text english',
+						es_ES: 'long text spanish',
+					},
+					richText_i18n: {
+						en_US: 'rich text english',
+						es_ES: 'rich text spanish',
+					},
+					text_i18n: {
+						en_US: 'text english',
+						es_ES: 'text spanish',
+					},
+				},
+				'c/' + objectDefinition.name.toLowerCase() + 's'
+			);
+
+			// Create a display page and add a form container with localization select
+
+			const displayPageTemplateName = getRandomString();
+
+			const className =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					objectDefinition.className
+				);
+
+			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
+				{
+					classNameId: className.classNameId,
+					classTypeId: '0',
+					groupId: site.id,
+					name: displayPageTemplateName,
+				}
+			);
+
+			// Go to edit display page template
+
+			await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+			await displayPageTemplatesPage.editTemplate(
+				displayPageTemplateName
+			);
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Form Container'
+			);
+
+			const formId = await pageEditorPage.getFragmentId('Form Container');
+
+			await pageEditorPage.mapFormFragment(
+				formId,
+				'Translation Fields Group (Default)',
+				'all',
+				{addLocalizationSelect: true}
+			);
+
+			await displayPageTemplatesPage.publishTemplate();
+
+			// Go to the object display page
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
+			);
+
+			// Assert that translation is displayed correctly
+
+			const checkboxField = page.getByRole('checkbox', {name: 'Boolean'});
+
+			const longTextField = page.getByRole('textbox', {
 				exact: true,
-				name: 'View',
-			}),
-			trigger: page.locator('.dnd-tbody .item-actions').last(),
-		});
+				name: 'Long Text',
+			});
 
-		await page.getByRole('textbox', {name: 'Long Text'}).waitFor();
+			const richTextField = page.frameLocator('iframe[title="editor"]');
 
-		await expect(page.getByText('long text english')).toBeVisible();
-		await expect(
-			page
-				.frameLocator('iframe[title="editor"]')
-				.getByText('rich text english')
-		).toBeVisible();
-		await expect(page.getByText('text english')).toBeVisible();
+			const textField = page.getByRole('textbox', {
+				exact: true,
+				name: 'Text',
+			});
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('menuitem', {
-				name: 'Español',
-			}),
-			trigger: page.getByTestId('triggerButton').first(),
-		});
+			await expect(checkboxField).toBeChecked();
 
-		await expect(page.getByText('long text español')).toBeVisible();
-		await expect(
-			page
-				.frameLocator('iframe[title="editor"]')
-				.getByText('rich text español')
-		).toBeVisible();
-		await expect(page.getByText('text español')).toBeVisible();
-	});
+			await expect(longTextField).toHaveValue('long text english');
+
+			await expect(
+				richTextField.getByText('rich text english')
+			).toBeVisible();
+
+			await expect(textField).toHaveValue('text english');
+
+			// Fill new values for the translation
+
+			await checkboxField.uncheck();
+
+			await longTextField.fill('long text english 1');
+
+			await textField.fill('text english 1');
+
+			await page.evaluate(() => {
+				Object.values((window as any).CKEDITOR.instances).forEach(
+					(editor: any) => editor.setData('rich text english 1')
+				);
+			});
+
+			// Assert spanish translation is correct
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await expect(checkboxField).not.toBeChecked();
+
+			await expect(longTextField).toHaveValue('long text spanish');
+
+			await expect(
+				richTextField.getByText('rich text spanish')
+			).toBeVisible();
+
+			await expect(textField).toHaveValue('text spanish');
+
+			// Fill new values
+
+			await checkboxField.check();
+
+			await longTextField.fill('long text spanish 1');
+
+			await textField.fill('text spanish 1');
+
+			await page.evaluate(() => {
+				Object.values((window as any).CKEDITOR.instances).forEach(
+					(editor: any) => editor.setData('rich text spanish 1')
+				);
+			});
+
+			// Edit the object
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Go to custom object admin an check the values
+
+			await goToObjectEntity({
+				entityName: 'Translation Fields Group',
+				entityPluralName: 'Translation Fields Groups',
+				page,
+				siteScope: 'Control Panel',
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {
+					exact: true,
+					name: 'View',
+				}),
+				trigger: page
+					.locator('.fds tbody .cell-item-actions .dropdown-toggle')
+					.last(),
+			});
+
+			await longTextField.waitFor();
+
+			await expect(checkboxField).not.toBeChecked();
+
+			await expect(page.getByText('long text english 1')).toBeVisible();
+
+			await expect(
+				richTextField.getByText('rich text english 1')
+			).toBeVisible();
+
+			await expect(page.locator('input.ddm-field-text')).toHaveValue(
+				'text english 1'
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {
+					name: 'Español',
+				}),
+				trigger: page.getByTestId('triggerButton').first(),
+			});
+
+			await expect(checkboxField).toBeChecked();
+
+			await expect(page.getByText('long text spanish 1')).toBeVisible();
+
+			await expect(
+				richTextField.getByText('rich text spanish 1')
+			).toBeVisible();
+
+			await expect(page.locator('input.ddm-field-text')).toHaveValue(
+				'text spanish 1'
+			);
+		}
+	);
 });
 
 test.describe('Numeric input field', () => {
@@ -1703,7 +3297,7 @@ test.describe('Numeric input field', () => {
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 		);
 
-		const lemonWeightInput = page.getByLabel('Lemon Weight');
+		const lemonWeightInput = page.getByLabel('Lemon Weight', {exact: true});
 
 		await expect(lemonWeightInput).toHaveAttribute('type', 'number');
 		await expect(lemonWeightInput).toHaveAttribute('max');
@@ -1905,25 +3499,21 @@ test.describe('Text input field', () => {
 				'Maximum Number of Characters Exceeded: 290 / 280'
 			);
 
-			const formError = page.getByText(
-				'Value exceeds maximum length of 280 for field Lemon Size.'
-			);
-
-			await page.getByLabel('Lemon Size').click();
+			await page.getByRole('textbox', {name: 'Lemon Size'}).click();
 
 			await page.keyboard.type('a'.repeat(290));
 
 			await expect(inputError).toBeVisible();
 
-			await expect(formError).not.toBeVisible();
-
-			// Submit the form and check that the form error is shown as an alert
+			// Submit the form and check that the error
 
 			await page.getByText('Submit', {exact: true}).click();
 
-			await expect(formError).toBeVisible();
+			await expect(inputError).not.toBeVisible();
 
-			await expect(formError).toHaveClass(/alert/);
+			await expect(
+				page.getByText('Value exceeds maximum length of 280.')
+			).toBeVisible();
 		}
 	);
 
@@ -1963,6 +3553,10 @@ test.describe('Text input field', () => {
 
 			await pageEditorPage.selectFragment(inputId);
 
+			await pageEditorPage.goToConfigurationTab('Styles');
+
+			await pageEditorPage.goToConfigurationTab('General');
+
 			const selectedOption = page
 				.getByLabel('Field', {exact: true})
 				.getByRole('option', {selected: true});
@@ -1981,9 +3575,9 @@ test.describe('Text input field', () => {
 				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 			);
 
-			await expect(page.getByLabel('Potato Origin')).toHaveAttribute(
-				'required'
-			);
+			await expect(
+				page.getByRole('textbox', {name: 'Potato Origin'})
+			).toHaveAttribute('required');
 		}
 	);
 });
@@ -2054,7 +3648,7 @@ test.describe('Submit button', () => {
 				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 			);
 
-			await page.getByLabel('Lemon Weight').fill('200');
+			await page.getByLabel('Lemon Weight', {exact: true}).fill('200');
 
 			await page.getByText('Submit', {exact: true}).click();
 
@@ -2072,37 +3666,64 @@ test.describe('Submit button', () => {
 		async ({
 			apiHelpers,
 			displayPageTemplatesPage,
-			objectDetailsPage,
 			page,
 			pageEditorPage,
 			pageManagementSite,
 		}) => {
-			const checkObjectEntryStatus = async (
-				value: string,
-				status: string
-			) => {
+			const getObjectEntry = async () => {
+				const {items} =
+					await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+						'c/drafts'
+					);
 
-				// Go to entity
+				const item = items[0];
 
-				await goToObjectEntity({
-					entityName: 'Lemon',
-					page,
-				});
-
-				// Check the status of the object entry
-
-				const row = page.locator('.dnd-tr', {hasText: value});
-
-				await expect(row).toContainText(status);
+				return item;
 			};
 
-			await test.step('Set the "Allow Users to Save Entries as Draft" configuration of the Lemon object to true', async () => {
-				await objectDetailsPage.goto('Lemon');
+			// Create object definition
 
-				await objectDetailsPage.updateConfiguration({
-					fieldLabel: 'Allow Users to Save Entries as Draft',
-					value: true,
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					enableObjectEntryDraft: true,
+					externalReferenceCode: 'draftERC',
+					label: {
+						en_US: 'Draft',
+					},
+					name: 'Draft',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Text,
+							externalReferenceCode: 'textERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Text',
+							},
+							localized: true,
+							name: 'text',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Drafts',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
 				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
 			});
 
 			const displayPageTemplateName = getRandomString();
@@ -2116,7 +3737,7 @@ test.describe('Submit button', () => {
 				);
 
 				await displayPageTemplatesPage.createTemplate({
-					contentType: 'Lemon',
+					contentType: 'Draft',
 					name: displayPageTemplateName,
 				});
 
@@ -2136,8 +3757,7 @@ test.describe('Submit button', () => {
 
 				await pageEditorPage.mapFormFragment(
 					fragmentId,
-					'Lemon (Default)',
-					['Lemon Weight']
+					'Draft (Default)'
 				);
 
 				// Add another submit button with the "Submitted Entry Status" configuration as Draft
@@ -2199,11 +3819,9 @@ test.describe('Submit button', () => {
 					pageManagementSite.friendlyUrlPath
 				);
 
-				// Map the form to Lemon Weight field
+				// Map the form to Draft object
 
-				await pageEditorPage.mapFormFragment(formId, 'Lemon', [
-					'Lemon Weight',
-				]);
+				await pageEditorPage.mapFormFragment(formId, 'Draft');
 
 				// Change the "Submitted Entry Status" configuration to Draft
 
@@ -2226,12 +3844,12 @@ test.describe('Submit button', () => {
 				await pageEditorPage.publishPage();
 			});
 
-			const input = page.getByLabel('Lemon Weight');
+			const input = page.getByRole('textbox', {name: 'Text'});
 			const submitDraftButton = page.getByText('Submit as draft', {
 				exact: true,
 			});
 
-			await test.step('Go to view mode and save the Lemon Weight field value as draft', async () => {
+			await test.step('Go to view mode and save the Text field value as draft', async () => {
 				await page.goto(
 					`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 				);
@@ -2245,62 +3863,35 @@ test.describe('Submit button', () => {
 						'Thank you. Your information was successfully received.'
 					)
 					.waitFor();
-
-				// Check the saved value
-
-				await checkObjectEntryStatus('100', 'Draft');
 			});
 
-			await test.step('Go to edit mode and map the Heading to the draft entry number and select the DPT created before as Field', async () => {
-				await pageEditorPage.goto(
-					layout,
-					pageManagementSite.friendlyUrlPath
+			// Check the saved value
+
+			const objectEntry = await getObjectEntry();
+
+			expect(objectEntry.text).toBe('100');
+			expect(objectEntry.status.label).toBe('draft');
+
+			// Go to display page
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon')
+				)
+			).body;
+
+			const className =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					objectDefinitionClassName
 				);
 
-				await pageEditorPage.changeEditableConfiguration({
-					editableId: 'element-text',
-					fieldLabel: 'Link',
-					fragmentId: headingId,
-					tab: 'Link',
-					value: 'Mapped URL',
-				});
-
-				await pageEditorPage.openMappingSelector();
-
-				const iframe = page.frameLocator('iframe[title="Select"]');
-
-				await iframe.getByPlaceholder('Search').waitFor();
-
-				await iframe.getByText('Lemons', {exact: true}).click();
-
-				await clickAndExpectToBeHidden({
-					target: iframe.locator('.lfr-item-viewer'),
-					trigger: iframe
-						.locator('.item-selector-list-row .entry')
-						.first(),
-				});
-
-				await pageEditorPage.changeConfiguration({
-					fieldLabel: 'Field',
-					tab: 'Link',
-					value: displayPageTemplateName,
-				});
-
-				await pageEditorPage.publishPage();
-			});
-
-			const headingFragment = page.getByText('Heading Example', {
-				exact: true,
-			});
-
-			await test.step('Go to view mode, click in the Heading and save the field value as Draft', async () => {
+			await test.step('Go to object display page and save the field value as Draft', async () => {
 				await page.goto(
-					`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+					`/web${pageManagementSite.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
 				);
-
-				await headingFragment.click();
-
-				await expect(headingFragment).not.toBeAttached();
 
 				// Set new value and submit as draft
 
@@ -2316,17 +3907,16 @@ test.describe('Submit button', () => {
 
 				// Check the saved value
 
-				await checkObjectEntryStatus('200', 'Draft');
+				const updatedObjectEntry = await getObjectEntry();
+
+				expect(updatedObjectEntry.text).toBe('200');
+				expect(updatedObjectEntry.status.label).toBe('draft');
 			});
 
-			await test.step('Go to view mode, click in the Heading and save the field value as Approved', async () => {
+			await test.step('Go to object display page and save the field value as Approved', async () => {
 				await page.goto(
-					`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+					`/web${pageManagementSite.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
 				);
-
-				await headingFragment.click();
-
-				await expect(headingFragment).not.toBeAttached();
 
 				// Set new value and submit as approved
 
@@ -2342,17 +3932,16 @@ test.describe('Submit button', () => {
 
 				// Check the saved value
 
-				await checkObjectEntryStatus('300', 'Approved');
+				const updatedObjectEntry = await getObjectEntry();
+
+				expect(updatedObjectEntry.text).toBe('300');
+				expect(updatedObjectEntry.status.label).toBe('approved');
 			});
 
 			await test.step('Go to view mode, click in the Heading and try to save the field value as Draft again', async () => {
 				await page.goto(
-					`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+					`/web${pageManagementSite.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
 				);
-
-				await headingFragment.click();
-
-				await expect(headingFragment).not.toBeAttached();
 
 				// Set new value and submit as draft
 
@@ -2368,16 +3957,10 @@ test.describe('Submit button', () => {
 
 				// Check the saved value
 
-				await checkObjectEntryStatus('300', 'Approved');
-			});
+				const updatedObjectEntry = await getObjectEntry();
 
-			await test.step('Restore default value', async () => {
-				await objectDetailsPage.goto('Lemon');
-
-				await objectDetailsPage.updateConfiguration({
-					fieldLabel: 'Allow Users to Save Entries as Draft',
-					value: false,
-				});
+				expect(updatedObjectEntry.text).toBe('300');
+				expect(updatedObjectEntry.status.label).toBe('approved');
 			});
 		}
 	);
@@ -2414,9 +3997,7 @@ test.describe('Textarea input field', () => {
 				'Lemon History',
 			]);
 
-			const textareaInput = page.getByLabel('Lemon History', {
-				exact: true,
-			});
+			const textareaInput = page.locator('[name="lemonHistory"]');
 
 			// Check the role of the input is textbox
 
@@ -2581,22 +4162,151 @@ test.describe('Textarea input field', () => {
 				'Maximum Number of Characters Exceeded: 310 / 300'
 			);
 
-			await page.getByLabel('Lemon History').click();
+			await page.getByRole('textbox', {name: 'Lemon History'}).click();
 
 			await page.keyboard.type('a'.repeat(310));
 
 			await expect(inputError).toBeVisible();
 
-			// Submit the form and check that the error is still visible
+			// Submit the form and check the error
 
 			await page.getByText('Submit', {exact: true}).click();
 
-			await expect(inputError).toBeVisible();
+			await expect(inputError).not.toBeVisible();
+
+			await expect(
+				page.getByText('Value exceeds maximum length of 300.')
+			).toBeVisible();
 		}
 	);
 });
 
 test.describe('Picklist input field', () => {
+	test(
+		'Can see more than 10 options on dropdown menu of select from list',
+		{
+			tag: '@LPD-194759',
+		},
+		async ({apiHelpers, page, pageManagementSite}) => {
+
+			// Create list type
+
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			const countries = [
+				'Argentina',
+				'Brasil',
+				'Canada',
+				'France',
+				'Germany',
+				'Hungary',
+				'Italy',
+				'India',
+				'Portugal',
+				'Rusia',
+				'Spain',
+			];
+
+			for (const country of countries) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					country
+				);
+			}
+
+			// Create object definition
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'plantERC',
+					label: {
+						en_US: 'Plant',
+					},
+					name: 'Plant',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Picklist,
+							externalReferenceCode: 'countryERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Country',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: false,
+							name: 'country',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Plants',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a content page with form container
+
+			const picklistId = getRandomString();
+
+			const picklistDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_country',
+				},
+				id: picklistId,
+				key: 'INPUTS-select-from-list',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName: objectDefinition.className,
+				pageElements: [picklistDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to view mode and assert select options
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page.getByPlaceholder('Choose an Option').click();
+
+			for (const country of countries) {
+				await expect(
+					page.getByRole('option', {name: country})
+				).toBeVisible();
+			}
+		}
+	);
+
 	test('Shows correct options in picklist field selected as title in related object', async ({
 		apiHelpers,
 		page,
@@ -2637,7 +4347,9 @@ test.describe('Picklist input field', () => {
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 		);
 
-		await page.getByLabel('Lemon Basket to Lemons').click();
+		await page
+			.getByRole('combobox', {name: 'Lemon Basket to Lemons'})
+			.click();
 
 		await expect(page.getByText('Plastic', {exact: true})).toBeVisible();
 		await expect(page.getByText('Carton', {exact: true})).toBeVisible();
@@ -2686,11 +4398,129 @@ test.describe('Picklist input field', () => {
 
 			// Check that the value after selecting the item is correct
 
-			await page.getByLabel('Material').click();
+			const materialField = page.getByRole('combobox', {
+				name: 'Material',
+			});
+
+			await materialField.click();
 
 			await page.getByText('carton').click();
 
-			await expect(page.getByLabel('Material')).toHaveValue('Carton');
+			await expect(materialField).toHaveValue('Carton');
+		}
+	);
+
+	test(
+		'The page designer map the Select from List fragment to objects fields on content pages',
+		{
+			tag: ['@LPS-151159', '@LPS-182728'],
+		},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a page with a Form fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon Basket')
+				)
+			).body;
+
+			const picklistId = getRandomString();
+
+			const picklistDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_material',
+				},
+				id: picklistId,
+				key: 'INPUTS-select-from-list',
+			});
+
+			const multiselectPicklistDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_lemonDimensions',
+				},
+				id: getRandomString(),
+				key: 'INPUTS-select-from-list',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [
+					picklistDefinition,
+					multiselectPicklistDefinition,
+					submitFragmentDefinition,
+				],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode and map it to the object
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Change label and help text
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Label',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: 'Select your material',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Help Text',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: 'Just one material can be selected',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Show Help Text',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: true,
+			});
+
+			// Mark field as required
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Mark as Required',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: true,
+			});
+
+			// Publish and go to view mode
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Assert help text and label
+
+			await expect(page.getByText('Select your material')).toBeVisible();
+
+			await expect(
+				page.getByText('Just one material can be selected')
+			).toBeVisible();
 		}
 	);
 });
@@ -3330,7 +5160,7 @@ test.describe('Multistep', () => {
 
 	test(
 		'Can change step with the stepper fragment',
-		{tag: '@LPD-10727'},
+		{tag: ['@LPD-10727', '@LPD-45551']},
 		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
 
 			// Get the id of Lemon object from the site initializer
@@ -3401,6 +5231,31 @@ test.describe('Multistep', () => {
 
 			await expect(button).toBeVisible();
 			await expect(heading).not.toBeVisible();
+
+			// Check in other viewports too
+
+			await pageEditorPage.switchViewport('Tablet');
+
+			const viewportIframe = page.frameLocator(
+				'.page-editor__global-context-iframe'
+			);
+
+			await viewportIframe.locator(button).waitFor();
+
+			await expect(async () => {
+				await viewportIframe
+					.locator(`.multi-step-icon`)
+					.nth(0)
+					.click({timeout: 1000});
+
+				await expect(viewportIframe.locator(button)).not.toBeVisible({
+					timeout: 1000,
+				});
+
+				await expect(viewportIframe.locator(heading)).toBeVisible({
+					timeout: 1000,
+				});
+			}).toPass();
 		}
 	);
 
@@ -3956,6 +5811,10 @@ test.describe('Multistep', () => {
 
 			await pageEditorPage.selectFragment(textInputId);
 
+			await pageEditorPage.goToConfigurationTab('Styles');
+
+			await pageEditorPage.goToConfigurationTab('General');
+
 			await page.getByLabel('Field', {exact: true}).waitFor();
 
 			await page
@@ -4003,7 +5862,7 @@ test.describe('Multistep', () => {
 
 			// Try to submit and check it takes to step 2 because field is required
 
-			const field = page.getByLabel('Potato Origin');
+			const field = page.getByRole('textbox', {name: 'Potato Origin'});
 
 			await submitForm();
 
@@ -4021,7 +5880,7 @@ test.describe('Multistep', () => {
 
 			// Fill field with correct value, submit and check it submits
 
-			await page.getByLabel('Potato Origin').fill('Canary Islands');
+			await field.fill('Canary Islands');
 
 			await submitForm();
 
@@ -4100,6 +5959,321 @@ test.describe('Multistep', () => {
 			});
 
 			await expect(page.getByText('Heading Example')).toBeVisible();
+		}
+	);
+
+	test(
+		'Step is changed when selecting a fragment in the tree',
+		{tag: ['@LPD-37501']},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Get the id of Lemon object from the site initializer
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon')
+				)
+			).body;
+
+			// Definition for the Stepper fragment
+
+			const stepperFragment = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-stepper',
+			});
+
+			// Create a form with two steps and the Stepper
+
+			const headingDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-heading',
+			});
+
+			const buttonDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [stepperFragment],
+				steps: [[headingDefinition], [buttonDefinition]],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await page
+				.getByText('Select a Page Element', {exact: true})
+				.waitFor();
+
+			await expect(page.locator('.multi-step-item').nth(0)).toHaveClass(
+				/active/,
+				{timeout: 1000}
+			);
+
+			// Go to the tree and select the form step container so the steps appear
+
+			await pageEditorPage.goToSidebarTab('Browser');
+
+			await page
+				.locator('.page-editor__page-structure__tree-node', {
+					hasText: 'Form Container',
+				})
+				.click();
+
+			await page
+				.locator('.page-editor__page-structure__tree-node', {
+					hasText: 'Form Steps',
+				})
+				.click();
+
+			await expect(async () => {
+
+				// Select the button fragment present in first step
+
+				await page
+					.locator('.page-editor__page-structure__tree-node', {
+						hasText: 'Step 1',
+					})
+					.click({timeout: 1000});
+
+				await page
+					.locator('.page-editor__page-structure__tree-node', {
+						hasText: 'Heading',
+					})
+					.click({timeout: 1000});
+
+				// Select the button fragment present in second step
+
+				await page
+					.locator('.page-editor__page-structure__tree-node', {
+						hasText: 'Step 2',
+					})
+					.click({timeout: 1000});
+
+				await page
+					.locator('.page-editor__page-structure__tree-node', {
+						hasText: 'Button',
+					})
+					.click({timeout: 1000});
+
+				// Check button is visible and stepper is updated
+
+				await expect(
+					page.locator('.page-editor__topper__title', {
+						hasText: 'Button',
+					})
+				).toBeVisible({timeout: 1000});
+
+				await expect(
+					page.locator('.multi-step-item').nth(1)
+				).toHaveClass(/active/, {timeout: 1000});
+			}).toPass();
+		}
+	);
+
+	test(
+		'Step can be removed and restored via undo',
+		{tag: ['@LPD-37578']},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Get the id of Lemon object from the site initializer
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon')
+				)
+			).body;
+
+			// Definition for the Stepper fragment
+
+			const stepperFragment = getFragmentDefinition({
+				fragmentConfig: {
+					numberOfSteps: 3,
+				},
+				id: getRandomString(),
+				key: 'INPUTS-stepper',
+			});
+
+			// Create a form with three steps and the Stepper
+
+			const headingId = getRandomString();
+
+			const headingDefinition = getFragmentDefinition({
+				id: headingId,
+				key: 'BASIC_COMPONENT-heading',
+			});
+
+			const buttonId = getRandomString();
+
+			const buttonDefinition = getFragmentDefinition({
+				id: buttonId,
+				key: 'BASIC_COMPONENT-button',
+			});
+
+			const paragraphId = getRandomString();
+
+			const paragraphDefinition = getFragmentDefinition({
+				id: paragraphId,
+				key: 'BASIC_COMPONENT-paragraph',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [stepperFragment],
+				steps: [
+					[headingDefinition],
+					[buttonDefinition],
+					[paragraphDefinition],
+				],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await page
+				.getByText('Select a Page Element', {exact: true})
+				.waitFor();
+
+			await expect(page.locator('.multi-step-item').nth(0)).toHaveClass(
+				/active/,
+				{timeout: 1000}
+			);
+
+			// Check the first step can't be removed
+
+			await pageEditorPage.selectFragment(headingId);
+
+			await clickAndExpectToBeVisible({
+				target: page.locator('.page-editor__topper__title', {
+					hasText: 'Step 1',
+				}),
+				trigger: page.locator('.breadcrumb-link', {hasText: 'Step 1'}),
+			});
+
+			await clickAndExpectToBeVisible({
+				target: page.getByRole('menuitem', {name: 'Paste'}),
+				timeout: 500,
+				trigger: page
+					.locator('.page-editor__topper__item')
+					.getByLabel('Options'),
+			});
+
+			await expect(
+				page.getByRole('menuitem', {name: 'Remove Step'})
+			).not.toBeVisible();
+
+			// Select third step and remove it
+
+			const heading = page.locator(
+				'.lfr-layout-structure-item-basic-component-heading'
+			);
+
+			const button = page.locator(
+				'.lfr-layout-structure-item-basic-component-button'
+			);
+
+			const paragraph = page.locator(
+				'.lfr-layout-structure-item-basic-component-paragraph'
+			);
+
+			const stepButtons = await page.locator('.multi-step-icon').all();
+			await stepButtons[2].click();
+
+			await expect(heading).not.toBeVisible();
+			await expect(button).not.toBeVisible();
+			await expect(paragraph).toBeVisible();
+
+			await pageEditorPage.selectFragment(paragraphId);
+
+			await clickAndExpectToBeVisible({
+				target: page.locator('.page-editor__topper__title', {
+					hasText: 'Step 3',
+				}),
+				trigger: page.locator('.breadcrumb-link', {hasText: 'Step 3'}),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {name: 'Remove Step'}),
+				timeout: 500,
+				trigger: page
+					.locator('.page-editor__topper__item')
+					.getByLabel('Options'),
+			});
+
+			// Check the step 2 is now active
+
+			await expect(page.locator('.multi-step-item').nth(1)).toHaveClass(
+				/active/,
+				{timeout: 1000}
+			);
+
+			await expect(button).toBeVisible();
+			await expect(heading).not.toBeVisible();
+			await expect(paragraph).not.toBeVisible();
+
+			// Check undo/redo works
+
+			await pageEditorPage.undoAction();
+
+			await expect(stepButtons[2]).toBeVisible();
+
+			await pageEditorPage.redoAction();
+
+			await expect(stepButtons[2]).not.toBeVisible();
+
+			// Remove the step 2 and check the form is converted to simple
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('menuitem', {name: 'Remove Step'}),
+				timeout: 500,
+				trigger: page
+					.locator('.page-editor__topper__item')
+					.getByLabel('Options'),
+			});
+
+			await page.getByText('Remove and Convert').waitFor();
+
+			await page.getByText('Remove and Convert').click();
+
+			// Check the stepper is removed as the form is converted to simple
+
+			await expect(stepButtons[0]).not.toBeVisible();
+
+			await expect(heading).toBeVisible();
+			await expect(button).not.toBeVisible();
+			await expect(paragraph).not.toBeVisible();
 		}
 	);
 });
@@ -4200,11 +6374,11 @@ test.describe('Edit mode language changes', () => {
 
 		await pageEditorPage.switchLanguage('en-US');
 
-		const englishLabel = page.getByLabel('English Label');
+		const englishLabel = page.getByText('English Label');
 		const englishHelpText = page.getByText('English Help Text');
 		const englishPlaceholder = page.getByPlaceholder('English Placeholder');
 
-		const spanishLabel = page.getByLabel('Spanish Label');
+		const spanishLabel = page.getByText('Spanish Label');
 		const spanishHelpText = page.getByText('Spanish Help Text');
 		const spanishPlaceholder = page.getByPlaceholder('Spanish Placeholder');
 
@@ -4271,6 +6445,81 @@ test.describe('Edit mode form errors', () => {
 	}
 
 	test(
+		'Can only drop form fragments inside a mapped form container except for Localization Select',
+		{
+			tag: ['@LPS-149984', '@LPS-157740'],
+		},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a content page
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition(),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Assert form fragments can only be dropped inside a mapped form container
+
+			await pageEditorPage.goToSidebarTab('Components');
+
+			const header = page.getByRole('menuitem', {
+				exact: true,
+				name: 'Form Components',
+			});
+
+			await expandSection(header);
+
+			await page.getByLabel(`Add Textarea`).focus();
+
+			await page.keyboard.press('Enter');
+
+			await waitForAlert(
+				page,
+				'Error:This form component can only be placed inside a mapped form container.',
+				{type: 'danger'}
+			);
+
+			// Assert that Localization select can be added outside a form container
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Localization Select'
+			);
+
+			await expect(
+				page.locator('.lfr-layout-structure-item-localization-select')
+			).toBeVisible();
+
+			// Assert form fragments cannot be placed inside an unmapped form container
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Form Container'
+			);
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Stepper',
+				page.locator('.page-editor__form .page-editor__container')
+			);
+
+			await waitForAlert(
+				page,
+				'Error:Fragments cannot be placed inside an unmapped form container.',
+				{type: 'danger'}
+			);
+		}
+	);
+
+	test(
 		'Show a warning message when there is a form with unmapped input fragments, hidden required input fragments, missing required input fragments, hidden submit button or missing submit button',
 		{tag: ['@LPS-150278', '@LPS-157998']},
 		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
@@ -4298,6 +6547,7 @@ test.describe('Edit mode form errors', () => {
 							label: {
 								en_US: 'Name',
 							},
+							localized: false,
 							name: 'name',
 							required: true,
 						},
@@ -4616,4 +6866,530 @@ test.describe('Edit mode form errors', () => {
 			await expect(page.getByText('Step 3 is empty')).toBeVisible();
 		}
 	);
+
+	test(
+		'Show	 error message after mapping the Form Container to object when multiple OOTB input fragments are unavailable',
+		{tag: '@LPS-158143'},
+		async ({
+			apiHelpers,
+			masterPagesPage,
+			page,
+			pageEditorPage,
+			pageManagementSite,
+		}) => {
+			const layoutPageTemplateEntryName = getRandomString();
+
+			const masterPage =
+				await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addLayoutPageTemplateEntry(
+					{
+						groupId: pageManagementSite.id,
+						name: layoutPageTemplateEntryName,
+						type: 'master-layout',
+					}
+				);
+
+			await masterPagesPage.goto(pageManagementSite.friendlyUrlPath);
+
+			await masterPagesPage.editMaster(layoutPageTemplateEntryName);
+
+			await masterPagesPage.configureAllowedFragments({
+				fragmentNames: ['Checkbox', 'Date'],
+				mode: 'unselect',
+				prefilter: 'Form Components',
+			});
+
+			await pageEditorPage.publishPage();
+
+			const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: pageManagementSite.id,
+				masterLayoutPlid: masterPage.plid,
+				options: {type: 'content'},
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Form Container'
+			);
+
+			const fragment = pageEditorPage.getFragment(
+				await pageEditorPage.getFragmentId('Form Container')
+			);
+
+			await fragment
+				.getByLabel('Content Type')
+				.selectOption('All Fields');
+
+			const fieldsModal = page.frameLocator(
+				'iframe[title="Manage Form Fields"]'
+			);
+
+			await fieldsModal
+				.getByLabel('Select All Items on the Page')
+				.check({trial: true});
+
+			await fieldsModal
+				.getByLabel('Select All Items on the Page')
+				.check();
+
+			await clickAndExpectToBeHidden({
+				target: page.locator('.modal-title', {
+					hasText: 'Manage Form Fields',
+				}),
+				trigger: page.locator('.modal-footer').getByText('Save'),
+			});
+
+			await expect(page.locator('.alert-danger')).toContainText(
+				'Some fragments are missing. Boolean and Date fields cannot have an associated fragment or cannot be available in master.'
+			);
+		}
+	);
 });
+
+test.describe('View mode form errors', () => {
+	test(
+		'Show only the first error message when multiple validation issues happen after submitting a form',
+		{
+			tag: '@LPS-151402',
+		},
+		async ({apiHelpers, page, pageManagementSite}) => {
+
+			// Create a default display page for lemon object
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon')
+				)
+			).body;
+
+			const className =
+				await apiHelpers.jsonWebServicesClassName.fetchClassName(
+					objectDefinitionClassName
+				);
+
+			const displayPage =
+				await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
+					{
+						classNameId: className.classNameId,
+						groupId: pageManagementSite.id,
+						name: getRandomString(),
+					}
+				);
+
+			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.markAsDefaultDisplayPageLayoutPageTemplateEntry(
+				{
+					layoutPageTemplateEntryId:
+						displayPage.layoutPageTemplateEntryId,
+				}
+			);
+
+			// Create a page with a form fragment
+
+			const formId = getRandomString();
+
+			const textInputDefinition1 = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_lemonSize',
+				},
+				id: getRandomString(),
+				key: 'INPUTS-text-input',
+			});
+
+			const textInputDefinition2 = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_lemonWeight',
+				},
+				id: getRandomString(),
+				key: 'INPUTS-text-input',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+				objectDefinitionClassName,
+				pageElements: [
+					textInputDefinition1,
+					textInputDefinition2,
+					submitFragmentDefinition,
+				],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Assert first error message is shown when there are multiple error messages
+
+			const lemonSizeField = page.getByRole('textbox', {
+				name: 'Lemon Size',
+			});
+
+			const lemonWeightField = page.getByRole('textbox', {
+				name: 'Lemon Weight',
+			});
+
+			await lemonSizeField.click();
+
+			await page.keyboard.type('a'.repeat(290));
+
+			await lemonWeightField.fill(getRandomString());
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			const formError = page.getByText(
+				'Value exceeds maximum length of 280 for field Lemon Size.'
+			);
+
+			await expect(formError).toBeVisible();
+
+			await expect(formError).toHaveClass(/alert/);
+
+			await expect(
+				page.getByText('The lemon weight must be greater than 0')
+			).not.toBeVisible();
+
+			// Assert second error message
+
+			await lemonSizeField.clear();
+
+			await lemonWeightField.fill('-1');
+
+			await page.getByText('Submit', {exact: true}).click();
+
+			await expect(formError).not.toBeVisible();
+
+			await expect(
+				page.getByText('The lemon weight must be greater than 0')
+			).toBeVisible();
+
+			// Delete the display page
+
+			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.deleteLayoutPageTemplateEntry(
+				{
+					layoutPageTemplateEntryId:
+						displayPage.layoutPageTemplateEntryId,
+				}
+			);
+		}
+	);
+});
+
+test(
+	'Check read-only fields',
+	{tag: ['@LPD-44528']},
+	async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+		// Create a new object definition with all fields
+
+		const objectDefinitionAPIClient =
+			await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+		const {body: objectDefinition} =
+			await objectDefinitionAPIClient.postObjectDefinition({
+				externalReferenceCode: 'readonly-object-erc',
+				label: {
+					en_US: 'Read Only Object',
+				},
+				name: 'ReadOnlyObject',
+				objectFields: [
+					{
+						DBType: ObjectField.DBTypeEnum.Boolean,
+						externalReferenceCode: 'boolean-erc',
+						indexed: true,
+						indexedAsKeyword: true,
+						label: {
+							en_US: 'Boolean',
+						},
+						name: 'boolean',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.DateTime,
+						externalReferenceCode: 'date-time-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Date And Time',
+						},
+						name: 'dateAndTime',
+						objectFieldSettings: [
+							{
+								name: 'timeStorage',
+								value: {},
+							},
+						],
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.Date,
+						externalReferenceCode: 'date-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Date',
+						},
+						name: 'date',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.Clob,
+						externalReferenceCode: 'long-text-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Long Text',
+						},
+						name: 'longText',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.Long,
+						businessType: ObjectField.BusinessTypeEnum.Attachment,
+						externalReferenceCode: 'dl-file-upload-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'DL File',
+						},
+						localized: false,
+						name: 'dlFileUpload',
+						objectFieldSettings: [
+							{
+								name: 'acceptedFileExtensions',
+								value: 'pdf',
+							},
+							{
+								name: 'maximumFileSize',
+								value: 100,
+							},
+							{
+								name: 'fileSource',
+								value: 'documentsAndMedia',
+							},
+						] as any,
+						type: ObjectField.TypeEnum.Long,
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.String,
+						externalReferenceCode: 'text-erc',
+						indexed: true,
+						indexedAsKeyword: true,
+						label: {
+							en_US: 'Text',
+						},
+						name: 'text',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.Clob,
+						businessType: ObjectField.BusinessTypeEnum.RichText,
+						externalReferenceCode: 'rich-text-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Rich Text',
+						},
+						name: 'richText',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.String,
+						businessType: ObjectField.BusinessTypeEnum.Picklist,
+						externalReferenceCode: 'picklist-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Picklist',
+						},
+						listTypeDefinitionExternalReferenceCode:
+							'lemon-dimensions-picklist-erc',
+						name: 'picklist',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.String,
+						businessType:
+							ObjectField.BusinessTypeEnum.MultiselectPicklist,
+						externalReferenceCode: 'multiselect-picklist-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'MultiSelect Picklist',
+						},
+						listTypeDefinitionExternalReferenceCode:
+							'lemon-dimensions-picklist-erc',
+						name: 'multiSelectPicklist',
+					},
+					{
+						DBType: ObjectField.DBTypeEnum.Integer,
+						externalReferenceCode: 'numeric-erc',
+						indexed: true,
+						indexedAsKeyword: false,
+						indexedLanguageId: '',
+						label: {
+							en_US: 'Numeric',
+						},
+						name: 'numeric',
+					},
+				],
+				pluralLabel: {
+					en_US: 'ReadOnlyObjects',
+				},
+				scope: 'company',
+				status: {
+					code: 0,
+				},
+			});
+
+		// Set readOnly to true for all fields
+
+		const objectFieldApiClient =
+			await apiHelpers.buildRestClient(ObjectFieldApi);
+
+		for (const objectField of objectDefinition.objectFields) {
+			await objectFieldApiClient.putObjectField(objectField.id, {
+				...objectField,
+				readOnly: ObjectField.ReadOnlyEnum.True,
+			});
+		}
+
+		apiHelpers.data.push({
+			id: objectDefinition.id,
+			type: 'objectDefinition',
+		});
+
+		// Create a page with a form mapped to 'Read Only Object'
+
+		const formId = getRandomString();
+
+		const formDefinition = getFormContainerDefinition({
+			id: formId,
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([formDefinition]),
+			siteId: pageManagementSite.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+
+		await pageEditorPage.mapFormFragment(formId, 'Read Only Object');
+
+		await pageEditorPage.publishPage();
+
+		await page.goto(
+			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+		);
+
+		// Check that all fields have the corresponding attribute and label
+
+		await expect(
+			page
+				.locator('.rich-text-input', {
+					hasText: 'Rich Text (Read Only)',
+				})
+				.frameLocator('iframe')
+				.locator('body')
+		).toHaveAttribute('aria-readonly', 'true');
+
+		[
+			'Boolean (Read Only)',
+			'Date (Read Only)',
+			'Date And Time (Read Only)',
+			'Long Text (Read Only)',
+			'DL File (Read Only)',
+			'Text (Read Only)',
+			'Picklist (Read Only)',
+			'Numeric (Read Only)',
+		].forEach(async (label) => {
+			await expect(page.getByLabel(label, {exact: true})).toHaveAttribute(
+				'readonly',
+				''
+			);
+		});
+
+		(
+			await page
+				.getByLabel('MultiSelect Picklist (Read Only)')
+				.locator('input')
+				.all()
+		).forEach(async (input) => {
+			await expect(input).toHaveAttribute('readonly', '');
+		});
+	}
+);
+
+test(
+	'Submitted entry status configuration is only visible if the form button is submit',
+	{tag: '@LPD-37217'},
+	async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+		const objectDefinitionApiClient =
+			await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+		const {className: objectDefinitionClassName} = (
+			await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+				getObjectERC('Lemon')
+			)
+		).body;
+
+		const formId = getRandomString();
+
+		const submitFragmentId = getRandomString();
+
+		const submitFragmentDefinition = getFragmentDefinition({
+			id: submitFragmentId,
+			key: 'INPUTS-submit-button',
+		});
+
+		const formDefinition = getFormContainerDefinition({
+			id: formId,
+			objectDefinitionClassName,
+			pageElements: [submitFragmentDefinition],
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([formDefinition]),
+			siteId: pageManagementSite.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+
+		await pageEditorPage.selectFragment(submitFragmentId);
+
+		await expect(page.getByLabel('Type', {exact: true})).toHaveValue(
+			'submit'
+		);
+
+		await expect(
+			page.getByLabel('Submitted Entry Status', {exact: true})
+		).toBeVisible();
+
+		await pageEditorPage.changeFragmentConfiguration({
+			fieldLabel: 'Type',
+			fragmentId: submitFragmentId,
+			tab: 'General',
+			value: 'Next',
+		});
+
+		await expect(
+			page.getByLabel('Submitted Entry Status')
+		).not.toBeVisible();
+	}
+);

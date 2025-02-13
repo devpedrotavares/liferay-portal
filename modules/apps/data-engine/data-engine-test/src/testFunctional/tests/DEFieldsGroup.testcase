@@ -1,4 +1,4 @@
-@component-name = "data-engine"
+@component-name = "portal-bpm"
 definition {
 
 	property portal.release = "true";
@@ -270,7 +270,7 @@ definition {
 	@description = "This is a test for LRQA-71711. This test verifies that the Web Content data persists upon editing the related Structure by creating a Fields Group"
 	@priority = 4
 	test CanDataBeEditedInNewFieldsGroup {
-		property custom.properties = "feature.flag.LPD-11228=true${line.separator}feature.flag.LPD-15596=true";
+		property custom.properties = "feature.flag.LPD-11228=true";
 
 		NavItem.gotoStructures();
 
@@ -300,21 +300,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 123);
 
-		PortletEntry.publish();
-
-		AssertClick(
-			buttonName = "Publish With Permissions",
-			locator1 = "WCEditWebContent#PUBLISH_WITH_PERMISSIONS_BUTTON",
-			value1 = "Publish With Permissions");
-
-		WaitForElementPresent(
-			locator1 = "Modal#SELECT_WITH_LABEL",
-			selectLabel = "Viewable by");
-
-		AssertClick(
-			buttonName = "Publish",
-			locator1 = "Modal#PRIMARY_BUTTON",
-			value1 = "Publish");
+		WebContent.publishWithPermissions();
 
 		NavItem.gotoStructures();
 
@@ -344,7 +330,7 @@ definition {
 	@description = "Verify that the Web Content data persists upon editing the related Structure by creating a Fields Group	"
 	@priority = 4
 	test CanDataBeEditedInNewFieldsGroupTranslated {
-		property custom.properties = "feature.flag.LPD-11228=true${line.separator}feature.flag.LPD-15596=true";
+		property custom.properties = "feature.flag.LPD-11228=true";
 
 		NavItem.gotoStructures();
 
@@ -660,7 +646,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 456);
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -708,7 +694,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 678);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -992,7 +978,7 @@ definition {
 			fieldLabel = "Date",
 			value = "08/06/2021");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1072,7 +1058,7 @@ definition {
 			index = 2,
 			value = "09/06/2021");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1110,7 +1096,7 @@ definition {
 	@description = "Verify that data inputted on a repeatable Fields Group duplicated persists on the Web Content"
 	@priority = 4
 	test CanInputDataOnDuplicatedFieldTranslated {
-		property custom.properties = "feature.flag.LPD-11228=true${line.separator}feature.flag.LPD-15596=true";
+		property custom.properties = "feature.flag.LPD-11228=true";
 
 		NavItem.gotoStructures();
 
@@ -1181,7 +1167,7 @@ definition {
 			index = 2,
 			value = 123456);
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		AssertClick(
 			buttonName = "Publish With Permissions",
@@ -1285,7 +1271,7 @@ definition {
 			fieldLabel = "Date",
 			value = "08/06/2021");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1301,7 +1287,7 @@ definition {
 			fieldLabel = "Date",
 			value = "09/06/2021");
 
-		Button.clickPublish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1359,7 +1345,7 @@ definition {
 			fieldLabel = "Date",
 			value = "08/06/2021");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1375,7 +1361,7 @@ definition {
 			fieldLabel = "Date",
 			value = "");
 
-		Button.clickPublish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1445,7 +1431,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 456);
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1469,7 +1455,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 456);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1493,7 +1479,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = "");
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1551,13 +1537,13 @@ definition {
 
 		DataEngine.addRepeatableField(fieldLabel = "Date");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
 		DERenderer.removeRepeatableField(fieldLabel = "Text");
 
-		Button.clickPublish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1569,7 +1555,7 @@ definition {
 	@description = "Verify that is possible to remove duplicated repeatable Fields Group"
 	@priority = 4
 	test CanRemoveDuplicatedRepeatableFieldsGroupTranslated {
-		property custom.properties = "feature.flag.LPD-11228=true${line.separator}feature.flag.LPD-15596=true";
+		property custom.properties = "feature.flag.LPD-11228=true";
 
 		NavItem.gotoStructures();
 
@@ -1640,21 +1626,7 @@ definition {
 			index = 2,
 			value = 123456);
 
-		PortletEntry.publish();
-
-		AssertClick(
-			buttonName = "Publish With Permissions",
-			locator1 = "WCEditWebContent#PUBLISH_WITH_PERMISSIONS_BUTTON",
-			value1 = "Publish With Permissions");
-
-		WaitForElementPresent(
-			locator1 = "Modal#SELECT_WITH_LABEL",
-			selectLabel = "Viewable by");
-
-		AssertClick(
-			buttonName = "Publish",
-			locator1 = "Modal#PRIMARY_BUTTON",
-			value1 = "Publish");
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1702,7 +1674,7 @@ definition {
 			index = 2,
 			value = 123456);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		AssertClick(
 			buttonName = "Publish",
@@ -1715,7 +1687,7 @@ definition {
 			fieldLabel = "Text",
 			index = 2);
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		AssertClick(
 			buttonName = "Publish",
@@ -1863,7 +1835,7 @@ definition {
 				row = ${index});
 		}
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1927,7 +1899,7 @@ definition {
 				row = ${index});
 		}
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -1982,7 +1954,7 @@ definition {
 			fieldLabel = "Multiple Selection",
 			optionValue = "Option 1");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -2031,7 +2003,7 @@ definition {
 			fieldLabel = "Multiple Selection",
 			optionValue = "Option 3");
 
-		Button.clickPublish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 
@@ -2101,7 +2073,7 @@ definition {
 			fieldLabel = "Numeric",
 			value = 456);
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
 

@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.Inject;
@@ -118,10 +119,11 @@ public class CommerceReturnItemObjectEntryValuesContributorTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
-				"CommerceReturn");
+				TestPropsValues.getCompanyId(), "CommerceReturn");
 
 		_objectEntry = _objectEntryLocalService.addObjectEntry(
-			_user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
+			_user.getUserId(), 0, null,
+			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"channelGroupId", _commerceChannel.getSiteGroupId()
 			).put(
@@ -162,10 +164,11 @@ public class CommerceReturnItemObjectEntryValuesContributorTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
-				"CommerceReturnItem");
+				TestPropsValues.getCompanyId(), "CommerceReturnItem");
 
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			_user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
+			_user.getUserId(), 0, null,
+			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"quantity", _commerceOrderItem.getQuantity()
 			).put(

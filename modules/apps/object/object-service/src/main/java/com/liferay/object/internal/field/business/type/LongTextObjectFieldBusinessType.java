@@ -79,8 +79,9 @@ public class LongTextObjectFieldBusinessType
 
 	@Override
 	public Map<String, Object> getProperties(
-		ObjectField objectField,
-		ObjectFieldRenderingContext objectFieldRenderingContext) {
+			ObjectField objectField,
+			ObjectFieldRenderingContext objectFieldRenderingContext)
+		throws PortalException {
 
 		return HashMapBuilder.<String, Object>put(
 			"displayStyle", "multiline"
@@ -92,6 +93,11 @@ public class LongTextObjectFieldBusinessType
 	@Override
 	public PropertyDefinition.PropertyType getPropertyType() {
 		return PropertyDefinition.PropertyType.TEXT;
+	}
+
+	@Override
+	public boolean isLocalizable() {
+		return true;
 	}
 
 	@Override

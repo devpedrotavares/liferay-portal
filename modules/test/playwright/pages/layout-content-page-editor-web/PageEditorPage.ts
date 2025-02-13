@@ -98,7 +98,11 @@ export class PageEditorPage {
 	}
 
 	async addFragment(setName: string, name: string, dropTarget?: Locator) {
-		await this.goToSidebarTab('Fragments and Widgets');
+		await this.goToSidebarTab('Components');
+
+		await this.page
+			.getByRole('tab', {exact: true, name: 'Fragments'})
+			.click();
 
 		const header = this.page.getByRole('menuitem', {
 			exact: true,
@@ -194,7 +198,7 @@ export class PageEditorPage {
 	}
 
 	async addWidget(category: string, name: string, dropTarget?: Locator) {
-		await this.goToSidebarTab('Fragments and Widgets');
+		await this.goToSidebarTab('Components');
 
 		await this.page
 			.getByRole('tab', {exact: true, name: 'Widgets'})
@@ -388,9 +392,12 @@ export class PageEditorPage {
 
 			await this.page.getByRole('menuitem', {name: unit}).click();
 
-			const input = this.page.getByRole('spinbutton', {
-				name: spacingType,
-			});
+			const input = this.page.getByRole(
+				unit === 'custom' ? 'textbox' : 'spinbutton',
+				{
+					name: spacingType,
+				}
+			);
 
 			await fillAndClickOutside(this.page, input, value);
 
@@ -436,7 +443,7 @@ export class PageEditorPage {
 		await this.page.getByRole('button', {name: 'Save'}).click();
 	}
 
-	async clickPageContentContentAction(
+	async clickPageContentAction(
 		action: string,
 		name: string,
 		subMenuAction?: string
@@ -562,6 +569,74 @@ export class PageEditorPage {
 		await this.waitForChangesSaved();
 	}
 
+	async dragToFragment({
+		drop = true,
+		position,
+		source,
+		targetId,
+	}: {
+		drop?: boolean;
+		position: 'bottom' | 'middle' | 'top';
+		source: Locator;
+		targetId: string;
+	}) {
+
+		// Try dragging source until movement preview appears
+
+		await expect(async () => {
+			const sourceBox = await source.boundingBox();
+
+			await source.hover({timeout: 1000});
+
+			await this.page.mouse.down();
+
+			await this.page.mouse.move(sourceBox.x + 5, sourceBox.y + 5);
+
+			await this.page
+				.getByLabel('Movement Preview')
+				.waitFor({timeout: 1000});
+		}).toPass();
+
+		// Move it to target until drag feedback appears
+
+		await expect(async () => {
+			const target = this.page.locator(
+				`.lfr-layout-structure-item-topper-${targetId}`
+			);
+			const targetBox = await target.boundingBox();
+
+			const randomX = Math.random() * targetBox.width;
+
+			const y =
+				position === 'top'
+					? targetBox.y + 10
+					: position === 'bottom'
+						? targetBox.y + targetBox.height - 10
+						: targetBox.y + targetBox.height / 2;
+
+			await this.page.mouse.move(targetBox.x + randomX, y, {steps: 10});
+
+			const dragCssClass =
+				position === 'top'
+					? 'drag-over-top'
+					: position === 'bottom'
+						? 'drag-over-bottom'
+						: 'drag-over-middle';
+
+			await expect(target).toHaveClass(new RegExp(dragCssClass), {
+				timeout: 1000,
+			});
+		}).toPass({timeout: 10000});
+
+		// Drop if specified
+
+		if (drop) {
+			await this.page.mouse.up();
+
+			await this.waitForChangesSaved();
+		}
+	}
+
 	async dragTreeNode({
 		position = 'middle',
 		source,
@@ -685,7 +760,7 @@ export class PageEditorPage {
 
 		// Enable editor
 
-		await editable.dblclick();
+		await editable.click();
 
 		// Set the content using codemirror API and save
 
@@ -893,22 +968,7 @@ export class PageEditorPage {
 	}
 
 	async goToWidgetConfiguration(widgetId: string) {
-		if (await this.page.evaluate(() => Liferay.FeatureFlags['32075'])) {
-			await this.clickFragmentOption(widgetId, 'Configuration');
-		}
-		else {
-			const topper = this.getTopper(widgetId);
-
-			await topper.hover();
-
-			await expect(topper.locator('.portlet-options')).toBeVisible();
-
-			await topper.locator('.portlet-options').click();
-
-			await this.page
-				.getByRole('menuitem', {exact: true, name: 'Configuration'})
-				.click();
-		}
+		await this.clickFragmentOption(widgetId, 'Configuration');
 	}
 
 	async hideFragment(fragmentId: string, isDesktop = true) {
@@ -929,7 +989,10 @@ export class PageEditorPage {
 			.getByRole('button', {name: 'Options'})
 			.click();
 
-		await this.page.locator('.dropdown-menu.show').getByText(name).click();
+		await this.page
+			.locator('.dropdown-menu.show')
+			.getByText(name, {exact: true})
+			.click();
 	}
 
 	async isActive(fragmentId: string, isDesktop = true) {
@@ -956,7 +1019,61 @@ export class PageEditorPage {
 		);
 	}
 
-	async mapFormFragment(fragmentId: string, type: string, fields?: string[]) {
+	async mapAction({entry, fragmentId}: {entry: string; fragmentId: string}) {
+		await this.selectFragment(fragmentId);
+
+		await this.changeConfiguration({
+			fieldLabel: 'Type',
+			tab: 'General',
+			value: 'Action',
+		});
+
+		await this.selectEditable(fragmentId, 'action');
+
+		await this.page.getByRole('tab', {exact: true, name: 'Action'}).click();
+
+		await this.setMappedItem({
+			entity: 'Student',
+			entry,
+			entryLocator: this.page
+				.frameLocator('iframe[title="Select"]')
+				.getByText(entry)
+				.first(),
+		});
+
+		await this.changeConfiguration({
+			fieldLabel: 'Action',
+			tab: 'Action',
+			value: 'addObjectEntryName',
+		});
+
+		await this.changeConfiguration({
+			fieldLabel: 'Success Interaction',
+			tab: 'Action',
+			value: 'displayPage',
+		});
+
+		await this.changeConfiguration({
+			fieldLabel: 'Display Page',
+			tab: 'Action',
+			value: 'ObjectEntry_displayPageURL',
+		});
+
+		await this.changeConfiguration({
+			fieldLabel: 'Error Interaction',
+			tab: 'Action',
+			value: 'notification',
+		});
+	}
+
+	async mapFormFragment(
+		fragmentId: string,
+		type: string,
+		fields?: string[] | 'all',
+		options?: {
+			addLocalizationSelect?: boolean;
+		}
+	) {
 		const fragment = this.getFragment(fragmentId);
 
 		await fragment.getByLabel('Content Type').selectOption(type);
@@ -969,7 +1086,7 @@ export class PageEditorPage {
 			.getByLabel('Select All Items on the Page')
 			.check({trial: true});
 
-		if (!fields) {
+		if (!fields || fields === 'all') {
 			await fieldsModal
 				.getByLabel('Select All Items on the Page')
 				.check();
@@ -992,8 +1109,26 @@ export class PageEditorPage {
 
 		await waitForAlert(
 			this.page,
-			'Success:Your form has been successfully loaded.'
+			'Success:Your form has been successfully loaded.',
+			{autoClose: false}
 		);
+
+		const addLocalizationSelectDialog = this.page.getByRole('dialog', {
+			name: 'Add Localization Select',
+		});
+
+		if (await addLocalizationSelectDialog.isVisible()) {
+			if (options?.addLocalizationSelect) {
+				await addLocalizationSelectDialog
+					.getByRole('button', {name: 'Add Localization Select'})
+					.click();
+			}
+			else {
+				await addLocalizationSelectDialog
+					.getByRole('button', {name: 'Cancel'})
+					.click();
+			}
+		}
 	}
 
 	async mapEditableLink({
@@ -1011,9 +1146,9 @@ export class PageEditorPage {
 			| {layoutTitle: string; type: 'Page'}
 			| {mappingConfiguration: MappingConfiguration; type: 'Mapped URL'};
 	}) {
-		const buttonFragmentId = await this.getFragmentId(fragmentName);
+		const fragmentId = await this.getFragmentId(fragmentName);
 
-		await this.selectEditable(buttonFragmentId, editableId);
+		await this.selectEditable(fragmentId, editableId);
 
 		await this.page.getByRole('tab', {exact: true, name: 'Link'}).click();
 
@@ -1069,6 +1204,12 @@ export class PageEditorPage {
 		await waitForAlert(this.page, successMessage);
 	}
 
+	async redoAction() {
+		await this.redoButton.click();
+
+		await this.waitForChangesSaved();
+	}
+
 	async removeFragment(fragmentId: string) {
 		await this.selectFragment(fragmentId);
 
@@ -1116,6 +1257,23 @@ export class PageEditorPage {
 
 			await expect(treeNode).toHaveClass(/focus/);
 		}
+	}
+
+	async selectDirectImage(fileName: string, imageId: string) {
+		await this.selectEditable(imageId, 'image-square');
+
+		await this.page.getByTitle('Select Image').click();
+
+		const articleCard = this.page
+			.frameLocator('iframe[title="Select"]')
+			.getByText(fileName, {exact: false});
+
+		await clickAndExpectToBeHidden({
+			target: this.page.locator('.modal-dialog'),
+			trigger: articleCard,
+		});
+
+		await this.waitForChangesSaved();
 	}
 
 	async selectEditable(
@@ -1257,9 +1415,22 @@ export class PageEditorPage {
 				.isVisible();
 
 			if (hasRecentItems) {
-				await this.page
-					.getByRole('menuitem', {name: 'Select Item...'})
-					.click();
+				if (customMappingButtonLocator) {
+					await customMappingButtonLocator.click();
+				}
+				else {
+					await this.selectItemMappingButton.click();
+				}
+
+				await clickAndExpectToBeVisible({
+					autoClick: true,
+					target: this.page.getByRole('menuitem', {
+						name: 'Select Item...',
+					}),
+					trigger: customMappingButtonLocator
+						? customMappingButtonLocator
+						: this.selectItemMappingButton,
+				});
 			}
 
 			const iframe = this.page.frameLocator('iframe[title="Select"]');
@@ -1365,7 +1536,7 @@ export class PageEditorPage {
 
 		if (source === 'relationship' || source === 'structure') {
 			await this.page
-				.getByLabel('Field')
+				.getByRole('combobox', {exact: true, name: 'Field'})
 				.selectOption(mappingConfiguration.mapping.field);
 
 			return;
@@ -1409,6 +1580,12 @@ export class PageEditorPage {
 				`.page-editor__layout-viewport--size-${VIEWPORTS_CLASSNAMES[viewport]}`
 			)
 			.waitFor();
+	}
+
+	async undoAction() {
+		await this.undoButton.click();
+
+		await this.waitForChangesSaved();
 	}
 
 	async waitForChangesSaved() {

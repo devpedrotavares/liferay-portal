@@ -14,6 +14,7 @@ import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.change.tracking.registry.CTModelRegistration;
 import com.liferay.portal.change.tracking.registry.CTModelRegistry;
@@ -1086,17 +1087,16 @@ public class CTSQLTransformerTest {
 
 		_ctPreferencesLocalService.updateCTPreferences(ctPreferences);
 
-		long originalCompanyId = CompanyThreadLocal.getCompanyId();
-
 		long originalUserId = PrincipalThreadLocal.getUserId();
 
-		CompanyThreadLocal.setCompanyId(companyId);
-
-		PrincipalThreadLocal.setName(userId);
-
-		try (Connection connection = DataAccess.getConnection();
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					companyId, ctCollectionId);
+			Connection connection = DataAccess.getConnection();
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				_getSQL(inputSQLFile, expectedOutputSQLFile, ctCollectionId))) {
+
+			PrincipalThreadLocal.setName(userId);
 
 			preparedStatementUnsafeConsumer.accept(preparedStatement);
 
@@ -1113,8 +1113,6 @@ public class CTSQLTransformerTest {
 			}
 		}
 		finally {
-			CompanyThreadLocal.setCompanyId(originalCompanyId);
-
 			PrincipalThreadLocal.setName(originalUserId);
 		}
 	}
@@ -1149,25 +1147,22 @@ public class CTSQLTransformerTest {
 
 		_ctPreferencesLocalService.updateCTPreferences(ctPreferences);
 
-		long originalCompanyId = CompanyThreadLocal.getCompanyId();
-
 		long originalUserId = PrincipalThreadLocal.getUserId();
 
-		CompanyThreadLocal.setCompanyId(companyId);
-
-		PrincipalThreadLocal.setName(userId);
-
-		try (Connection connection = DataAccess.getConnection();
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					companyId, ctCollectionId);
+			Connection connection = DataAccess.getConnection();
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				_getSQL(inputSQLFile, expectedOutputSQLFile, ctCollectionId))) {
+
+			PrincipalThreadLocal.setName(userId);
 
 			preparedStatementUnsafeConsumer.accept(preparedStatement);
 
 			Assert.assertEquals(1, preparedStatement.executeUpdate());
 		}
 		finally {
-			CompanyThreadLocal.setCompanyId(originalCompanyId);
-
 			PrincipalThreadLocal.setName(originalUserId);
 		}
 	}

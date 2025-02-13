@@ -1,66 +1,119 @@
-const inputElement = document.getElementById(
-	`${fragmentNamespace}-rich-text-input`
-);
+const editorName = `${fragmentEntryLinkNamespace}-${input.name}`;
 
-const inputLabelElement = document.getElementById(
-	`${fragmentEntryLinkNamespace}-rich-text-input-label`
-);
+if (layoutMode !== 'edit') {
+	const editor = document.getElementById(editorName);
+	editor.name = input.name;
 
-let currentLanguageId = themeDisplay.getDefaultLanguageId();
-
-if (input.attributes?.readOnly) {
-	if (inputElement) {
-		inputElement.innerHTML = input.value;
-	}
-}
-else if (layoutMode === 'edit') {
-	if (inputElement) {
-		inputElement.setAttribute('disabled', true);
-	}
-}
-else if (layoutMode !== 'edit' && input.attributes.localizable) {
-	CKEDITOR.on('instanceReady', (editorEvent) => {
-		if (editorEvent.editor.name === input.name) {
-			editorEvent.editor.on('change', () => {
-				const value = editorEvent.editor.getData();
-
-				const translationInput =
-					getOrCreateTranslationInput(currentLanguageId);
-
-				translationInput.value = value;
-
-				Liferay.fire('localizationSelect:updateTranslationStatus', {
-					languageId: currentLanguageId,
-				});
-			});
-		}
-
-		Liferay.on('localizationSelect:localeChanged', (event) => {
-			currentLanguageId = event.languageId;
-
-			const translationInput =
-				getOrCreateTranslationInput(currentLanguageId);
-
-			if (translationInput.getAttribute('value') !== null) {
-				editorEvent.editor.setData(translationInput.value);
+	const editorPromise = new Promise((resolve) => {
+		CKEDITOR.on('instanceReady', (editorEvent) => {
+			if (editorEvent.editor.name === editorName) {
+				resolve(editorEvent.editor);
 			}
 		});
 	});
-}
 
-function getOrCreateTranslationInput(languageId) {
-	const inputId = `${fragmentNamespace}${input.name}_${languageId}`;
-
-	let translationInput = document.getElementById(inputId);
-
-	if (!translationInput) {
-		translationInput = document.createElement('input');
-		translationInput.type = 'hidden';
-		translationInput.id = inputId;
-		translationInput.name = `${input.name}_${currentLanguageId}`;
-
-		inputLabelElement.parentElement.appendChild(translationInput);
+	if (input.readOnly) {
+		editorPromise.then((editor) => {
+			editor.setReadOnly(true);
+		});
 	}
+	else if (Liferay.FeatureFlags['LPD-37927']) {
+		const inputContainer = document.getElementById(
+			`${fragmentEntryLinkNamespace}-rich-text-input`
+		);
 
-	return translationInput;
+		import('@liferay/fragment-impl').then(
+			({registerLocalizedInput, registerUnlocalizedInput}) => {
+				if (input.localizable) {
+					const {onChange} = registerLocalizedInput({
+						defaultLanguageId: themeDisplay.getDefaultLanguageId(),
+						initialValues: input.valueI18n,
+						inputName: input.name,
+						localizationInputsContainer: inputContainer,
+						namespace: fragmentNamespace,
+						onLocaleChange: ({value}) => {
+							editorPromise.then((editor) => {
+								editor.setData(value);
+							});
+						},
+					});
+
+					editorPromise.then((editor) => {
+						editor.on('change', () => {
+							const value = editor.getData();
+
+							onChange(value);
+						});
+					});
+				}
+				else {
+					registerUnlocalizedInput({
+						defaultLanguageId: themeDisplay.getDefaultLanguageId(),
+						onLocaleChange: (languageId) => {
+							editorPromise.then((editor) => {
+								const editorWrapper = document.getElementById(
+									`cke_${editorName}`
+								);
+								const iframe =
+									editorWrapper.querySelector('iframe');
+								const inputLabel = document.querySelector(
+									`label[for="${editorName}"]`
+								);
+								const isReadOnly =
+									input.attributes.unlocalizedFieldsState ===
+									'read-only';
+
+								if (
+									languageId ===
+									themeDisplay.getDefaultLanguageId()
+								) {
+									editor.setReadOnly(false);
+
+									if (isReadOnly) {
+										inputLabel.innerHTML = input.label;
+									}
+									else {
+										editorWrapper.classList.remove(
+											'rich-text-input--disabled'
+										);
+
+										iframe.setAttribute('tabindex', '0');
+
+										iframe.contentDocument.body.removeAttribute(
+											'aria-disabled'
+										);
+									}
+								}
+								else {
+									editor.setReadOnly(true);
+
+									if (isReadOnly) {
+										inputLabel.innerHTML =
+											inputContainer.dataset.readonlyLabel;
+									}
+									else {
+										editorWrapper.classList.add(
+											'rich-text-input--disabled'
+										);
+
+										iframe.setAttribute('tabindex', '-1');
+
+										iframe.contentDocument.body.setAttribute(
+											'aria-disabled',
+											'true'
+										);
+									}
+								}
+							});
+						},
+						unlocalizedFieldsState:
+							input.attributes.unlocalizedFieldsState,
+						unlocalizedMessageContainer: document.getElementById(
+							`${fragmentNamespace}-unlocalized-info`
+						),
+					});
+				}
+			}
+		);
+	}
 }

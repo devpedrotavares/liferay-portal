@@ -158,32 +158,6 @@ public class LayoutsTreeDisplayContext {
 		).build();
 	}
 
-	private String _getAddCollectionLayoutURL() {
-		Group scopeGroup = _themeDisplay.getScopeGroup();
-
-		if (scopeGroup.isStaged() && !scopeGroup.isStagingGroup()) {
-			return StringPool.BLANK;
-		}
-
-		return PortletURLBuilder.create(
-			PortalUtil.getControlPanelPortletURL(
-				_liferayPortletRequest, LayoutAdminPortletKeys.GROUP_PAGES,
-				PortletRequest.RENDER_PHASE)
-		).setMVCPath(
-			"/select_layout_collections.jsp"
-		).setRedirect(
-			_getRedirect()
-		).setBackURL(
-			_getBackURL()
-		).setParameter(
-			"groupId", _themeDisplay.getSiteGroupId()
-		).setParameter(
-			"privateLayout", _isPrivateLayout()
-		).setParameter(
-			"selPlid", LayoutConstants.DEFAULT_PLID
-		).buildString();
-	}
-
 	private String _getAddLayoutURL() {
 		Group scopeGroup = _themeDisplay.getScopeGroup();
 
@@ -262,8 +236,6 @@ public class LayoutsTreeDisplayContext {
 
 	private Map<String, Object> _getConfigData() {
 		Map<String, Object> configData = HashMapBuilder.<String, Object>put(
-			"addCollectionLayoutURL", _getAddCollectionLayoutURL()
-		).put(
 			"addLayoutURL", _getAddLayoutURL()
 		).put(
 			"administrationPortletNamespace",
@@ -338,11 +310,7 @@ public class LayoutsTreeDisplayContext {
 				() -> {
 					Group scopeGroup = _themeDisplay.getScopeGroup();
 
-					if (scopeGroup.hasLocalOrRemoteStagingGroup()) {
-						return true;
-					}
-
-					return false;
+					return scopeGroup.hasLocalOrRemoteStagingGroup();
 				}
 			).build());
 
@@ -806,14 +774,9 @@ public class LayoutsTreeDisplayContext {
 	}
 
 	private boolean _hasAddLayoutPermission() throws PortalException {
-		if (GroupPermissionUtil.contains(
-				_themeDisplay.getPermissionChecker(),
-				_themeDisplay.getScopeGroup(), ActionKeys.ADD_LAYOUT)) {
-
-			return true;
-		}
-
-		return false;
+		return GroupPermissionUtil.contains(
+			_themeDisplay.getPermissionChecker(), _themeDisplay.getScopeGroup(),
+			ActionKeys.ADD_LAYOUT);
 	}
 
 	private boolean _hasAdministrationPortletPermission() throws Exception {
@@ -827,25 +790,15 @@ public class LayoutsTreeDisplayContext {
 		ControlPanelEntry controlPanelEntry =
 			portlet.getControlPanelEntryInstance();
 
-		if (!controlPanelEntry.hasAccessPermission(
-				_themeDisplay.getPermissionChecker(),
-				_themeDisplay.getScopeGroup(), portlet)) {
-
-			return false;
-		}
-
-		return true;
+		return controlPanelEntry.hasAccessPermission(
+			_themeDisplay.getPermissionChecker(), _themeDisplay.getScopeGroup(),
+			portlet);
 	}
 
 	private boolean _hasConfigureLayoutPermission() throws PortalException {
-		if (GroupPermissionUtil.contains(
-				_themeDisplay.getPermissionChecker(),
-				_themeDisplay.getScopeGroup(), ActionKeys.MANAGE_LAYOUTS)) {
-
-			return true;
-		}
-
-		return false;
+		return GroupPermissionUtil.contains(
+			_themeDisplay.getPermissionChecker(), _themeDisplay.getScopeGroup(),
+			ActionKeys.MANAGE_LAYOUTS);
 	}
 
 	private boolean _isPageHierarchyOption(String pageTypeOption) {

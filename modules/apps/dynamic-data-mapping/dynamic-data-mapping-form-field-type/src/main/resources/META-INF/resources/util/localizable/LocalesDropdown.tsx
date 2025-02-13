@@ -7,21 +7,28 @@ import ClayButton from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
-import {PagesVisitor, useFormState} from 'data-engine-js-components-web';
-import React, {useRef, useState} from 'react';
+import {
+	PagesVisitor,
+	useConfig,
+	useFormState,
+} from 'data-engine-js-components-web';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import AvailableLocaleLabel from './AvailableLocaleLabel';
 
-interface Locale {
+export interface AvailableLocale {
 	displayName: string;
 	icon: string;
-	isDefault?: boolean;
-	isTranslated?: boolean;
 	localeId: Liferay.Language.Locale;
 }
+
+export interface EditingLocale extends AvailableLocale {
+	isDefault: boolean;
+	isTranslated: boolean;
+}
 interface LocalesDropdownProps {
-	availableLocales: Locale[];
-	editingLocale: Locale;
+	availableLocales: EditingLocale[];
+	editingLocale: EditingLocale;
 	fieldName: string;
 	onLanguageClicked: (localeId: Liferay.Language.Locale) => void;
 }
@@ -33,11 +40,29 @@ const LocalesDropdown = ({
 	onLanguageClicked,
 }: LocalesDropdownProps) => {
 	const {pages} = useFormState();
+	const {portletNamespace} = useConfig();
 
 	const alignElementRef = useRef(null);
 	const dropdownMenuRef = useRef(null);
 
 	const [dropdownActive, setDropdownActive] = useState(false);
+
+	const localeChangeHandler = useCallback(
+		(event: any) => {
+			const localeId = event.item.getAttribute('data-value');
+			document.getElementsByName(fieldName + localeId)[0].click();
+		},
+		[fieldName]
+	);
+	useEffect(() => {
+		Liferay.on('inputLocalized:localeChanged', localeChangeHandler);
+
+		return () =>
+			Liferay.detach(
+				'inputLocalized:localeChanged',
+				localeChangeHandler as () => void
+			);
+	}, [localeChangeHandler]);
 
 	return (
 		<div>
@@ -63,7 +88,7 @@ const LocalesDropdown = ({
 			<ClayDropDown.Menu
 				active={dropdownActive}
 				alignElementRef={alignElementRef}
-				onSetActive={setDropdownActive}
+				onActiveChange={setDropdownActive}
 				ref={dropdownMenuRef}
 			>
 				<ClayDropDown.ItemList>
@@ -93,7 +118,8 @@ const LocalesDropdown = ({
 										visitor.mapFields(
 											(field) => {
 												if (
-													field.localizable &&
+													(field.localizedObjectField ||
+														field.localizable) &&
 													fieldName !==
 														field.fieldName
 												) {
@@ -108,6 +134,22 @@ const LocalesDropdown = ({
 											true,
 											true
 										);
+
+										const friendlyURLInputComponent =
+											Liferay.component(
+												`${portletNamespace}friendlyURL`
+											);
+
+										if (friendlyURLInputComponent) {
+											Liferay.fire(
+												'inputLocalized:localeChanged',
+												{
+													item: document.querySelector(
+														`[data-languageid="${localeId}"][data-value="${localeId}"]`
+													),
+												}
+											);
+										}
 									}
 								}}
 							>

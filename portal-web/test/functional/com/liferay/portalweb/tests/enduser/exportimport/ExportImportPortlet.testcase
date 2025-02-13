@@ -74,7 +74,7 @@ definition {
 
 			CKEditor.addSourceContent(content = '''<p><a href="${portalURL}/web/site-name/test-page">test page</a></p>''');
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("When: Export and download the web content to a LAR file") {
@@ -199,7 +199,6 @@ definition {
 	test EditImportedContentPageViaImportedSiteTemplate {
 		property osgi.module.configuration.file.names = "com.liferay.layout.configuration.LayoutExportImportConfiguration.config";
 		property osgi.module.configurations = "exportDraftLayout=\"true\"";
-		property testray.component.names = "Training";
 
 		task ("Given: User add a new site template") {
 			SiteTemplates.addCP(
@@ -652,7 +651,7 @@ definition {
 				locator1 = "WCEditWebContent#ANY_TEXT_INPUT",
 				value1 = "Liferay 1");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "Exported Article");
 		}
@@ -783,7 +782,7 @@ definition {
 				webContentLinkToPage = "Test Page",
 				webContentTitle = "WC WebContent Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "WC WebContent Title");
 		}

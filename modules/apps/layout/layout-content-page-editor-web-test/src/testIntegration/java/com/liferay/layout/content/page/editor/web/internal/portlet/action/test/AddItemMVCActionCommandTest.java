@@ -107,13 +107,9 @@ public class AddItemMVCActionCommandTest {
 			layoutStructure.getLayoutStructureItem(
 				layoutStructure.getMainItemId());
 
-		List<String> childrenItemIds =
-			rootLayoutStructureItem.getChildrenItemIds();
-
-		String itemId = childrenItemIds.get(0);
-
 		LayoutStructureItem layoutStructureItem =
-			layoutStructure.getLayoutStructureItem(itemId);
+			layoutStructure.getLayoutStructureItem(
+				rootLayoutStructureItem.getChildrenItemId(0));
 
 		Assert.assertEquals(
 			_layoutStructure.getMainItemId(),
@@ -159,13 +155,9 @@ public class AddItemMVCActionCommandTest {
 			layoutStructure.getLayoutStructureItem(
 				layoutStructure.getMainItemId());
 
-		List<String> childrenItemIds =
-			rootLayoutStructureItem.getChildrenItemIds();
-
-		String itemId = childrenItemIds.get(1);
-
 		LayoutStructureItem layoutStructureItem =
-			layoutStructure.getLayoutStructureItem(itemId);
+			layoutStructure.getLayoutStructureItem(
+				rootLayoutStructureItem.getChildrenItemId(1));
 
 		Assert.assertEquals(
 			_layoutStructure.getMainItemId(),
@@ -190,6 +182,20 @@ public class AddItemMVCActionCommandTest {
 		Assert.assertNotNull(mobileLandscapeConfigJSONObject);
 		Assert.assertEquals(
 			1, mobileLandscapeConfigJSONObject.get("numberOfColumns"));
+
+		JSONObject portraitMobileConfigJSONObject =
+			itemConfigJSONObject.getJSONObject(
+				ViewportSize.PORTRAIT_MOBILE.getViewportSizeId());
+
+		Assert.assertNotNull(portraitMobileConfigJSONObject);
+		Assert.assertEquals(
+			1, portraitMobileConfigJSONObject.get("numberOfColumns"));
+
+		JSONObject tabletConfigJSONObject = itemConfigJSONObject.getJSONObject(
+			ViewportSize.TABLET.getViewportSizeId());
+
+		Assert.assertNotNull(tabletConfigJSONObject);
+		Assert.assertEquals(1, tabletConfigJSONObject.get("numberOfColumns"));
 	}
 
 	@Test
@@ -248,13 +254,9 @@ public class AddItemMVCActionCommandTest {
 			layoutStructure.getLayoutStructureItem(
 				layoutStructure.getMainItemId());
 
-		List<String> childrenItemIds =
-			rootLayoutStructureItem.getChildrenItemIds();
-
-		String itemId = childrenItemIds.get(0);
-
 		LayoutStructureItem layoutStructureItem =
-			layoutStructure.getLayoutStructureItem(itemId);
+			layoutStructure.getLayoutStructureItem(
+				rootLayoutStructureItem.getChildrenItemId(0));
 
 		Assert.assertEquals(
 			_layoutStructure.getMainItemId(),
@@ -331,11 +333,9 @@ public class AddItemMVCActionCommandTest {
 			layoutStructure.getLayoutStructureItem(
 				layoutStructure.getMainItemId());
 
-		List<String> childrenItemIds =
-			rootLayoutStructureItem.getChildrenItemIds();
-
 		LayoutStructureItem layoutStructureItem =
-			layoutStructure.getLayoutStructureItem(childrenItemIds.get(0));
+			layoutStructure.getLayoutStructureItem(
+				rootLayoutStructureItem.getChildrenItemId(0));
 
 		Assert.assertEquals(
 			_layoutStructure.getMainItemId(),

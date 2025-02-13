@@ -6,6 +6,7 @@
 import {navigate} from 'frontend-js-web';
 import {useCallback, useContext, useEffect, useMemo} from 'react';
 
+import {KeyboardMovementContext} from '../contexts/KeyboardMovementContext';
 import {
 	KeyboardNavigationContext,
 	NavigationTarget,
@@ -51,6 +52,8 @@ export function useKeyboardNavigation({
 		KeyboardNavigationContext
 	);
 
+	const {sources} = useContext(KeyboardMovementContext);
+
 	const isTarget = useMemo(
 		() =>
 			columnIndex === target.columnIndex &&
@@ -59,7 +62,7 @@ export function useKeyboardNavigation({
 	);
 
 	const onKeyDown = useCallback(
-		(event) => {
+		(event: any) => {
 			const key = getKey(event, rtl);
 
 			if (!isAllowedKey(key)) {
@@ -125,10 +128,6 @@ export function useKeyboardNavigation({
 	// Focus element when it's target
 
 	useEffect(() => {
-		if (!Liferay.FeatureFlags['LPD-35220']) {
-			return;
-		}
-
 		if (element && isTarget) {
 
 			// Return if focus is prevented
@@ -141,12 +140,12 @@ export function useKeyboardNavigation({
 		}
 	}, [element, isTarget, target.preventFocus]);
 
-	// Focus element after navigate
+	// Focus element after navigate or cancelling movement
 
 	useEffect(() => {
 		const {itemId, type} = getSessionState();
 
-		if (!element || itemId !== id) {
+		if (!element || itemId !== id || !!sources.length) {
 			return;
 		}
 
@@ -155,7 +154,7 @@ export function useKeyboardNavigation({
 		setTarget({columnIndex, itemIndex, preventFocus: true});
 
 		focusElement(element, type);
-	}, [columnIndex, element, id, itemIndex, setTarget]);
+	}, [columnIndex, element, id, itemIndex, setTarget, sources.length]);
 
 	return {
 		isTarget,

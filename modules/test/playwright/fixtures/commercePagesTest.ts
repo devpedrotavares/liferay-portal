@@ -13,12 +13,15 @@ import {CommerceAdminChannelDetailsCountriesPage} from '../pages/commerce/commer
 import {CommerceAdminChannelDetailsPage} from '../pages/commerce/commerce-channel-web/commerceAdminChannelDetailsPage';
 import {CommerceAdminChannelsPage} from '../pages/commerce/commerce-channel-web/commerceAdminChannelsPage';
 import {CheckoutPage} from '../pages/commerce/commerce-checkout-web/checkoutPage';
+import {CommerceAdminCurrenciesPage} from '../pages/commerce/commerce-currency-web/commerceAdminCurrenciesPage';
+import {CommerceAdminCurrencyDetailsPage} from '../pages/commerce/commerce-currency-web/commerceAdminCurrencyDetailsPage';
 import {CommerceLayoutsPage} from '../pages/commerce/commerce-order-content-web/commerceLayoutsPage';
 import {PendingOrdersPage} from '../pages/commerce/commerce-order-content-web/pendingOrdersPage';
 import {PlacedOrdersPage} from '../pages/commerce/commerce-order-content-web/placedOrdersPage';
 import {ReturnDetailsPage} from '../pages/commerce/commerce-order-content-web/returnDetailsPage';
 import {ReturnsPage} from '../pages/commerce/commerce-order-content-web/returnsPage';
 import {CommerceAdminOrderDetailsPage} from '../pages/commerce/commerce-order-web/commerceAdminOrderDetailsPage';
+import {CommerceAdminOrderNotesPage} from '../pages/commerce/commerce-order-web/commerceAdminOrderNotesPage';
 import {CommerceAdminOrdersPage} from '../pages/commerce/commerce-order-web/commerceAdminOrdersPage';
 import {CommerceAdminReturnsPage} from '../pages/commerce/commerce-order-web/commerceAdminReturnsPage';
 import {OrganizationManagementPage} from '../pages/commerce/commerce-organization-web/organizationManagementPage';
@@ -29,7 +32,11 @@ import {SpecificationFacetsPage} from '../pages/commerce/commerce-product-conten
 import {ProductDetailsPage} from '../pages/commerce/commerce-product-content-web/productDetailsPage';
 import {ProductPublisherPage} from '../pages/commerce/commerce-product-content-web/productPublisherPage';
 import {AttachmentsPage} from '../pages/commerce/commerce-product-definitions-web/attachmentsPage';
+import {CommerceAdminProductConfigurationEntriesPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductConfigurationEntriesPage';
+import {CommerceAdminProductConfigurationEntryPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductConfigurationEntryPage';
+import {CommerceAdminProductConfigurationListPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductConfigurationListPage';
 import {CommerceAdminProductConfigurationListsPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductConfigurationListsPage';
+import {CommerceAdminProductDetailsConfigurationPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsConfigurationPage';
 import {CommerceAdminProductDetailsDiagramPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsDiagramPage';
 import {CommerceAdminProductDetailsMediaPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsMediaPage';
 import {CommerceAdminProductDetailsPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsPage';
@@ -38,7 +45,7 @@ import {CommerceAdminProductDetailsProductRelationsPage} from '../pages/commerce
 import {CommerceAdminProductDetailsSkusPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsSkusPage';
 import {CommerceAdminProductDetailsVisibilityPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductDetailsVisibilityPage';
 import {CommerceAdminProductPage} from '../pages/commerce/commerce-product-definitions-web/commerceAdminProductPage';
-import {CommerceProductSpecificationsPage} from '../pages/commerce/commerce-product-options-web/commerceProductSpecificationsPage';
+import {CommerceSpecificationsPage} from '../pages/commerce/commerce-product-options-web/commerceSpecificationsPage';
 import {CommerceAdminShipmentsPage} from '../pages/commerce/commerce-shipment-web/commerceAdminShipmentsPage';
 import {CommerceThemeMiniumCatalogPage} from '../pages/commerce/commerce-theme-minium/commerceThemeMiniumCatalogPage';
 import {CommerceThemeMiniumPage} from '../pages/commerce/commerce-theme-minium/commerceThemeMiniumPage';
@@ -54,11 +61,18 @@ const commercePagesTest = test.extend<{
 	commerceAdminChannelDetailsCountriesPage: CommerceAdminChannelDetailsCountriesPage;
 	commerceAdminChannelDetailsPage: CommerceAdminChannelDetailsPage;
 	commerceAdminChannelsPage: CommerceAdminChannelsPage;
+	commerceAdminCurrenciesPage: CommerceAdminCurrenciesPage;
+	commerceAdminCurrencyDetailsPage: CommerceAdminCurrencyDetailsPage;
 	commerceAdminDiscountDetailsPage: CommerceAdminDiscountDetailsPage;
 	commerceAdminDiscountsPage: CommerceAdminDiscountsPage;
 	commerceAdminOrderDetailsPage: CommerceAdminOrderDetailsPage;
+	commerceAdminOrderNotesPage: CommerceAdminOrderNotesPage;
 	commerceAdminOrdersPage: CommerceAdminOrdersPage;
+	commerceAdminProductConfigurationEntriesPage: CommerceAdminProductConfigurationEntriesPage;
+	commerceAdminProductConfigurationEntryPage: CommerceAdminProductConfigurationEntryPage;
+	commerceAdminProductConfigurationListPage: CommerceAdminProductConfigurationListPage;
 	commerceAdminProductConfigurationListsPage: CommerceAdminProductConfigurationListsPage;
+	commerceAdminProductDetailsConfigurationPage: CommerceAdminProductDetailsConfigurationPage;
 	commerceAdminProductDetailsDiagramPage: CommerceAdminProductDetailsDiagramPage;
 	commerceAdminProductDetailsMediaPage: CommerceAdminProductDetailsMediaPage;
 	commerceAdminProductDetailsPage: CommerceAdminProductDetailsPage;
@@ -77,7 +91,7 @@ const commercePagesTest = test.extend<{
 	commerceLayoutsPage: CommerceLayoutsPage;
 	commerceMiniCartPage: CommerceMiniCartPage;
 	commercePaymentsPage: CommercePaymentsPage;
-	commerceProductSpecificationsPage: CommerceProductSpecificationsPage;
+	commerceSpecificationsPage: CommerceSpecificationsPage;
 	commerceThemeMiniumCatalogPage: CommerceThemeMiniumCatalogPage;
 	commerceThemeMiniumPage: CommerceThemeMiniumPage;
 	commerceWishListPage: CommerceWishListPage;
@@ -108,6 +122,12 @@ const commercePagesTest = test.extend<{
 	commerceAdminChannelsPage: async ({page}, use) => {
 		await use(new CommerceAdminChannelsPage(page));
 	},
+	commerceAdminCurrenciesPage: async ({page}, use) => {
+		await use(new CommerceAdminCurrenciesPage(page));
+	},
+	commerceAdminCurrencyDetailsPage: async ({page}, use) => {
+		await use(new CommerceAdminCurrencyDetailsPage(page));
+	},
 	commerceAdminDiscountDetailsPage: async ({page}, use) => {
 		await use(new CommerceAdminDiscountDetailsPage(page));
 	},
@@ -117,11 +137,26 @@ const commercePagesTest = test.extend<{
 	commerceAdminOrderDetailsPage: async ({page}, use) => {
 		await use(new CommerceAdminOrderDetailsPage(page));
 	},
+	commerceAdminOrderNotesPage: async ({page}, user) => {
+		await user(new CommerceAdminOrderNotesPage(page));
+	},
 	commerceAdminOrdersPage: async ({page}, use) => {
 		await use(new CommerceAdminOrdersPage(page));
 	},
+	commerceAdminProductConfigurationEntriesPage: async ({page}, use) => {
+		await use(new CommerceAdminProductConfigurationEntriesPage(page));
+	},
+	commerceAdminProductConfigurationEntryPage: async ({page}, use) => {
+		await use(new CommerceAdminProductConfigurationEntryPage(page));
+	},
+	commerceAdminProductConfigurationListPage: async ({page}, use) => {
+		await use(new CommerceAdminProductConfigurationListPage(page));
+	},
 	commerceAdminProductConfigurationListsPage: async ({page}, use) => {
 		await use(new CommerceAdminProductConfigurationListsPage(page));
+	},
+	commerceAdminProductDetailsConfigurationPage: async ({page}, use) => {
+		await use(new CommerceAdminProductDetailsConfigurationPage(page));
 	},
 	commerceAdminProductDetailsDiagramPage: async ({page}, use) => {
 		await use(new CommerceAdminProductDetailsDiagramPage(page));
@@ -177,8 +212,8 @@ const commercePagesTest = test.extend<{
 	commercePaymentsPage: async ({page}, use) => {
 		await use(new CommercePaymentsPage(page));
 	},
-	commerceProductSpecificationsPage: async ({page}, use) => {
-		await use(new CommerceProductSpecificationsPage(page));
+	commerceSpecificationsPage: async ({page}, use) => {
+		await use(new CommerceSpecificationsPage(page));
 	},
 	commerceThemeMiniumCatalogPage: async ({page}, use) => {
 		await use(new CommerceThemeMiniumCatalogPage(page));

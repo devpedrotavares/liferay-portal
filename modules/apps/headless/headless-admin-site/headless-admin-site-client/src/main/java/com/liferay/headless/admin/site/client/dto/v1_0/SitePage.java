@@ -382,29 +382,6 @@ public class SitePage implements Cloneable, Serializable {
 
 	protected String parentSitePageExternalReferenceCode;
 
-	public String getSiteExternalReferenceCode() {
-		return siteExternalReferenceCode;
-	}
-
-	public void setSiteExternalReferenceCode(String siteExternalReferenceCode) {
-		this.siteExternalReferenceCode = siteExternalReferenceCode;
-	}
-
-	public void setSiteExternalReferenceCode(
-		UnsafeSupplier<String, Exception>
-			siteExternalReferenceCodeUnsafeSupplier) {
-
-		try {
-			siteExternalReferenceCode =
-				siteExternalReferenceCodeUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String siteExternalReferenceCode;
-
 	public TaxonomyCategory[] getTaxonomyCategories() {
 		return taxonomyCategories;
 	}
@@ -561,8 +538,7 @@ public class SitePage implements Cloneable, Serializable {
 
 	public static enum Type {
 
-		COLLECTION_PAGE("CollectionPage"), CONTENT_PAGE("ContentPage"),
-		WIDGET_PAGE("WidgetPage");
+		CONTENT_PAGE("ContentPage"), WIDGET_PAGE("WidgetPage");
 
 		public static Type create(String value) {
 			for (Type type : values()) {

@@ -23,11 +23,10 @@ export const test = mergeTests(
 let objectDefinition: ObjectDefinition;
 
 test.beforeEach(async ({apiHelpers}) => {
-	objectDefinition = await apiHelpers.objectAdmin.postRandomObjectDefinition(
-		{code: 0},
-		undefined,
-		'default'
-	);
+	objectDefinition = await apiHelpers.objectAdmin.postRandomObjectDefinition({
+		objectFolderExternalReferenceCode: 'default',
+		status: {code: 0},
+	});
 });
 
 test.afterEach(async ({apiHelpers, notificationTemplatesPage, page}) => {
@@ -391,7 +390,7 @@ test('can use notification terms and freeMarker variables in notification templa
 	];
 
 	for (const term of terms) {
-		await expect(page.locator('div.dnd-td').getByText(term)).toBeVisible();
+		await expect(page.locator('.fds td').getByText(term)).toBeVisible();
 	}
 
 	const copyButtons = [

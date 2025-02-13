@@ -1,4 +1,4 @@
-@component-name = "portal-upgrades"
+@component-name = "portal-content-management"
 definition {
 
 	property ci.retries.disabled = "true";
@@ -9,7 +9,6 @@ definition {
 	property portal.version = "7.3.10.1";
 	property test.liferay.virtual.instance = "false";
 	property test.run.type = "single";
-	property testray.component.names = "Upgrades Content Management,Web Content Administration";
 	property testray.main.component.name = "Upgrades Content Management";
 
 	setUp {
@@ -293,7 +292,7 @@ definition {
 
 		Button.clickSaveAsDraft();
 
-		PortletEntry.publish();
+		WebContent.publishExistingWCArticleWithPermissions();
 
 		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
 
@@ -397,7 +396,7 @@ definition {
 
 		IFrame.closeFrame();
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 	}
 
 	@description = "This is a use case for LRQA-61632. Enable Staging,Publish to live site, assert value entered persists,including images and links  With First Complex Structure"

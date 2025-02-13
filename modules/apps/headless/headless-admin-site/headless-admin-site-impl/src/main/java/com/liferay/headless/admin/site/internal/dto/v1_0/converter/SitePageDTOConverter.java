@@ -5,19 +5,21 @@
 
 package com.liferay.headless.admin.site.internal.dto.v1_0.converter;
 
+import com.liferay.headless.admin.site.dto.v1_0.ContentPageSettings;
 import com.liferay.headless.admin.site.dto.v1_0.PageSettings;
 import com.liferay.headless.admin.site.dto.v1_0.SitePage;
 import com.liferay.headless.admin.site.dto.v1_0.WidgetPageSettings;
-import com.liferay.portal.kernel.model.Group;
+import com.liferay.headless.admin.site.internal.dto.v1_0.util.SitePageTypeUtil;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortletConstants;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rubén Pulido
@@ -54,57 +56,54 @@ public class SitePageDTOConverter implements DTOConverter<Layout, SitePage> {
 					() -> LocalizedMapUtil.getI18nMap(
 						true, layout.getNameMap()));
 				setPageSettings(() -> _toPageSettings(layout));
-				setSiteExternalReferenceCode(
+				setParentSitePageExternalReferenceCode(
 					() -> {
-						Group group = layout.getGroup();
+						if (layout.getParentLayoutId() == 0) {
+							return null;
+						}
 
-						return group.getExternalReferenceCode();
+						Layout parentLayout = _layoutLocalService.getLayout(
+							layout.getGroupId(), layout.isPrivateLayout(),
+							layout.getParentLayoutId());
+
+						return parentLayout.getExternalReferenceCode();
 					});
-				setType(() -> _toType(layout));
+				setType(
+					() -> SitePageTypeUtil.toExternalType(layout.getType()));
 				setUuid(layout::getUuid);
 			}
 		};
 	}
 
+	private PageSettings _getPageSettings(Layout layout) {
+		SitePage.Type type = SitePageTypeUtil.toExternalType(layout.getType());
+
+		if (type == SitePage.Type.CONTENT_PAGE) {
+			return new ContentPageSettings();
+		}
+
+		return _toWidgetPageSettings(layout);
+	}
+
 	private PageSettings _toPageSettings(Layout layout) {
-		PageSettings pageSettings = null;
-
-		SitePage.Type type = _toType(layout);
-
-		if (type == SitePage.Type.WIDGET_PAGE) {
-			pageSettings = _toWidgetPageSettings(layout);
-		}
-		else {
-			return null;
-		}
+		PageSettings pageSettings = _getPageSettings(layout);
 
 		pageSettings.setHiddenFromNavigation(layout::isHidden);
 
 		return pageSettings;
 	}
 
-	private SitePage.Type _toType(Layout layout) {
-		String type = layout.getType();
-
-		if ((type == null) || type.isEmpty()) {
-			return null;
-		}
-		else if (type.equals(LayoutConstants.TYPE_PORTLET)) {
-			return SitePage.Type.WIDGET_PAGE;
-		}
-
-		return null;
-	}
-
 	private WidgetPageSettings _toWidgetPageSettings(Layout layout) {
-		return new WidgetPageSettings() {
-			{
-				setLayoutTemplateId(
-					() -> layout.getTypeSettingsProperty(
-						LayoutTypePortletConstants.LAYOUT_TEMPLATE_ID));
-				setType(Type.WIDGET_PAGE_SETTINGS);
-			}
-		};
+		WidgetPageSettings widgetPageSettings = new WidgetPageSettings();
+
+		widgetPageSettings.setLayoutTemplateId(
+			() -> layout.getTypeSettingsProperty(
+				LayoutTypePortletConstants.LAYOUT_TEMPLATE_ID));
+
+		return widgetPageSettings;
 	}
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 }

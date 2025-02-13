@@ -12,7 +12,6 @@ import {
 } from 'frontend-js-web';
 
 import {LocaleChangedHandler} from './LocaleChangedHandler.es';
-import initializeLock from './initializeLock';
 import removeAlert from './removeAlert';
 import showAlert from './showAlert';
 
@@ -65,31 +64,6 @@ export default function _JournalPortlet({
 
 	const lockHolder = {};
 
-	if (!Liferay.FeatureFlags['LPD-15596']) {
-		initializeLock('publishing', {
-			errorIndicator: document.getElementById(
-				`${namespace}lockErrorIndicator`
-			),
-			lockedIndicator: document.getElementById(
-				`${namespace}savingChangesIndicator`
-			),
-			namespace,
-			onLockChange: ({isLocked}) => {
-				[publishButton, resetValuesButton, saveButton].forEach(
-					(triggerElement) => {
-						if (triggerElement) {
-							triggerElement.disabled = isLocked;
-						}
-					}
-				);
-			},
-			triggerElements: [publishButton, resetValuesButton, saveButton],
-			unlockedIndicator: document.getElementById(
-				`${namespace}changesSavedIndicator`
-			),
-		});
-	}
-
 	Liferay.componentReady(`${namespace}publishing`).then((lock) => {
 		lockHolder.lock = lock;
 	});
@@ -107,6 +81,10 @@ export default function _JournalPortlet({
 				input.value = '';
 			}
 		};
+
+		actionInput.value = articleId
+			? '/journal/update_data_engine_default_values'
+			: '/journal/add_data_engine_default_values';
 
 		resetInput('displayDate');
 		resetInput('displayDateAmPm');
@@ -277,10 +255,7 @@ export default function _JournalPortlet({
 	const handlePublishButtonClick = (event) => {
 		lockHolder.lock?.lock();
 
-		if (
-			Liferay.FeatureFlags['LPD-11228'] &&
-			Liferay.FeatureFlags['LPD-15596']
-		) {
+		if (Liferay.FeatureFlags['LPD-11228']) {
 			return;
 		}
 
@@ -304,10 +279,6 @@ export default function _JournalPortlet({
 				.forEach((field) => {
 					field.required = false;
 				});
-
-			actionInput.value = articleId
-				? '/journal/update_data_engine_default_values'
-				: '/journal/add_data_engine_default_values';
 		}
 		else {
 			articleId = document.getElementById(`${namespace}articleId`).value;

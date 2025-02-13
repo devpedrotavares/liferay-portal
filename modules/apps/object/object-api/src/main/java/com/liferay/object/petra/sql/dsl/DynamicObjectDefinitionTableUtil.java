@@ -8,6 +8,8 @@ package com.liferay.object.petra.sql.dsl;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -53,19 +55,33 @@ public class DynamicObjectDefinitionTableUtil {
 			return dataType;
 		}
 
-		int size = 280;
-
-		if (StringUtil.equals(
-				businessType, ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
-
-			size = 75;
-		}
-
-		return StringBundler.concat(dataType, "(", size, ")");
+		return StringBundler.concat(
+			dataType, "(", getMaxLength(businessType), ")");
 	}
 
 	public static Class<?> getJavaClass(String dbType) {
 		return _javaClasses.get(dbType);
+	}
+
+	public static int getMaxLength(String businessType) {
+		if (StringUtil.equals(
+				businessType,
+				ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
+
+			if (DBManagerUtil.getDBType() == DBType.SQLSERVER) {
+				return 4000;
+			}
+
+			return 5000;
+		}
+		else if (StringUtil.equals(
+					businessType,
+					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
+
+			return 75;
+		}
+
+		return 280;
 	}
 
 	public static String getSQLColumnNull(String dbType) {

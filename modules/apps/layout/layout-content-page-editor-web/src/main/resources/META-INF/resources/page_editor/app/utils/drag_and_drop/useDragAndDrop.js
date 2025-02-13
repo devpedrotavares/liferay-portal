@@ -151,13 +151,15 @@ export function useDragItem(source, onDragEnd, onBegin = () => {}) {
 
 	if (activeItemIds.length > 1) {
 		sources = [
-			...activeItemIds.map((id) =>
-				toMovementItem(
-					id,
-					layoutDataRef.current,
-					fragmentEntryLinksRef.current
-				)
-			),
+			...activeItemIds
+				.filter((id) => layoutDataRef.current.items[id])
+				.map((id) =>
+					toMovementItem(
+						id,
+						layoutDataRef.current,
+						fragmentEntryLinksRef.current
+					)
+				),
 		];
 	}
 
@@ -415,6 +417,7 @@ function computeDrop({
 			onInvalid: () => dispatch(initialDragDrop.state),
 			sources,
 			targetId,
+			type: 'drop',
 		})
 	) {
 		return;
@@ -434,7 +437,12 @@ function computeDrop({
 			});
 		}
 		else {
-			onDragEnd(targetId, position);
+			onDragEnd(
+				targetId,
+				position,
+				dropTarget.collectionItemIndex !== null &&
+					dropTarget.toControlsId
+			);
 		}
 	}
 

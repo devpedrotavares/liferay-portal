@@ -5,6 +5,7 @@
 
 package com.liferay.headless.commerce.admin.order.client.serdes.v1_0;
 
+import com.liferay.headless.commerce.admin.order.client.dto.v1_0.CustomField;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.Order;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.OrderItem;
 import com.liferay.headless.commerce.admin.order.client.json.BaseJSONParser;
@@ -235,6 +236,30 @@ public class OrderSerDes {
 			sb.append("\"");
 		}
 
+		if (order.getCurrencyExternalReferenceCode() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"currencyExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(order.getCurrencyExternalReferenceCode()));
+
+			sb.append("\"");
+		}
+
+		if (order.getCurrencyId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"currencyId\": ");
+
+			sb.append(order.getCurrencyId());
+		}
+
 		if (order.getCustomFields() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -242,7 +267,17 @@ public class OrderSerDes {
 
 			sb.append("\"customFields\": ");
 
-			sb.append(_toJSON(order.getCustomFields()));
+			sb.append("[");
+
+			for (int i = 0; i < order.getCustomFields().length; i++) {
+				sb.append(String.valueOf(order.getCustomFields()[i]));
+
+				if ((i + 1) < order.getCustomFields().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
 		}
 
 		if (order.getDeliveryTermDescription() != null) {
@@ -1461,6 +1496,22 @@ public class OrderSerDes {
 			map.put("currencyCode", String.valueOf(order.getCurrencyCode()));
 		}
 
+		if (order.getCurrencyExternalReferenceCode() == null) {
+			map.put("currencyExternalReferenceCode", null);
+		}
+		else {
+			map.put(
+				"currencyExternalReferenceCode",
+				String.valueOf(order.getCurrencyExternalReferenceCode()));
+		}
+
+		if (order.getCurrencyId() == null) {
+			map.put("currencyId", null);
+		}
+		else {
+			map.put("currencyId", String.valueOf(order.getCurrencyId()));
+		}
+
 		if (order.getCustomFields() == null) {
 			map.put("customFields", null);
 		}
@@ -2352,8 +2403,16 @@ public class OrderSerDes {
 			else if (Objects.equals(jsonParserFieldName, "currencyCode")) {
 				return false;
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "currencyExternalReferenceCode")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "currencyId")) {
+				return false;
+			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
-				return true;
+				return false;
 			}
 			else if (Objects.equals(
 						jsonParserFieldName, "deliveryTermDescription")) {
@@ -2894,9 +2953,34 @@ public class OrderSerDes {
 					order.setCurrencyCode((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "currencyExternalReferenceCode")) {
+
+				if (jsonParserFieldValue != null) {
+					order.setCurrencyExternalReferenceCode(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "currencyId")) {
+				if (jsonParserFieldValue != null) {
+					order.setCurrencyId(
+						Long.valueOf((String)jsonParserFieldValue));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
 				if (jsonParserFieldValue != null) {
-					order.setCustomFields((Map<String, ?>)jsonParserFieldValue);
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					CustomField[] customFieldsArray =
+						new CustomField[jsonParserFieldValues.length];
+
+					for (int i = 0; i < customFieldsArray.length; i++) {
+						customFieldsArray[i] = CustomFieldSerDes.toDTO(
+							(String)jsonParserFieldValues[i]);
+					}
+
+					order.setCustomFields(customFieldsArray);
 				}
 			}
 			else if (Objects.equals(

@@ -6,19 +6,15 @@
 package com.liferay.fragment.input.template.parser.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.input.template.parser.FragmentEntryInputTemplateNodeContextHelper;
 import com.liferay.fragment.input.template.parser.InputTemplateNode;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
-import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormProvider;
-import com.liferay.info.search.InfoSearchClassMapperRegistry;
-import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
@@ -31,6 +27,7 @@ import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
+import com.liferay.object.field.builder.DateObjectFieldBuilder;
 import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
 import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
@@ -55,6 +52,7 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -62,10 +60,15 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -74,10 +77,18 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.io.Serializable;
 
+import java.sql.Timestamp;
+
+import java.text.DateFormat;
+
+import java.time.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -114,7 +125,7 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 		_objectDefinition = _addObjectDefinition();
 
 		_objectEntry = _objectEntryLocalService.addObjectEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			TestPropsValues.getUserId(), _group.getGroupId(), null,
 			_objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"myMultiselectPicklist",
@@ -139,7 +150,7 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 	}
 
 	@Test
-	public void testGetMultiPicklistSelectInfoFieldTypeValue()
+	public void testGetMultiselectPicklistSelectInfoFieldTypeValue()
 		throws Exception {
 
 		ListTypeEntry listTypeEntry2 = _listTypeEntries.get(1);
@@ -181,7 +192,7 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 			"_c_customObjectDefinitionId");
 
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			TestPropsValues.getUserId(), _group.getGroupId(),
+			TestPropsValues.getUserId(), _group.getGroupId(), null,
 			objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				relationshipObjectFieldName, _objectEntry.getObjectEntryId()
@@ -189,25 +200,6 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 				"myText", RandomTestUtil.randomString()
 			).build(),
 			ServiceContextTestUtil.getServiceContext());
-
-		FragmentEntryLink fragmentEntryLink =
-			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-				RandomTestUtil.randomLong(),
-				_segmentsExperienceLocalService.
-					fetchDefaultSegmentsExperienceId(_layout.getPlid()),
-				_layout.getPlid(), StringPool.BLANK, StringPool.BLANK,
-				StringPool.BLANK, StringPool.BLANK,
-				JSONUtil.put(
-					FragmentEntryProcessorConstants.
-						KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
-					JSONUtil.put(
-						"inputFieldId",
-						"ObjectField_" + relationshipObjectFieldName)
-				).toString(),
-				StringPool.BLANK, 0, StringPool.BLANK,
-				FragmentConstants.TYPE_INPUT,
-				ServiceContextTestUtil.getServiceContext());
 
 		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
@@ -239,7 +231,10 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 			InputTemplateNode inputTemplateNode =
 				_fragmentEntryInputTemplateNodeContextHelper.
 					toInputTemplateNode(
-						"Default", fragmentEntryLink, httpServletRequest,
+						"Default",
+						_addInputFragmentEntryLink(
+							"ObjectField_" + relationshipObjectFieldName),
+						httpServletRequest,
 						infoItemFormProvider.getInfoForm(
 							StringPool.BLANK, _group.getGroupId()),
 						LocaleUtil.getSiteDefault());
@@ -256,6 +251,279 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
+	}
+
+	@Test
+	public void testGetRichTextSelectInfoFieldTypeValueWithInfoParametersMap()
+		throws Exception {
+
+		HttpServletRequest httpServletRequest = _getHttpServletRequest();
+
+		Map<Locale, String> localeMap = HashMapBuilder.put(
+			LocaleUtil.SPAIN, RandomTestUtil.randomString()
+		).put(
+			LocaleUtil.US, RandomTestUtil.randomString()
+		).build();
+
+		SessionMessages.add(
+			httpServletRequest, "infoFormParameterMap",
+			HashMapBuilder.<String, Object>put(
+				"myRichText", localeMap
+			).build());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group, TestPropsValues.getUserId());
+
+		serviceContext.setRequest(httpServletRequest);
+
+		InfoItemFormProvider<?> infoItemFormProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFormProvider.class, _objectDefinition.getClassName());
+
+		try {
+			ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
+			InputTemplateNode inputTemplateNode =
+				_fragmentEntryInputTemplateNodeContextHelper.
+					toInputTemplateNode(
+						"Default", _addInputFragmentEntryLink("myRichText"),
+						httpServletRequest,
+						infoItemFormProvider.getInfoForm(
+							StringPool.BLANK, _group.getGroupId()),
+						LocaleUtil.getSiteDefault());
+
+			Assert.assertEquals(
+				localeMap.get(LocaleUtil.getSiteDefault()),
+				inputTemplateNode.getInputValue());
+			Assert.assertEquals(localeMap, inputTemplateNode.getValueI18n());
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
+	@Test
+	public void testGetTextSelectInfoFieldTypeValueWithInfoParametersMap()
+		throws Exception {
+
+		HttpServletRequest httpServletRequest = _getHttpServletRequest();
+
+		String value = RandomTestUtil.randomString();
+
+		SessionMessages.add(
+			httpServletRequest, "infoFormParameterMap",
+			HashMapBuilder.<String, Object>put(
+				"myText", value
+			).build());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group, TestPropsValues.getUserId());
+
+		serviceContext.setRequest(httpServletRequest);
+
+		InfoItemFormProvider<?> infoItemFormProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFormProvider.class, _objectDefinition.getClassName());
+
+		try {
+			ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
+			InputTemplateNode inputTemplateNode =
+				_fragmentEntryInputTemplateNodeContextHelper.
+					toInputTemplateNode(
+						"Default", _addInputFragmentEntryLink("myText"),
+						httpServletRequest,
+						infoItemFormProvider.getInfoForm(
+							StringPool.BLANK, _group.getGroupId()),
+						LocaleUtil.getSiteDefault());
+
+			Assert.assertEquals(value, inputTemplateNode.getInputValue());
+
+			Assert.assertEquals(
+				Collections.emptyMap(), inputTemplateNode.getValueI18n());
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
+	@FeatureFlags({"LPD-32050", "LPD-37927"})
+	@Test
+	public void testToInputTemplateNodeLocalizedInputValue() throws Exception {
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionTestUtil.publishObjectDefinition(
+				ListUtil.fromArray(
+					new DateObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"myDate"
+					).objectFieldSettings(
+						Collections.emptyList()
+					).build(),
+					new DateTimeObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"myDateTime"
+					).objectFieldSettings(
+						Collections.singletonList(
+							_createObjectFieldSetting(
+								ObjectFieldSettingConstants.NAME_TIME_STORAGE,
+								ObjectFieldSettingConstants.
+									VALUE_CONVERT_TO_UTC))
+					).build(),
+					new DateObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"myLocalizedDate"
+					).localized(
+						true
+					).objectFieldSettings(
+						Collections.emptyList()
+					).build(),
+					new DateTimeObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"myLocalizedDateTime"
+					).localized(
+						true
+					).objectFieldSettings(
+						Collections.singletonList(
+							_createObjectFieldSetting(
+								ObjectFieldSettingConstants.NAME_TIME_STORAGE,
+								ObjectFieldSettingConstants.
+									VALUE_CONVERT_TO_UTC))
+					).build()),
+				ObjectDefinitionConstants.SCOPE_SITE);
+
+		Date enDate = DateUtil.parseDate(
+			"yyyy-MM-dd", "2021-05-31", LocaleUtil.US);
+
+		Timestamp enTimestamp = new Timestamp(enDate.getTime());
+
+		Date esDate = new Date(System.currentTimeMillis());
+
+		Timestamp esTimestamp = new Timestamp(esDate.getTime());
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			TestPropsValues.getUserId(), _group.getGroupId(), null,
+			objectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.<String, Serializable>put(
+				"myDate", enDate
+			).put(
+				"myDateTime", enTimestamp
+			).put(
+				"myLocalizedDate_i18n",
+				HashMapBuilder.put(
+					LocaleUtil.toLanguageId(LocaleUtil.US), enDate
+				).put(
+					LocaleUtil.toLanguageId(LocaleUtil.SPAIN), esDate
+				).build()
+			).put(
+				"myLocalizedDateTime_i18n",
+				HashMapBuilder.put(
+					LocaleUtil.toLanguageId(LocaleUtil.US), enTimestamp
+				).put(
+					LocaleUtil.toLanguageId(LocaleUtil.SPAIN), esTimestamp
+				).build()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		DateFormat enDateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+			"yyyy-MM-dd", LocaleUtil.US);
+
+		String enValue = enDateFormat.format(enDate);
+
+		_testToInputTemplateNodeLocalizedInputValue(
+			objectDefinition.getClassName(), "ObjectField_myDate", objectEntry,
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, enValue
+			).put(
+				LocaleUtil.US, enValue
+			).build(),
+			Collections.emptyMap());
+
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
+			"yyyy-MM-dd'T'HH:mm");
+
+		enValue = dateTimeFormatter.format(enTimestamp.toLocalDateTime());
+
+		_testToInputTemplateNodeLocalizedInputValue(
+			objectDefinition.getClassName(), "ObjectField_myDateTime",
+			objectEntry,
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, enValue
+			).put(
+				LocaleUtil.US, enValue
+			).build(),
+			Collections.emptyMap());
+
+		enValue = enDateFormat.format(enDate);
+
+		DateFormat esDateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+			"yyyy-MM-dd", LocaleUtil.SPAIN);
+
+		String esValue = esDateFormat.format(esDate);
+
+		_testToInputTemplateNodeLocalizedInputValue(
+			objectDefinition.getClassName(), "ObjectField_myLocalizedDate",
+			objectEntry,
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, esValue
+			).put(
+				LocaleUtil.US, enValue
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, esValue
+			).put(
+				LocaleUtil.US, enValue
+			).build());
+
+		enValue = dateTimeFormatter.format(enTimestamp.toLocalDateTime());
+
+		esValue = dateTimeFormatter.format(esTimestamp.toLocalDateTime());
+
+		_testToInputTemplateNodeLocalizedInputValue(
+			objectDefinition.getClassName(), "ObjectField_myLocalizedDateTime",
+			objectEntry,
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, esValue
+			).put(
+				LocaleUtil.US, enValue
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, esValue
+			).put(
+				LocaleUtil.US, enValue
+			).build());
+	}
+
+	private FragmentEntryLink _addInputFragmentEntryLink(String inputFieldId)
+		throws Exception {
+
+		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
+			null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
+			RandomTestUtil.randomLong(),
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				_layout.getPlid()),
+			_layout.getPlid(), StringPool.BLANK, StringPool.BLANK,
+			StringPool.BLANK, StringPool.BLANK,
+			JSONUtil.put(
+				FragmentEntryProcessorConstants.
+					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
+				JSONUtil.put("inputFieldId", inputFieldId)
+			).toString(),
+			StringPool.BLANK, 0, StringPool.BLANK, FragmentConstants.TYPE_INPUT,
+			ServiceContextTestUtil.getServiceContext());
 	}
 
 	private ObjectDefinition _addObjectDefinition() throws Exception {
@@ -284,6 +552,13 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 				Collections.singletonMap(
 					LocaleUtil.US, RandomTestUtil.randomString()),
 				false, _listTypeEntries);
+
+		ObjectField myRichTextObjectField = ObjectFieldUtil.createObjectField(
+			ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
+			ObjectFieldConstants.DB_TYPE_STRING, RandomTestUtil.randomString(),
+			"myRichText", false);
+
+		myRichTextObjectField.setLocalized(true);
 
 		List<ObjectField> objectFields = Arrays.asList(
 			new AttachmentObjectFieldBuilder(
@@ -348,21 +623,19 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 				ObjectFieldConstants.BUSINESS_TYPE_PRECISION_DECIMAL,
 				ObjectFieldConstants.DB_TYPE_BIG_DECIMAL,
 				RandomTestUtil.randomString(), "myPrecisionDecimal", false),
-			ObjectFieldUtil.createObjectField(
-				ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT,
-				ObjectFieldConstants.DB_TYPE_STRING,
-				RandomTestUtil.randomString(), "myRichText", false));
+			myRichTextObjectField);
 
 		objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, true, false, true,
+				TestPropsValues.getUserId(), 0, null, false, false, true, true,
+				true,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"CustomObjectDefinition", null, "control_panel.sites",
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				true, ObjectDefinitionConstants.SCOPE_SITE,
 				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT, objectFields);
 
-		ObjectField objectField = ObjectFieldUtil.addCustomObjectField(
+		ObjectField myTextObjectField = ObjectFieldUtil.addCustomObjectField(
 			new TextObjectFieldBuilder(
 			).userId(
 				TestPropsValues.getUserId()
@@ -378,7 +651,8 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 				objectDefinition.getObjectDefinitionId()
 			).build());
 
-		objectDefinition.setTitleObjectFieldId(objectField.getObjectFieldId());
+		objectDefinition.setTitleObjectFieldId(
+			myTextObjectField.getObjectFieldId());
 
 		objectDefinition = _objectDefinitionLocalService.updateObjectDefinition(
 			objectDefinition);
@@ -391,23 +665,6 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 	private void _assertInputTemplateNodeInputValue(
 			String expectedValue, String inputFieldId)
 		throws Exception {
-
-		FragmentEntryLink fragmentEntryLink =
-			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-				RandomTestUtil.randomLong(),
-				_segmentsExperienceLocalService.
-					fetchDefaultSegmentsExperienceId(_layout.getPlid()),
-				_layout.getPlid(), StringPool.BLANK, StringPool.BLANK,
-				StringPool.BLANK, StringPool.BLANK,
-				JSONUtil.put(
-					FragmentEntryProcessorConstants.
-						KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
-					JSONUtil.put("inputFieldId", inputFieldId)
-				).toString(),
-				StringPool.BLANK, 0, StringPool.BLANK,
-				FragmentConstants.TYPE_INPUT,
-				ServiceContextTestUtil.getServiceContext());
 
 		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
@@ -427,7 +684,8 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 			InputTemplateNode inputTemplateNode =
 				_fragmentEntryInputTemplateNodeContextHelper.
 					toInputTemplateNode(
-						"Default", fragmentEntryLink, httpServletRequest,
+						"Default", _addInputFragmentEntryLink(inputFieldId),
+						httpServletRequest,
 						infoItemFormProvider.getInfoForm(
 							StringPool.BLANK, _group.getGroupId()),
 						LocaleUtil.getSiteDefault());
@@ -487,14 +745,80 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 		return themeDisplay;
 	}
 
+	private void _testToInputTemplateNodeLocalizedInputValue(
+			String className, String inputFieldId, ObjectEntry objectEntry,
+			Map<Locale, String> valueI18nMap, Map<Locale, String> values)
+		throws Exception {
+
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+		ThemeDisplay themeDisplay = _getThemeDisplay();
+
+		httpServletRequest.setAttribute(WebKeys.THEME_DISPLAY, themeDisplay);
+
+		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
+			_layoutDisplayPageProviderRegistry.
+				getLayoutDisplayPageProviderByClassName(className);
+
+		httpServletRequest.setAttribute(
+			LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
+			layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
+				new InfoItemReference(
+					className, objectEntry.getObjectEntryId())));
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group, TestPropsValues.getUserId());
+
+		serviceContext.setRequest(httpServletRequest);
+
+		InfoItemFormProvider<?> infoItemFormProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFormProvider.class, className);
+
+		try {
+			ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
+			for (Map.Entry<Locale, String> entry : values.entrySet()) {
+				Locale locale = entry.getKey();
+
+				themeDisplay.setLocale(locale);
+
+				InputTemplateNode inputTemplateNode =
+					_fragmentEntryInputTemplateNodeContextHelper.
+						toInputTemplateNode(
+							"Default", _addInputFragmentEntryLink(inputFieldId),
+							httpServletRequest,
+							infoItemFormProvider.getInfoForm(
+								StringPool.BLANK, _group.getGroupId()),
+							locale);
+
+				Assert.assertEquals(
+					entry.getValue(), inputTemplateNode.getInputValue());
+
+				Map<Locale, String> actualValueI18nMap =
+					inputTemplateNode.getValueI18n();
+
+				Assert.assertEquals(
+					MapUtil.toString(actualValueI18nMap), valueI18nMap.size(),
+					actualValueI18nMap.size());
+
+				for (Map.Entry<Locale, String> curEntry :
+						valueI18nMap.entrySet()) {
+
+					Assert.assertEquals(
+						curEntry.getValue(),
+						actualValueI18nMap.get(curEntry.getKey()));
+				}
+			}
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
 	@Inject
 	private CompanyLocalService _companyLocalService;
-
-	@Inject
-	private DLAppLocalService _dlAppLocalService;
-
-	@Inject
-	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
 
 	@Inject
 	private FragmentEntryInputTemplateNodeContextHelper
@@ -508,12 +832,6 @@ public class FragmentEntryInputTemplateNodeContextHelperTest {
 
 	@Inject
 	private InfoItemServiceRegistry _infoItemServiceRegistry;
-
-	@Inject
-	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
-
-	@Inject
-	private ItemSelector _itemSelector;
 
 	private Layout _layout;
 

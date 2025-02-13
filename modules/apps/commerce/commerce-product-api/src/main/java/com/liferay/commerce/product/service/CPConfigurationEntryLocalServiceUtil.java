@@ -56,23 +56,29 @@ public class CPConfigurationEntryLocalServiceUtil {
 	public static CPConfigurationEntry addCPConfigurationEntry(
 			String externalReferenceCode, long userId, long groupId,
 			long classNameId, long classPK, long cpConfigurationListId,
-			String allowedOrderQuantities, boolean backOrders,
-			long commerceAvailabilityEstimateId,
-			String cpDefinitionInventoryEngine, boolean displayAvailability,
-			boolean displayStockQuantity, String lowStockActivity,
+			long cpTaxCategoryId, String allowedOrderQuantities,
+			boolean backOrders, long commerceAvailabilityEstimateId,
+			String cpDefinitionInventoryEngine, double depth,
+			boolean displayAvailability, boolean displayStockQuantity,
+			boolean freeShipping, double height, String lowStockActivity,
 			java.math.BigDecimal maxOrderQuantity,
 			java.math.BigDecimal minOrderQuantity,
 			java.math.BigDecimal minStockQuantity,
-			java.math.BigDecimal multipleOrderQuantity)
+			java.math.BigDecimal multipleOrderQuantity, boolean purchasable,
+			boolean shippable, double shippingExtraPrice,
+			boolean shipSeparately, boolean taxExempt, boolean visible,
+			double weight, double width)
 		throws PortalException {
 
 		return getService().addCPConfigurationEntry(
 			externalReferenceCode, userId, groupId, classNameId, classPK,
-			cpConfigurationListId, allowedOrderQuantities, backOrders,
-			commerceAvailabilityEstimateId, cpDefinitionInventoryEngine,
-			displayAvailability, displayStockQuantity, lowStockActivity,
+			cpConfigurationListId, cpTaxCategoryId, allowedOrderQuantities,
+			backOrders, commerceAvailabilityEstimateId,
+			cpDefinitionInventoryEngine, depth, displayAvailability,
+			displayStockQuantity, freeShipping, height, lowStockActivity,
 			maxOrderQuantity, minOrderQuantity, minStockQuantity,
-			multipleOrderQuantity);
+			multipleOrderQuantity, purchasable, shippable, shippingExtraPrice,
+			shipSeparately, taxExempt, visible, weight, width);
 	}
 
 	/**
@@ -97,10 +103,17 @@ public class CPConfigurationEntryLocalServiceUtil {
 		return getService().createPersistedModel(primaryKeyObj);
 	}
 
-	public static void deleteCPConfigurationEntries(
-		long cpConfigurationListId) {
+	public static void deleteCPConfigurationEntries(long cpConfigurationListId)
+		throws PortalException {
 
 		getService().deleteCPConfigurationEntries(cpConfigurationListId);
+	}
+
+	public static void deleteCPConfigurationEntries(
+			long classNameId, long classPK)
+		throws PortalException {
+
+		getService().deleteCPConfigurationEntries(classNameId, classPK);
 	}
 
 	/**
@@ -112,9 +125,11 @@ public class CPConfigurationEntryLocalServiceUtil {
 	 *
 	 * @param cpConfigurationEntry the cp configuration entry
 	 * @return the cp configuration entry that was removed
+	 * @throws PortalException
 	 */
 	public static CPConfigurationEntry deleteCPConfigurationEntry(
-		CPConfigurationEntry cpConfigurationEntry) {
+			CPConfigurationEntry cpConfigurationEntry)
+		throws PortalException {
 
 		return getService().deleteCPConfigurationEntry(cpConfigurationEntry);
 	}
@@ -267,6 +282,13 @@ public class CPConfigurationEntryLocalServiceUtil {
 			uuid, groupId);
 	}
 
+	public static CPConfigurationEntry forceDeleteCPConfigurationEntry(
+		CPConfigurationEntry cpConfigurationEntry) {
+
+		return getService().forceDeleteCPConfigurationEntry(
+			cpConfigurationEntry);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -294,6 +316,19 @@ public class CPConfigurationEntryLocalServiceUtil {
 		long cpConfigurationListId) {
 
 		return getService().getCPConfigurationEntries(cpConfigurationListId);
+	}
+
+	public static List<CPConfigurationEntry> getCPConfigurationEntries(
+		long classNameId, long classPK) {
+
+		return getService().getCPConfigurationEntries(classNameId, classPK);
+	}
+
+	public static List<CPConfigurationEntry> getCPConfigurationEntries(
+		long classNameId, long classPK, boolean visible) {
+
+		return getService().getCPConfigurationEntries(
+			classNameId, classPK, visible);
 	}
 
 	/**
@@ -437,22 +472,28 @@ public class CPConfigurationEntryLocalServiceUtil {
 
 	public static CPConfigurationEntry updateCPConfigurationEntry(
 			String externalReferenceCode, long cpConfigurationEntryId,
-			String allowedOrderQuantities, boolean backOrders,
-			long commerceAvailabilityEstimateId,
-			String cpDefinitionInventoryEngine, boolean displayAvailability,
-			boolean displayStockQuantity, String lowStockActivity,
+			long cpTaxCategoryId, String allowedOrderQuantities,
+			boolean backOrders, long commerceAvailabilityEstimateId,
+			String cpDefinitionInventoryEngine, double depth,
+			boolean displayAvailability, boolean displayStockQuantity,
+			boolean freeShipping, double height, String lowStockActivity,
 			java.math.BigDecimal maxOrderQuantity,
 			java.math.BigDecimal minOrderQuantity,
 			java.math.BigDecimal minStockQuantity,
-			java.math.BigDecimal multipleOrderQuantity)
+			java.math.BigDecimal multipleOrderQuantity, boolean purchasable,
+			boolean shippable, double shippingExtraPrice,
+			boolean shipSeparately, boolean taxExempt, boolean visible,
+			double weight, double width)
 		throws PortalException {
 
 		return getService().updateCPConfigurationEntry(
-			externalReferenceCode, cpConfigurationEntryId,
+			externalReferenceCode, cpConfigurationEntryId, cpTaxCategoryId,
 			allowedOrderQuantities, backOrders, commerceAvailabilityEstimateId,
-			cpDefinitionInventoryEngine, displayAvailability,
-			displayStockQuantity, lowStockActivity, maxOrderQuantity,
-			minOrderQuantity, minStockQuantity, multipleOrderQuantity);
+			cpDefinitionInventoryEngine, depth, displayAvailability,
+			displayStockQuantity, freeShipping, height, lowStockActivity,
+			maxOrderQuantity, minOrderQuantity, minStockQuantity,
+			multipleOrderQuantity, purchasable, shippable, shippingExtraPrice,
+			shipSeparately, taxExempt, visible, weight, width);
 	}
 
 	public static CPConfigurationEntryLocalService getService() {

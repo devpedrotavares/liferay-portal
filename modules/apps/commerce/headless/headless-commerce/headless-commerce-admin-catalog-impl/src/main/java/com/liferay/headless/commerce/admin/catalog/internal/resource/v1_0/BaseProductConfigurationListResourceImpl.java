@@ -78,6 +78,10 @@ public abstract class BaseProductConfigurationListResourceImpl
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "catalogId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -111,6 +115,9 @@ public abstract class BaseProductConfigurationListResourceImpl
 	@Override
 	public Page<ProductConfigurationList> getProductConfigurationListsPage(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("catalogId")
+			Long catalogId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.ws.rs.QueryParam("search")
 			String search,
 			@javax.ws.rs.core.Context Filter filter,
@@ -128,6 +135,10 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "catalogId"
+			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
@@ -168,6 +179,9 @@ public abstract class BaseProductConfigurationListResourceImpl
 	@Override
 	public Response postProductConfigurationListsPageExportBatch(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("catalogId")
+			Long catalogId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.ws.rs.QueryParam("search")
 			String search,
 			@javax.ws.rs.core.Context Filter filter,
@@ -206,7 +220,7 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "masterProductConfigurationList": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {
@@ -350,7 +364,7 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "masterProductConfigurationList": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -501,7 +515,7 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "masterProductConfigurationList": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -630,7 +644,8 @@ public abstract class BaseProductConfigurationListResourceImpl
 		throws Exception {
 
 		return getProductConfigurationListsPage(
-			search, filter, pagination, sorts);
+			_parseLong((String)parameters.get("catalogId")), search, filter,
+			pagination, sorts);
 	}
 
 	@Override

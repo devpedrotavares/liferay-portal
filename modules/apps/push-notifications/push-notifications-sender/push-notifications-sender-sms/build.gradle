@@ -1,10 +1,9 @@
 dependencies {
-	compileInclude group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: "2.11.3"
+	compileInclude group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: "2.18.2"
 	compileInclude group: "com.twilio.sdk", name: "twilio", version: "8.3.0"
 	compileInclude group: "io.jsonwebtoken", name: "jjwt-api", version: "0.11.2"
 	compileInclude group: "io.jsonwebtoken", name: "jjwt-impl", version: "0.11.2"
 	compileInclude group: "io.jsonwebtoken", name: "jjwt-jackson", version: "0.11.2"
-
 	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly group: "org.apache.httpcomponents", name: "httpclient", version: "4.5.13"

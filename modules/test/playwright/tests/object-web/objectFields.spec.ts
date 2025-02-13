@@ -16,13 +16,21 @@ import {
 import {Locator, Page, expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {objectPagesTest} from '../../fixtures/objectPagesTest';
 import {getRandomInt} from '../../utils/getRandomInt';
 import {AsyncArray} from './utils/AsyncArray';
-import {createObjectField, mockObjectFields} from './utils/mockObjectFields';
+import {createObjectFields, mockObjectFields} from './utils/mockObjectFields';
 
-export const test = mergeTests(apiHelpersTest, loginTest(), objectPagesTest);
+export const test = mergeTests(
+	apiHelpersTest,
+	featureFlagsTest({
+		'LPD-32050': {enabled: true},
+	}),
+	loginTest(),
+	objectPagesTest
+);
 
 const createdEntities = {
 	listTypeDefinitionIds: [],
@@ -36,11 +44,10 @@ const createdEntities = {
 
 test.beforeEach(async ({apiHelpers}) => {
 	const newObjectDefinition =
-		await apiHelpers.objectAdmin.postRandomObjectDefinition(
-			{code: 0},
-			undefined,
-			'default'
-		);
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			objectFolderExternalReferenceCode: 'default',
+			status: {code: 0},
+		});
 
 	createdEntities.objectDefinitions.push(newObjectDefinition);
 });
@@ -272,11 +279,10 @@ test.describe('Manage object fields through Model Builder', () => {
 		const {listTypeDefinitionIds} = createdEntities;
 
 		const draftObjectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 2},
-				undefined,
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 2},
+			});
 
 		createdEntities.objectDefinitions.push(draftObjectDefinition);
 
@@ -360,15 +366,15 @@ test.describe('Manage object fields through Model Builder', () => {
 
 		await objectFieldApiClient.postObjectDefinitionByExternalReferenceCodeObjectField(
 			objectDefinition.externalReferenceCode,
-			createObjectField(
+			createObjectFields(
 				'picklist',
-				{label: 'picklistField', name: 'picklistField'},
+				[{label: 'picklistField', name: 'picklistField'}],
 				{
 					listTypeDefinitionExternalReferenceCode:
 						listTypeDefinition.externalReferenceCode,
 					listTypeDefinitionId: listTypeDefinition.id,
 				}
-			)
+			)[0]
 		);
 
 		await modelBuilderDiagramPage.goto({objectFolderName: 'Default'});
@@ -429,11 +435,12 @@ test.describe('Manage object fields through Model Builder', () => {
 		listTypeDefinitionIds.push(listTypeDefinition.id);
 
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 1},
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
 				objectFields,
-				objectFolder.externalReferenceCode
-			);
+				objectFolderExternalReferenceCode:
+					objectFolder.externalReferenceCode,
+				status: {code: 1},
+			});
 
 		objectDefinitions.push(objectDefinition);
 
@@ -722,11 +729,11 @@ test.describe('Manage objectFields through Objects Admin UI', () => {
 		const {listTypeDefinitionIds, objectDefinitions} = createdEntities;
 
 		const objectDefinition =
-			await apiHelpers.objectAdmin.postRandomObjectDefinition(
-				{code: 1},
-				[],
-				'default'
-			);
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				objectFields: [],
+				objectFolderExternalReferenceCode: 'default',
+				status: {code: 1},
+			});
 
 		objectDefinitions.push(objectDefinition);
 
@@ -830,15 +837,13 @@ test.describe('Manage objectFields through Objects Admin UI', () => {
 		}
 
 		while (
-			(await page.locator('.dnd-tbody > .dnd-tr').all()).length !==
+			(await page.locator('tbody > tr').all()).length !==
 			objectDefinition.objectFields.length + objectFieldsMock.length
 		) {
 			await page.waitForTimeout(1000);
 		}
 
-		const objectFieldTableRows = await page
-			.locator('.dnd-tbody > .dnd-tr')
-			.all();
+		const objectFieldTableRows = await page.locator('tbody > tr').all();
 
 		const asyncArray = new AsyncArray<Locator, boolean>();
 
@@ -868,6 +873,26 @@ test.describe('Manage objectFields through Objects Admin UI', () => {
 				)
 			).toBeVisible();
 		}
+	});
+
+	test('cannot create localized object fields in unmodifiable system object definition', async ({
+		objectFieldsPage,
+	}) => {
+		await objectFieldsPage.goto('Account');
+
+		await objectFieldsPage.addObjectFieldButton.waitFor();
+
+		await objectFieldsPage.addObjectFieldButton.click();
+
+		await objectFieldsPage.objectFieldOptionsDropdown.click();
+
+		await objectFieldsPage.page
+			.getByRole('option', {exact: true, name: 'Text'})
+			.click();
+
+		expect(
+			objectFieldsPage.page.getByText('Enable Entry Translation')
+		).toBeDisabled();
 	});
 
 	test('cannot delete an objectField that belongs to a unique composite key validation through Objects Admin UI', async ({

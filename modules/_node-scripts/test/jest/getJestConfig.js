@@ -6,15 +6,45 @@
 const path = require('path');
 
 function getJestConfig({rootDir = '<rootDir>'}) {
+	let moduleNameMapper = {};
+	let testEnvironment = 'jest-environment-jsdom-sixteen';
+
+	if (process.env.USE_REACT_16 === 'true') {
+		moduleNameMapper = {
+
+			// Testing dependencies
+
+			'^@testing-library/dom((\\/.*)?)$': '@testing-library/dom-8.11.1$1',
+			'^@testing-library/react((\\/.*)?)$':
+				'@testing-library/react-12.1.2$1',
+			'^@testing-library/react-hooks((\\/.*)?)$':
+				'@testing-library/react-hooks-3.4.2$1',
+			'^@testing-library/user-event((\\/.*)?)$':
+				'@testing-library/user-event-4.2.4$1',
+
+			// React Dependencies
+
+			'^react$': 'react-16',
+			'^react-dom$': 'react-dom-16',
+			'^react-dom/client$': 'react-dom/client',
+			'^react-dom/server$': 'react-dom-16/server',
+			'^react-dom/test-utils$': 'react-dom-16/test-utils',
+			'^react-test-renderer$': 'react-test-renderer-16.12.0',
+		};
+
+		testEnvironment = 'jest-environment-jsdom-thirteen';
+	}
+
 	return {
 		coverageDirectory: 'build/coverage',
 		globalSetup: path.join(__dirname, 'globalSetup.js'),
+		moduleNameMapper,
 		modulePathIgnorePatterns: ['/__fixtures__/', '/build/', '/classes/'],
 		prettierPath: null,
 		resolver: path.join(__dirname, 'resolver.js'),
 		setupFiles: [path.join(__dirname, 'setup.js')],
 		setupFilesAfterEnv: [path.join(__dirname, 'setupAfterEnv.js')],
-		testEnvironment: 'jest-environment-jsdom-thirteen',
+		testEnvironment,
 		testEnvironmentOptions: {
 			url: 'http://localhost',
 		},
@@ -29,8 +59,9 @@ function getJestConfig({rootDir = '<rootDir>'}) {
 
 			/* eslint-enable sort-keys */
 		},
-
-		transformIgnorePatterns: ['/node_modules/'],
+		transformIgnorePatterns: [
+			'/node_modules/(?!@ckeditor|ckeditor5|lodash-es|vanilla-colorful)',
+		],
 	};
 }
 

@@ -45,6 +45,7 @@ page import="com.liferay.portal.kernel.exception.NoSuchUserException" %><%@
 page import="com.liferay.portal.kernel.exception.PasswordExpiredException" %><%@
 page import="com.liferay.portal.kernel.exception.PhoneNumberException" %><%@
 page import="com.liferay.portal.kernel.exception.PhoneNumberExtensionException" %><%@
+page import="com.liferay.portal.kernel.exception.PwdEncryptorException" %><%@
 page import="com.liferay.portal.kernel.exception.RequiredFieldException" %><%@
 page import="com.liferay.portal.kernel.exception.RequiredReminderQueryException" %><%@
 page import="com.liferay.portal.kernel.exception.SendPasswordException" %><%@
@@ -69,7 +70,9 @@ page import="com.liferay.portal.kernel.security.auth.FullNameDefinition" %><%@
 page import="com.liferay.portal.kernel.security.auth.FullNameDefinitionFactory" %><%@
 page import="com.liferay.portal.kernel.security.auth.PrincipalException" %><%@
 page import="com.liferay.portal.kernel.security.auth.ScreenNameValidator" %><%@
+page import="com.liferay.portal.kernel.security.permission.ActionKeys" %><%@
 page import="com.liferay.portal.kernel.service.UserLocalServiceUtil" %><%@
+page import="com.liferay.portal.kernel.service.permission.PortletPermissionUtil" %><%@
 page import="com.liferay.portal.kernel.servlet.SessionErrors" %><%@
 page import="com.liferay.portal.kernel.servlet.SessionMessages" %><%@
 page import="com.liferay.portal.kernel.util.CalendarFactoryUtil" %><%@
@@ -100,7 +103,7 @@ page import="java.util.Date" %>
 <%
 String authType = portletPreferences.getValue("authType", StringPool.BLANK);
 
-CaptchaConfiguration captchaConfiguration = (CaptchaConfiguration)ConfigurationProviderUtil.getSystemConfiguration(CaptchaConfiguration.class);
+CaptchaConfiguration captchaConfiguration = (CaptchaConfiguration)ConfigurationProviderUtil.getCompanyConfiguration(CaptchaConfiguration.class, company.getCompanyId());
 %>
 
 <%@ include file="/init-ext.jsp" %>

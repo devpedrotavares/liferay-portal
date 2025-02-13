@@ -46,14 +46,12 @@ export function createApp({
 	appDescription,
 	appName,
 	catalogId,
-	productChannels,
 	productSpecifications,
 }: {
 	appCategories: Categories[];
 	appDescription: string;
 	appName: string;
 	catalogId: number;
-	productChannels?: Partial<Channel>[];
 	productSpecifications?: ProductSpecification[];
 }) {
 	return fetch(
@@ -65,8 +63,6 @@ export function createApp({
 				categories: appCategories,
 				description: {en_US: appDescription},
 				name: {en_US: appName},
-				productChannelFilter: true,
-				productChannels,
 				productConfiguration: {allowBackOrder: true},
 				productSpecifications,
 				productStatus: 2,
@@ -368,7 +364,7 @@ export async function getCategories({vocabId}: {vocabId: number}) {
 		}
 	);
 
-	const {items} = (await response.json()) as {items: Vocabulary[]};
+	const {items} = (await response.json()) as {items: any[]};
 
 	return items;
 }
@@ -732,9 +728,7 @@ export async function updateProductSpecification({
 	return await response.json();
 }
 
-export async function postEmailAppInformation(
-	emailInformation: EmailAppInformation
-) {
+export async function postEmailAppInformation(emailInformation: any) {
 	await fetch(`${baseURL}/o/c/getappinformations/`, {
 		body: JSON.stringify(emailInformation),
 		headers,

@@ -16,11 +16,13 @@ import {getDescendantIds} from './getDescendantIds';
 import {FORM_ERROR_TYPES} from './getFormErrorDescription';
 import getLayoutDataItemUniqueClassName from './getLayoutDataItemUniqueClassName';
 import hasDraftSubmitChild from './hasDraftSubmitChild';
+import {hasLocalizableFields} from './hasLocalizableFields';
+import {hasLocalizationSelect} from './hasLocalizationSelect';
 import hasRequiredInputChild from './hasRequiredInputChild';
 import {hasVisibleFormButtonChild} from './hasVisibleFormButtonChild';
-import hasVisibleSubmitChild from './hasVisibleSubmitChild';
 import {isItemHidden} from './isItemHidden';
 import {isLayoutDataItemDeleted} from './isLayoutDataItemDeleted';
+import isLocalizationSelect from './isLocalizationSelect';
 import {isMultistepForm} from './isMultistepForm';
 import isStepper from './isStepper';
 import isVisible from './isVisible';
@@ -50,13 +52,24 @@ export default function useCheckFormsValidity() {
 
 		for (const form of forms) {
 			if (
-				!hasVisibleSubmitChild(
-					form.itemId,
-					globalContext,
-					layoutData,
+				hasLocalizationSelect(fragmentEntryLinks) &&
+				!(await hasLocalizableFields(stateRef.current, form.itemId))
+			) {
+				addError(
+					validations,
+					form,
+					FORM_ERROR_TYPES.missingLocalizableFields
+				);
+			}
+
+			if (
+				!hasVisibleFormButtonChild({
 					fragmentEntryLinks,
-					selectedViewportSize
-				)
+					itemId: form.itemId,
+					layoutData,
+					type: 'submit',
+					viewportSize: selectedViewportSize,
+				})
 			) {
 				addError(validations, form, FORM_ERROR_TYPES.missingSubmit);
 			}
@@ -256,7 +269,8 @@ async function checkUnmappedInputChild(
 		if (
 			fragmentEntryLink.fragmentEntryType !==
 				FRAGMENT_ENTRY_TYPES.input ||
-			isStepper(fragmentEntryLink)
+			isStepper(fragmentEntryLink) ||
+			isLocalizationSelect(fragmentEntryLink)
 		) {
 			continue;
 		}

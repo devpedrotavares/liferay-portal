@@ -2320,6 +2320,47 @@ public class Mutation {
 	}
 
 	@GraphQLField(
+		description = "Deletes the asset library's Document Metadata Set by external reference code."
+	)
+	public boolean deleteAssetLibraryDocumentMetadataSetByExternalReferenceCode(
+			@GraphQLName("assetLibraryId") @NotEmpty String assetLibraryId,
+			@GraphQLName("externalReferenceCode") String externalReferenceCode)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_documentMetadataSetResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			documentMetadataSetResource ->
+				documentMetadataSetResource.
+					deleteAssetLibraryDocumentMetadataSetByExternalReferenceCode(
+						Long.valueOf(assetLibraryId), externalReferenceCode));
+
+		return true;
+	}
+
+	@GraphQLField(
+		description = "Updates the asset Library's Document Metadata Set with the given external reference code, or creates it if it does not exists."
+	)
+	public DocumentMetadataSet
+			updateAssetLibraryDocumentMetadataSetByExternalReferenceCode(
+				@GraphQLName("assetLibraryId") @NotEmpty String assetLibraryId,
+				@GraphQLName("externalReferenceCode") String
+					externalReferenceCode,
+				@GraphQLName("documentMetadataSet") DocumentMetadataSet
+					documentMetadataSet)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_documentMetadataSetResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			documentMetadataSetResource ->
+				documentMetadataSetResource.
+					putAssetLibraryDocumentMetadataSetByExternalReferenceCode(
+						Long.valueOf(assetLibraryId), externalReferenceCode,
+						documentMetadataSet));
+	}
+
+	@GraphQLField(
 		description = "Deletes the document metadata set and returns a 204 if the operation succeeds."
 	)
 	public boolean deleteDocumentMetadataSet(
@@ -2396,6 +2437,47 @@ public class Mutation {
 			documentMetadataSetResource ->
 				documentMetadataSetResource.postSiteDocumentMetadataSetBatch(
 					Long.valueOf(siteKey), callbackURL, object));
+	}
+
+	@GraphQLField(
+		description = "Deletes the site's Document Metadata Set by external reference code."
+	)
+	public boolean deleteSiteDocumentMetadataSetByExternalReferenceCode(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("externalReferenceCode") String externalReferenceCode)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_documentMetadataSetResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			documentMetadataSetResource ->
+				documentMetadataSetResource.
+					deleteSiteDocumentMetadataSetByExternalReferenceCode(
+						Long.valueOf(siteKey), externalReferenceCode));
+
+		return true;
+	}
+
+	@GraphQLField(
+		description = "Updates the site's Document Metadata Set with the given external reference code, or creates it if it does not exist."
+	)
+	public DocumentMetadataSet
+			updateSiteDocumentMetadataSetByExternalReferenceCode(
+				@GraphQLName("siteKey") @NotEmpty String siteKey,
+				@GraphQLName("externalReferenceCode") String
+					externalReferenceCode,
+				@GraphQLName("documentMetadataSet") DocumentMetadataSet
+					documentMetadataSet)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_documentMetadataSetResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			documentMetadataSetResource ->
+				documentMetadataSetResource.
+					putSiteDocumentMetadataSetByExternalReferenceCode(
+						Long.valueOf(siteKey), externalReferenceCode,
+						documentMetadataSet));
 	}
 
 	@GraphQLField
@@ -4621,6 +4703,44 @@ public class Mutation {
 			navigationMenuResource ->
 				navigationMenuResource.postSiteNavigationMenuBatch(
 					Long.valueOf(siteKey), callbackURL, object));
+	}
+
+	@GraphQLField(
+		description = "Deletes the navigation menu by external reference code and returns a 204 if the operation succeeds"
+	)
+	public boolean deleteSiteNavigationMenuByExternalReferenceCode(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("externalReferenceCode") String externalReferenceCode)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_navigationMenuResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			navigationMenuResource ->
+				navigationMenuResource.
+					deleteSiteNavigationMenuByExternalReferenceCode(
+						Long.valueOf(siteKey), externalReferenceCode));
+
+		return true;
+	}
+
+	@GraphQLField(
+		description = "Updates the navigation menu with the given external reference code or creates it if it does not exist."
+	)
+	public NavigationMenu updateSiteNavigationMenuByExternalReferenceCode(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("externalReferenceCode") String externalReferenceCode,
+			@GraphQLName("navigationMenu") NavigationMenu navigationMenu)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_navigationMenuResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			navigationMenuResource ->
+				navigationMenuResource.
+					putSiteNavigationMenuByExternalReferenceCode(
+						Long.valueOf(siteKey), externalReferenceCode,
+						navigationMenu));
 	}
 
 	@GraphQLField

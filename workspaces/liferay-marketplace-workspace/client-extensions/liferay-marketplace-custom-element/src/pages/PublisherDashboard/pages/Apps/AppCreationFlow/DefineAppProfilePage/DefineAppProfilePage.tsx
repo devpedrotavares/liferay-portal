@@ -22,7 +22,6 @@ import {TYPES} from '../AppContext/actionTypes';
 import './DefineAppProfilePage.scss';
 import MultiSelect from '../../../../../../components/MultiSelect/MultiSelect';
 import UploadLogo from '../../../../../../components/UploadLogo/UploadLogo';
-import {useMarketplaceContext} from '../../../../../../context/MarketplaceContext';
 import {PRODUCT_SPECIFICATION_KEY} from '../../../../../../enums/Product';
 import i18n from '../../../../../../i18n';
 import HeadlessCommerceAdminCatalogImpl from '../../../../../../services/rest/HeadlessCommerceAdminCatalog';
@@ -63,7 +62,6 @@ export function DefineAppProfilePage({
 		},
 		dispatch,
 	] = useAppContext();
-	const {channel} = useMarketplaceContext();
 
 	const handleLogoUpload = (files: FileList) => {
 		const file = files[0];
@@ -123,21 +121,10 @@ export function DefineAppProfilePage({
 				appDescription: appDescription?.replace(/\n/g, '<br>'),
 				appName,
 				catalogId,
-				productChannels: [
-					{
-						channelId: channel?.id as number,
-						currencyCode: channel?.currencyCode as string,
-						externalReferenceCode:
-							channel?.externalReferenceCode as string,
-						id: channel?.id as number,
-						name: channel?.name as string,
-						type: channel?.type as string,
-					},
-				],
 				productSpecifications: [
 					{
 						specificationKey:
-							PRODUCT_SPECIFICATION_KEY.APP_LICENSING_TYPE,
+							PRODUCT_SPECIFICATION_KEY.APP_DEVELOPER_NAME,
 						value: {en_US: catalog?.name},
 					},
 				],

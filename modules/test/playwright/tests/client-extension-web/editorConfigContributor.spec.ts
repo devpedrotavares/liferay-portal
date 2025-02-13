@@ -24,7 +24,7 @@ export const test = mergeTests(
 	editEditorConfigContributorPageTest,
 	editorSamplesPageTest,
 	featureFlagsTest({
-		'LPS-178052': true,
+		'LPS-178052': {enabled: true},
 	}),
 	isolatedSiteTest,
 	loginTest(),
@@ -69,7 +69,9 @@ test('Create, edit and delete editor config contributor client extension @LPS-18
 
 	// Synchronize test to avoid flakiness
 
-	expect(editEditorConfigContributorPage.descriptionCKEditor).toBeVisible();
+	await expect(
+		editEditorConfigContributorPage.descriptionCKEditor
+	).toBeVisible();
 
 	const sampleName2 = getRandomString();
 

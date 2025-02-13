@@ -1,4 +1,4 @@
-@component-name = "portal-content-dashboard"
+@component-name = "portal-content-management"
 definition {
 
 	property ci.retries.disabled = "true";
@@ -36,6 +36,7 @@ definition {
 			ContentDashboard.editAsset(
 				assetNewTitle = "WC Content Edit",
 				assetTitle = "WC Content",
+				isWebContent = "true",
 				saveAsDraft = "true");
 		}
 
@@ -97,7 +98,7 @@ definition {
 				webContentContent = "WC Content Content",
 				webContentTitle = "Web Content Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			User.logoutAndLoginPG(
 				userLoginEmailAddress = "test@liferay.com",
@@ -1577,7 +1578,7 @@ definition {
 				categoryNameList = "Substage_4",
 				vocabularyName = "Stage");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("Navigate to the content panel and see if, in the new category order, the new category receives a new color, placed in the last position") {
@@ -2438,9 +2439,7 @@ definition {
 
 			WebContentNavigator.gotoEditCP(webContentTitle = "WC Title");
 
-			WebContent.editDisplayDate(displayDate = "01/01/2100");
-
-			PortletEntry.publish();
+			WebContent.scheduleWCArticleWithPermissions(displayDate = "2100-01-01 01:00");
 		}
 
 		task ("Go to Content Dashboard and click on the title") {
@@ -3445,7 +3444,8 @@ definition {
 
 			ContentDashboard.editAsset(
 				assetNewTitle = "WC Title Edited",
-				assetTitle = "WC Title");
+				assetTitle = "WC Title",
+				isWebContent = "true");
 		}
 
 		task ("Assert in title was porperty edited") {
@@ -4607,9 +4607,7 @@ definition {
 
 			WebContentNavigator.gotoEditCP(webContentTitle = "WC Title Scheduled");
 
-			WebContent.editDisplayDate(displayDate = "01/01/2100");
-
-			PortletEntry.publish();
+			WebContent.scheduleWCArticleWithPermissions(displayDate = "2100-11-20 01:00");
 		}
 
 		task ("Filter asset at Content Dashboard using status") {
@@ -4790,7 +4788,7 @@ definition {
 
 			WebContent.addReviewDate(reviewDate = "01/01/2100");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("When navigating to the content dashboard") {
@@ -4842,7 +4840,7 @@ definition {
 				webContentText = "Web Content Content",
 				webContentTitle = "Web Content Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Navigate to Content Dashbaord") {
@@ -5763,13 +5761,13 @@ definition {
 
 			WebContent.addReviewDate(reviewDate = "01/01/2100");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 
 			WebContentNavigator.gotoEditCP(webContentTitle = "WC Title 2");
 
 			WebContent.addReviewDate(reviewDate = "01/01/2200");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("When navigating to the content dashboard") {
@@ -6072,7 +6070,8 @@ definition {
 
 			ContentDashboard.editAsset(
 				assetNewTitle = "WC Title Edited",
-				assetTitle = "WC Title");
+				assetTitle = "WC Title",
+				isWebContent = "true");
 
 			AssertTextEquals(
 				locator1 = "ContentDashboard#FILTER_TEXT",
@@ -6161,7 +6160,8 @@ definition {
 
 			ContentDashboard.editAsset(
 				assetNewTitle = "WC WebContent New Title",
-				assetTitle = "WC WebContent Title");
+				assetTitle = "WC WebContent Title",
+				isWebContent = "true");
 		}
 
 		task ("Check if content is correct") {
@@ -6281,7 +6281,7 @@ definition {
 				webContentContent = "WC Content 2",
 				webContentTitle = "WC Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Login with Admin user") {
@@ -6364,7 +6364,7 @@ definition {
 				webContentContent = "WC Content",
 				webContentTitle = "WC Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Login with Admin user") {
@@ -6441,7 +6441,7 @@ definition {
 				webContentContent = "WC Content",
 				webContentTitle = "WC Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Edit Web Content created by Test user") {
@@ -6697,7 +6697,7 @@ definition {
 
 			WebContent.addReviewDate(reviewDate = "01/01/2100");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("When navigating to the content dashboard") {
@@ -6756,7 +6756,7 @@ definition {
 				webContentContent = "WC Content Content",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Login with Test user once more") {
@@ -6895,7 +6895,7 @@ definition {
 
 			AssertChecked(locator1 = "Checkbox#NEVER_REVIEW");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("When navigating to the content dashboard") {
@@ -6927,7 +6927,7 @@ definition {
 
 			WebContent.addReviewDate(reviewDate = "01/01/2100");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 		}
 
 		task ("When navigating to the content dashboard") {
@@ -7027,7 +7027,7 @@ definition {
 				webContentText = "Web Content Content",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Navigate to Content Dashbaord") {

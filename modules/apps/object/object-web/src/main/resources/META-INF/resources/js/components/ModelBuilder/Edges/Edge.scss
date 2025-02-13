@@ -1,13 +1,44 @@
-.lfr-objects__model-builder-self-edge-dropdown-item {
-	align-items: center;
-	display: flex;
-	justify-content: space-between;
+.lfr-objects__model-builder-many-edge-dropdown-item {
+	&-button {
+		align-items: center;
+		display: flex;
+		gap: 1rem;
+
+		.dropdown-item-indicator-end {
+			top: unset;
+		}
+
+		.dropdown-item-indicator-start {
+			position: static;
+		}
+	}
+	&-details {
+		padding-left: 2rem;
+	}
 }
 
 .react-flow__edge {
+	&-button {
+		border-color: transparent;
+		padding-bottom: 1px;
+		padding-top: 1px;
+		white-space: nowrap;
+	}
 	&.selected {
 		marker {
 			fill: #0b5fff !important;
+		}
+	}
+
+	&.react-flow__edge-treeStructureObjectRelationshipEdge {
+		&.selected {
+			marker {
+				fill: #2e5aac !important;
+			}
+		}
+
+		marker {
+			fill: #89a7e0;
 		}
 	}
 

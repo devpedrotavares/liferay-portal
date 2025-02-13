@@ -44,12 +44,21 @@ export class ObjectAdminApiHelper {
 		);
 	}
 
-	async postRandomObjectDefinition(
-		status: {code: number},
-		objectFields?: Partial<ObjectField>[],
-		objectFolderExternalReferenceCode?: string,
-		titleObjectFieldName?: string
-	): Promise<ObjectDefinition> {
+	async postRandomObjectDefinition({
+		objectFields,
+		objectFolderExternalReferenceCode,
+		panelCategoryKey,
+		scope = 'company',
+		status,
+		titleObjectFieldName,
+	}: {
+		objectFields?: Partial<ObjectField>[];
+		objectFolderExternalReferenceCode?: string;
+		panelCategoryKey?: string;
+		scope?: 'site' | 'company';
+		status: {code: number};
+		titleObjectFieldName?: string;
+	}) {
 		const objectDefinitionExternalReferenceCode =
 			'ObjectDefinition' + getRandomInt();
 
@@ -70,6 +79,7 @@ export class ObjectAdminApiHelper {
 					indexedLanguageId: '',
 					label: {en_US: 'textField'},
 					listTypeDefinitionId: 0,
+					localized: false,
 					name: 'textField',
 					required: false,
 					system: false,
@@ -77,10 +87,11 @@ export class ObjectAdminApiHelper {
 				},
 			],
 			objectFolderExternalReferenceCode,
+			panelCategoryKey: panelCategoryKey ?? '',
 			pluralLabel: {
 				en_US: objectDefinitionExternalReferenceCode,
 			},
-			scope: 'company',
+			scope,
 			status,
 			titleObjectFieldName: titleObjectFieldName ?? 'id',
 		};

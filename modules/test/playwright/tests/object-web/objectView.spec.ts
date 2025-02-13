@@ -4,6 +4,7 @@
  */
 
 import {
+	ObjectField,
 	ObjectRelationship,
 	ObjectRelationshipApi,
 } from '@liferay/object-admin-rest-client-js';
@@ -28,18 +29,16 @@ test('can create an object custom view using object relationship entry', async (
 	page,
 }) => {
 	const objectDefinition1 =
-		await apiHelpers.objectAdmin.postRandomObjectDefinition(
-			{code: 0},
-			undefined,
-			'default'
-		);
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			objectFolderExternalReferenceCode: 'default',
+			status: {code: 0},
+		});
 
 	const objectDefinition2 =
-		await apiHelpers.objectAdmin.postRandomObjectDefinition(
-			{code: 0},
-			undefined,
-			'default'
-		);
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			objectFolderExternalReferenceCode: 'default',
+			status: {code: 0},
+		});
 	apiHelpers.data.push({id: objectDefinition1.id, type: 'objectDefinition'});
 
 	apiHelpers.data.push({id: objectDefinition2.id, type: 'objectDefinition'});
@@ -90,8 +89,8 @@ test('can create an object custom view using object relationship entry', async (
 	await page.getByRole('link', {name: objectViewName}).click();
 
 	editObjectViewPage.createFilter(
-		'Includes',
 		objectRelationshipLabel,
+		'Includes',
 		`${objectEntryResponse.id}`
 	);
 
@@ -105,5 +104,61 @@ test('can create an object custom view using object relationship entry', async (
 
 	await expect(
 		editObjectViewPage.sidePanel.getByText(`${objectEntryResponse.id}`)
+	).toBeVisible();
+});
+
+test('cannot create an object custom view using empty multiselectpicklist entry', async ({
+	apiHelpers,
+	editObjectViewPage,
+	objectViewPage,
+	page,
+}) => {
+	const listTypeDefinition =
+		await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+	apiHelpers.data.push({
+		id: listTypeDefinition.id,
+		type: 'listTypeDefinition',
+	});
+
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			objectFields: [
+				{
+					DBType: ObjectField.DBTypeEnum.String,
+					businessType:
+						ObjectField.BusinessTypeEnum.MultiselectPicklist,
+					externalReferenceCode: 'customPicklist',
+					indexed: true,
+					indexedAsKeyword: false,
+					indexedLanguageId: 'en_US',
+					label: {
+						en_US: 'customPicklist',
+					},
+					listTypeDefinitionExternalReferenceCode:
+						listTypeDefinition.externalReferenceCode,
+					name: 'customPicklist',
+					required: false,
+					state: false,
+				},
+			],
+			objectFolderExternalReferenceCode: 'default',
+			status: {code: 0},
+		});
+
+	apiHelpers.data.push({id: objectDefinition.id, type: 'objectDefinition'});
+
+	const objectViewName = getRandomString();
+
+	await objectViewPage.goto(objectDefinition.label['en_US']);
+
+	await objectViewPage.createObjectView(objectViewName);
+
+	await page.getByRole('link', {name: objectViewName}).click();
+
+	await editObjectViewPage.createFilter('customPicklist', 'Includes');
+
+	await expect(
+		page.frameLocator('iframe').getByText('Required')
 	).toBeVisible();
 });

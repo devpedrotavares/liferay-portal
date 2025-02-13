@@ -128,18 +128,19 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 		_mergeHTMLFiles(filePath);
 
 		JenkinsResultsParserUtil.rsync(
-			"test-1-0",
-			_REPORT_RSYNC_DESTINATION_DIR_PATH + "archived-reports/" +
-				_CURRENT_DATE_STRING,
-			null, filePath);
-
-		JenkinsResultsParserUtil.rsync(
 			null, _ARCHIVE_BASE_DIR_PATH + "/reports/" + _CURRENT_DATE_STRING,
 			null, filePath);
 
-		CloudStorageSyncUtil.syncGCPFiles(
-			_ARCHIVE_BASE_DIR_PATH + "/reports",
-			CloudStorageSyncUtil.GCP_BUCKET_PATH_JENKINS_CI_DATA + "/reports");
+		try {
+			CloudStorageSyncUtil.syncGCPFiles(
+				_ARCHIVE_BASE_DIR_PATH + "/reports",
+				_getGCPBucketBasePath() + "/reports");
+		}
+		catch (IOException ioException) {
+			System.out.println("Unable to archive report: " + filePath);
+
+			ioException.printStackTrace();
+		}
 	}
 
 	private void _copyArchivedBuildData(
@@ -393,7 +394,27 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 				filePath + "/js/testray-data.js",
 				_getBuildProperty("ci.system.status.report.job.name"),
 				_getBuildProperty("ci.system.status.report.test.suite.name"));
+
+			CloudStorageSyncUtil.copyGCPFile(
+				filePath + "/js/testray-data.js",
+				JenkinsResultsParserUtil.combine(
+					_getGCPBucketBasePath(), "/data/",
+					_getReportDirName(reportName), "/testray-data.js"));
 		}
+
+		String testrayDataJSFilePath = filePath + "/js/testray-data.js";
+
+		File testrayDataJSFile = new File(testrayDataJSFilePath);
+
+		if (!testrayDataJSFile.exists()) {
+			CloudStorageSyncUtil.copyGCPFile(
+				JenkinsResultsParserUtil.combine(
+					_getGCPBucketBasePath(), "/data/",
+					_getReportDirName(reportName), "/testray-data.js"),
+				filePath + "/js/testray-data.js");
+		}
+
+		_mergeHTMLFiles(filePath);
 
 		_updateReport(filePath);
 
@@ -449,9 +470,14 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 			return;
 		}
 
-		CloudStorageSyncUtil.syncGCPFiles(
-			CloudStorageSyncUtil.GCP_BUCKET_PATH_JENKINS_CI_DATA + "/reports",
-			_ARCHIVE_BASE_DIR_PATH + "/reports");
+		try {
+			CloudStorageSyncUtil.syncGCPFiles(
+				_getGCPBucketBasePath() + "/reports",
+				_ARCHIVE_BASE_DIR_PATH + "/reports");
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
 
 		StringBuilder sb = new StringBuilder();
 
@@ -573,6 +599,16 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 		_archiveReport(filePath);
 	}
 
+	private String _getGCPBucketBasePath() {
+		String masterNetworkName = System.getenv("MASTER_NETWORK_NAME");
+
+		if (!masterNetworkName.equals("gcp-network")) {
+			return CloudStorageSyncUtil.GCP_BUCKET_PATH_JENKINS_CI_DATA;
+		}
+
+		return CloudStorageSyncUtil.GCP_BUCKET_PATH_JENKINS_CI_DATA + "/aws";
+	}
+
 	private String _getReportDirName(String reportName) {
 		return _reportDirNames.get(reportName);
 	}
@@ -644,6 +680,12 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 	}
 
 	private void _mergeHTMLFiles(String reportDirPath) {
+		_mergeHTMLFiles(reportDirPath, true);
+	}
+
+	private void _mergeHTMLFiles(
+		String reportDirPath, boolean deleteFrontendFiles) {
+
 		File reportDir = new File(reportDirPath);
 
 		File reportFile = new File(reportDir, "index.html");
@@ -684,7 +726,9 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 					newReportFileContent = newReportFileContent.replace(
 						line, scriptElementContent);
 
-					javaScriptFile.delete();
+					if (deleteFrontendFiles) {
+						javaScriptFile.delete();
+					}
 
 					continue;
 				}
@@ -713,7 +757,9 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 					newReportFileContent = newReportFileContent.replace(
 						line, styleElementContent);
 
-					cssFile.delete();
+					if (deleteFrontendFiles) {
+						cssFile.delete();
+					}
 				}
 			}
 
@@ -724,6 +770,7 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 		}
 		catch (IOException ioException) {
 			System.out.println("Unable to merge files in: " + reportDirPath);
+
 			ioException.printStackTrace();
 		}
 	}
@@ -754,8 +801,19 @@ public class GenerateReportsBuildRunner extends BaseBuildRunner<BuildData> {
 	}
 
 	private void _updateReport(String filePath) {
-		JenkinsResultsParserUtil.rsync(
-			"test-1-0", _REPORT_RSYNC_DESTINATION_DIR_PATH, null, filePath);
+		_mergeHTMLFiles(filePath, false);
+
+		try {
+			JenkinsResultsParserUtil.rsync(
+				"test-1-0", _REPORT_RSYNC_DESTINATION_DIR_PATH, null, filePath);
+		}
+		catch (Exception exception) {
+			System.out.println(
+				"Unable to rsync report " + filePath + " to test-1-0:" +
+					_REPORT_RSYNC_DESTINATION_DIR_PATH);
+
+			exception.printStackTrace();
+		}
 	}
 
 	private void _validateBuildParameters() {

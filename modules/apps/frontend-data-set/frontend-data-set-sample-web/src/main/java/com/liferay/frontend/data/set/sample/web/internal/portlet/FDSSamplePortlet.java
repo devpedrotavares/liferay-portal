@@ -106,7 +106,7 @@ public class FDSSamplePortlet extends MVCPortlet {
 
 		objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				user.getUserId(), 0, null, false, true, false, false,
+				user.getUserId(), 0, null, false, false, true, false, false,
 				LocalizedMapUtil.getLocalizedMap("Frontend Data Set Sample"),
 				"FDSSample", "100", null,
 				LocalizedMapUtil.getLocalizedMap("Frontend Data Set Samples"),
@@ -132,6 +132,10 @@ public class FDSSamplePortlet extends MVCPortlet {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
+						"ImageURL", "imageURL", false),
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
 						"Size", "size", false)));
 
 		objectDefinition =
@@ -150,13 +154,16 @@ public class FDSSamplePortlet extends MVCPortlet {
 
 		for (int i = 1; i <= 100; i++) {
 			_objectEntryLocalService.addObjectEntry(
-				user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
+				user.getUserId(), 0, null,
+				objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"color", colors[i % 4]
 				).put(
 					"date", calendar.getTime()
 				).put(
 					"description", "This is a description for sample " + i + "."
+				).put(
+					"imageURL", "/image/company_logo"
 				).put(
 					"size", sizes[i % 6]
 				).put(

@@ -296,6 +296,16 @@ public class CTCollectionWrapper
 		return model.getSchemaVersionId();
 	}
 
+	@Override
+	public int getScore() {
+		return model.getScore();
+	}
+
+	@Override
+	public String getScoreSizeClassification() {
+		return model.getScoreSizeClassification();
+	}
+
 	/**
 	 * Returns the shareable of this ct collection.
 	 *
@@ -389,6 +399,11 @@ public class CTCollectionWrapper
 	@Override
 	public boolean isProduction() {
 		return model.isProduction();
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return model.isReadOnly();
 	}
 
 	/**

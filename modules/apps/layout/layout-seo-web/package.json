@@ -1,12 +1,12 @@
 {
 	"dependencies": {
 		"@clayui/button": "3.116.0",
-		"@clayui/form": "3.122.0",
+		"@clayui/form": "3.125.0",
 		"@liferay/frontend-js-react-web": "*",
 		"classnames": "2.3.1",
 		"frontend-js-web": "*",
 		"prop-types": "15.7.2",
-		"react": "16.12.0"
+		"react": "18.2.0"
 	},
 	"main": "js/index.js",
 	"name": "layout-seo-web",
@@ -16,5 +16,5 @@
 		"format": "node-scripts format",
 		"test": "node-scripts test"
 	},
-	"version": "2.0.94"
+	"version": "2.0.95"
 }

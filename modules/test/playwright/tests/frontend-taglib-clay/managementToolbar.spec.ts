@@ -15,7 +15,7 @@ export const test = mergeTests(
 	apiHelpersTest,
 	claySamplePageTest,
 	featureFlagsTest({
-		'LPS-178052': true,
+		'LPS-178052': {enabled: true},
 	}),
 	isolatedSiteTest,
 	loginTest()
@@ -23,13 +23,16 @@ export const test = mergeTests(
 
 test.beforeEach(
 	'Setup site and Clay Sample widget',
-	async ({apiHelpers, claySamplePage, site}) => {
+	async ({apiHelpers, claySamplePage, page, site}) => {
 		await test.step('Create a content site and the clay sample widget', async () => {
 			await claySamplePage.setupClaySampleWidget({apiHelpers, site});
 		});
 
 		await test.step('Select Management Toolbars tab', async () => {
-			await claySamplePage.selectTab('Management Toolbars');
+			await claySamplePage.selectTab(
+				'Management Toolbars',
+				page.getByRole('heading', {name: 'DEFAULT STATE'})
+			);
 		});
 	}
 );
@@ -333,7 +336,7 @@ test.describe('Management Toolbar Active State', () => {
 });
 
 test.describe('Management Toolbar Using Display Context', () => {
-	test(
+	test.skip(
 		'Assert the order button can display the correct icons',
 		{tag: '@LPS-144536'},
 		async ({claySamplePage, page}) => {

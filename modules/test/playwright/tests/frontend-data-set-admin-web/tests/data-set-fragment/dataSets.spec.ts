@@ -11,6 +11,7 @@ import {isolatedLayoutTest} from '../../../../fixtures/isolatedLayoutTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../../utils/getRandomString';
+import performLogin, {performLogout} from '../../../../utils/performLogin';
 
 // Structured Content utilities
 
@@ -22,8 +23,8 @@ export const test = mergeTests(
 	apiHelpersTest,
 	dataSetManagerApiHelpersTest,
 	featureFlagsTest({
-		'LPS-164563': true,
-		'LPS-178052': true,
+		'LPS-164563': {enabled: true},
+		'LPS-178052': {enabled: true},
 	}),
 	isolatedLayoutTest({publish: false}),
 	loginTest(),
@@ -76,11 +77,13 @@ test.afterEach(async ({apiHelpers, dataSetManagerApiHelpers}) => {
 				article.articleId
 			);
 		});
+
+		article = null;
 	}
 });
 
 test(
-	'Assing a data set to the "Data Set" fragment, change and delete assignment',
+	'Assign a data set to the "Data Set" fragment, change and delete assignment',
 	{
 		tag: '@LPS-172403',
 	},
@@ -135,7 +138,7 @@ test(
 			await dataSetFragmentPage.selectDataSet(dataSetLabel1);
 		});
 
-		await test.step('Change assigment to second data set', async () => {
+		await test.step('Change assignment to second data set', async () => {
 			await dataSetFragmentPage.changeDataSetButton.click();
 
 			const selectionListContainer =
@@ -158,17 +161,11 @@ test(
 		});
 
 		await test.step('Assert that the data set is available on the page', async () => {
-			await dataSetFragmentPage.tableWrapper.waitFor({
-				state: 'visible',
-			});
-
-			await expect(dataSetFragmentPage.tableWrapper).toBeInViewport();
+			await expect(dataSetFragmentPage.table.container).toBeInViewport();
 
 			expect(
-				await page
-					.locator('.dnd-thead > div')
-					.first()
-					.locator('.dnd-th')
+				await dataSetFragmentPage.table.headRow
+					.locator('th')
 					.allInnerTexts()
 			).toEqual(['ID', 'Field Name', '']);
 		});
@@ -215,7 +212,7 @@ test(
 			).toBeInViewport();
 
 			await expect(
-				await dataSetFragmentPage.tableWrapper
+				await dataSetFragmentPage.table.container
 			).not.toBeInViewport();
 		});
 	}
@@ -372,24 +369,21 @@ test(
 		});
 
 		await test.step('Assert that the Data Set is available on the page', async () => {
-			await dataSetFragmentPage.tableWrapper.waitFor({
+			await dataSetFragmentPage.table.container.waitFor({
 				state: 'visible',
 			});
 
-			await expect(dataSetFragmentPage.tableWrapper).toBeInViewport();
+			await expect(dataSetFragmentPage.table.container).toBeInViewport();
 
 			expect(
-				await page
-					.locator('.dnd-thead > div')
-					.first()
-					.locator('.dnd-th')
+				await dataSetFragmentPage.table.headRow
+					.locator('th')
 					.allInnerTexts()
 			).toEqual(['Title', 'Description', '']);
 
 			expect(
-				await page
-					.locator('.dnd-tbody > .dnd-tr')
-					.locator('.dnd-td')
+				await dataSetFragmentPage.table.bodyRows
+					.locator('td')
 					.allInnerTexts()
 			).toEqual(
 				expect.arrayContaining([
@@ -402,7 +396,7 @@ test(
 		await test.step('Confirm that we can change the Data Set and display the Roles Data Set', async () => {
 			await dataSetFragmentPage.editPage({layout});
 
-			await dataSetFragmentPage.tableWrapper.click();
+			await dataSetFragmentPage.table.container.click();
 
 			await dataSetFragmentPage.changeDataSetButton.click();
 
@@ -433,25 +427,22 @@ test(
 		});
 
 		await test.step('Assert that the User Schema (Roles) Data Set is available on the page', async () => {
-			await dataSetFragmentPage.tableWrapper.waitFor({
+			await dataSetFragmentPage.table.container.waitFor({
 				state: 'visible',
 			});
 
-			await expect(dataSetFragmentPage.tableWrapper).toBeInViewport();
+			await expect(dataSetFragmentPage.table.container).toBeInViewport();
 
 			expect(
-				await page
-					.locator('.dnd-thead > div')
-					.first()
-					.locator('.dnd-th')
+				await dataSetFragmentPage.table.headRow
+					.locator('th')
 					.allInnerTexts()
 			).toEqual(['Role Type', 'Name', '']);
 
 			expect(
-				await page
-					.locator('.dnd-tbody > .dnd-tr')
+				await dataSetFragmentPage.table.bodyRows
 					.first()
-					.locator('.dnd-td')
+					.locator('td')
 					.allInnerTexts()
 			).toEqual(['organization', 'Account Manager', '']);
 		});
@@ -459,7 +450,7 @@ test(
 		await test.step('Confirm that we can change the Data Set and display the Taxonomy Vocabulary Data Set', async () => {
 			await dataSetFragmentPage.editPage({layout});
 
-			await dataSetFragmentPage.tableWrapper.click();
+			await dataSetFragmentPage.table.container.click();
 
 			await dataSetFragmentPage.changeDataSetButton.click();
 
@@ -492,29 +483,89 @@ test(
 		});
 
 		await test.step('Assert that the Taxonomy Vocabulary Data Set is available on the page', async () => {
-			await dataSetFragmentPage.tableWrapper.waitFor({
+			await dataSetFragmentPage.table.container.waitFor({
 				state: 'visible',
 			});
 
 			await expect(
-				await dataSetFragmentPage.tableWrapper
+				await dataSetFragmentPage.table.container
 			).toBeInViewport();
 
 			expect(
-				await page
-					.locator('.dnd-thead > div')
-					.first()
-					.locator('.dnd-th')
+				await dataSetFragmentPage.table.headRow
+					.locator('th')
 					.allInnerTexts()
 			).toEqual(['Vocabulary Name', 'Number of Categories', '']);
 
 			expect(
-				await page
-					.locator('.dnd-tbody > .dnd-tr')
+				await dataSetFragmentPage.table.bodyRows
 					.first()
-					.locator('.dnd-td')
+					.locator('td')
 					.allInnerTexts()
 			).toEqual(['Topic', '0', '']);
 		});
 	}
 );
+
+test('An unauthorized user accessing a page with a data set fragment', async ({
+	dataSetFragmentPage,
+	dataSetManagerApiHelpers,
+	layout,
+	page,
+}) => {
+	const dataSetERC = getRandomString();
+	const dataSetLabel = getRandomString();
+
+	dataSetERCs.push(dataSetERC);
+
+	await test.step('Create data set', async () => {
+		await dataSetManagerApiHelpers.createDataSet({
+			erc: dataSetERC,
+			label: dataSetLabel,
+		});
+	});
+
+	await test.step('Create sample data for data sets', async () => {
+		await dataSetManagerApiHelpers.createDataSetTableSection({
+			dataSetERC,
+			fieldName: 'fieldName',
+			label_i18n: {en_US: 'Field Name'},
+		});
+	});
+
+	await test.step('Configure Data Set fragment', async () => {
+		await dataSetFragmentPage.configureDataSetFragment({
+			dataSetLabel,
+			layout,
+		});
+	});
+
+	await test.step('Log out', async () => {
+		await performLogout(page);
+
+		await expect(page.getByRole('button', {name: 'Sign In'})).toBeVisible();
+	});
+
+	try {
+		await test.step('Go to Data Set fragment page', async () => {
+			await dataSetFragmentPage.goToPage({layout});
+
+			await page
+				.locator('.data-set-content-wrapper')
+				.waitFor({state: 'visible'});
+		});
+
+		await test.step('Assert that no results are displayed', async () => {
+			await expect(
+				page
+					.locator('.data-set-content-wrapper')
+					.getByText('No Results Found')
+			).toBeVisible();
+		});
+	}
+	finally {
+		await test.step('Log back in as admin', async () => {
+			await performLogin(page, 'test');
+		});
+	}
+});

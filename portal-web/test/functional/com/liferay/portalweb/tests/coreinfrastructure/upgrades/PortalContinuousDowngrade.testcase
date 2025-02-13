@@ -1,4 +1,4 @@
-@component-name = "portal-upgrades"
+@component-name = "portal-db-infrastructure"
 definition {
 
 	property minimum.slave.ram = "24";
@@ -23,7 +23,7 @@ definition {
 			webContentContent = "WC WebContent Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		WebContent.viewTitle(webContentTitle = "WC WebContent Title");
 

@@ -122,18 +122,12 @@ public class SystemObjectEntryItemSelectorView
 		InfoItemItemSelectorCriterion itemSelectorCriterion,
 		ThemeDisplay themeDisplay) {
 
-		if (StringUtil.equals(
-				_itemSelector.getItemSelectedEventName(
-					themeDisplay.getURLCurrent()),
-				StringBundler.concat(
-					"_",
-					ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
-					"_selectInfoItem"))) {
-
-			return false;
-		}
-
-		return true;
+		return !StringUtil.equals(
+			_itemSelector.getItemSelectedEventName(
+				themeDisplay.getURLCurrent()),
+			StringBundler.concat(
+				"_", ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
+				"_selectInfoItem"));
 	}
 
 	@Override
@@ -384,7 +378,8 @@ public class SystemObjectEntryItemSelectorView
 						ParamUtil.getLong(_portletRequest, "objectEntryId"),
 						ParamUtil.getLong(
 							_portletRequest, "objectRelationshipId"),
-						searchContainer.getStart(), searchContainer.getEnd());
+						null, searchContainer.getStart(),
+						searchContainer.getEnd());
 
 				searchContainer.setResultsAndTotal(
 					() -> baseModels,
@@ -393,7 +388,8 @@ public class SystemObjectEntryItemSelectorView
 						_themeDisplay.getScopeGroupId(), _objectDefinition,
 						ParamUtil.getLong(_portletRequest, "objectEntryId"),
 						ParamUtil.getLong(
-							_portletRequest, "objectRelationshipId")));
+							_portletRequest, "objectRelationshipId"),
+						null));
 			}
 			catch (Exception exception) {
 				_log.error(exception);

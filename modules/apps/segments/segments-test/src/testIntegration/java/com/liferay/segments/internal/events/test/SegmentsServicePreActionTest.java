@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.events.LifecycleEvent;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -119,7 +120,7 @@ public class SegmentsServicePreActionTest {
 					false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, 0, 0,
 					nameMap, nameMap, Collections.emptyMap(),
 					Collections.emptyMap(), Collections.emptyMap(),
-					LayoutConstants.TYPE_COLLECTION,
+					LayoutConstants.TYPE_CONTENT,
 					UnicodePropertiesBuilder.put(
 						LayoutTypeSettingsConstants.KEY_PUBLISHED, "true"
 					).buildString(),
@@ -171,7 +172,7 @@ public class SegmentsServicePreActionTest {
 					false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, 0, 0,
 					nameMap, nameMap, Collections.emptyMap(),
 					Collections.emptyMap(), Collections.emptyMap(),
-					LayoutConstants.TYPE_COLLECTION,
+					LayoutConstants.TYPE_CONTENT,
 					UnicodePropertiesBuilder.put(
 						LayoutTypeSettingsConstants.KEY_PUBLISHED, "true"
 					).buildString(),
@@ -251,7 +252,7 @@ public class SegmentsServicePreActionTest {
 					false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, 0, 0,
 					nameMap, nameMap, Collections.emptyMap(),
 					Collections.emptyMap(), Collections.emptyMap(),
-					LayoutConstants.TYPE_COLLECTION,
+					LayoutConstants.TYPE_CONTENT,
 					UnicodePropertiesBuilder.put(
 						LayoutTypeSettingsConstants.KEY_PUBLISHED, "true"
 					).buildString(),
@@ -396,7 +397,7 @@ public class SegmentsServicePreActionTest {
 					false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, 0, 0,
 					nameMap, nameMap, Collections.emptyMap(),
 					Collections.emptyMap(), Collections.emptyMap(),
-					LayoutConstants.TYPE_COLLECTION,
+					LayoutConstants.TYPE_CONTENT,
 					UnicodePropertiesBuilder.put(
 						LayoutTypeSettingsConstants.KEY_PUBLISHED, "true"
 					).buildString(),
@@ -467,6 +468,8 @@ public class SegmentsServicePreActionTest {
 			_companyLocalService.getCompany(TestPropsValues.getCompanyId()));
 		themeDisplay.setLayout(layout);
 		themeDisplay.setLifecycleRender(true);
+		themeDisplay.setPermissionChecker(
+			PermissionThreadLocal.getPermissionChecker());
 		themeDisplay.setUser(TestPropsValues.getUser());
 
 		return themeDisplay;

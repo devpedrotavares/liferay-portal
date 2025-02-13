@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.odata.entity.EntityModel;
@@ -48,7 +49,6 @@ import java.io.Serializable;
 
 import java.math.BigDecimal;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -86,7 +86,7 @@ public class OrderItemResourceImpl extends BaseOrderItemResourceImpl {
 				contextUser.getUserId(), commerceOrder.getCommerceOrderId(),
 				commerceOrder.getCommerceAccountId()));
 
-		Response.ResponseBuilder responseBuilder = Response.ok();
+		Response.ResponseBuilder responseBuilder = Response.noContent();
 
 		return responseBuilder.build();
 	}
@@ -621,16 +621,11 @@ public class OrderItemResourceImpl extends BaseOrderItemResourceImpl {
 			List<CommerceOrderItem> commerceOrderItems, Locale locale)
 		throws Exception {
 
-		List<OrderItem> orderItems = new ArrayList<>();
-
-		for (CommerceOrderItem commerceOrderItem : commerceOrderItems) {
-			orderItems.add(
-				_orderItemDTOConverter.toDTO(
-					new DefaultDTOConverterContext(
-						commerceOrderItem.getCommerceOrderItemId(), locale)));
-		}
-
-		return orderItems;
+		return transform(
+			commerceOrderItems,
+			commerceOrderItem -> _orderItemDTOConverter.toDTO(
+				new DefaultDTOConverterContext(
+					commerceOrderItem.getCommerceOrderItemId(), locale)));
 	}
 
 	private OrderItem _updateOrderItem(
@@ -642,6 +637,11 @@ public class OrderItemResourceImpl extends BaseOrderItemResourceImpl {
 
 		BigDecimal quantity = commerceOrderItem.getQuantity();
 
+		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
+			commerceOrderItem.getGroupId());
+
+		serviceContext.setAttribute("validateOrder", Boolean.FALSE);
+
 		commerceOrderItem = _commerceOrderItemService.updateCommerceOrderItem(
 			commerceOrderItem.getCommerceOrderItemId(),
 			GetterUtil.getString(
@@ -652,8 +652,7 @@ public class OrderItemResourceImpl extends BaseOrderItemResourceImpl {
 				contextCompany.getCompanyId(), commerceOrder.getGroupId(),
 				contextUser.getUserId(), commerceOrder.getCommerceOrderId(),
 				commerceOrder.getCommerceAccountId()),
-			_serviceContextHelper.getServiceContext(
-				commerceOrderItem.getGroupId()));
+			serviceContext);
 
 		// Pricing
 

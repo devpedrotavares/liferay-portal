@@ -64,7 +64,7 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 						</clay:content-col>
 
 						<clay:content-col>
-							<ul class="navbar-nav">
+							<ul class="align-items-center navbar-nav">
 								<li>
 									<c:if test="<%= FragmentPermission.contains(permissionChecker, scopeGroupId, FragmentActionKeys.MANAGE_FRAGMENT_ENTRIES) %>">
 										<clay:link
@@ -77,6 +77,35 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 										/>
 									</c:if>
 								</li>
+
+								<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-34938") %>'>
+									<li>
+										<div class="marketplace-button">
+											<clay:button
+												additionalProps='<%=
+													HashMapBuilder.<String, Object>put(
+														"body", LanguageUtil.get(request, "we-are-excited-to-share-that-marketplace-is-now-part-of-fragments")
+													).put(
+														"heading", LanguageUtil.get(request, "marketplace-is-now-in-fragments")
+													).build()
+												%>'
+												borderless="<%= true %>"
+												displayType="secondary"
+												icon="marketplace"
+												id='<%= liferayPortletResponse.getNamespace() + "isMarketplaceButtonVisited" %>'
+												monospaced="<%= true %>"
+												propsTransformer="{MarketplaceButtonPropsTransformer} from fragment-web"
+												small="<%= true %>"
+												title='<%= LanguageUtil.get(request, "open-marketplace-explorer") %>'
+											/>
+
+											<c:if test='<%= !GetterUtil.getBoolean(SessionClicks.get(request, liferayPortletResponse.getNamespace() + "isMarketplaceButtonVisited", "false")) %>'>
+												<span class="notification" id="<portlet:namespace />marketplaceBadge"></span>
+											</c:if>
+										</div>
+									</li>
+								</c:if>
+
 								<li>
 
 									<%
@@ -163,7 +192,12 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 		<clay:col
 			lg="9"
 		>
-			<c:if test="<%= (fragmentEntriesDisplayContext.getFragmentCollection() != null) || (fragmentEntriesDisplayContext.getFragmentCollectionContributor() != null) %>">
+
+			<%
+			FragmentCollectionContributor fragmentCollectionContributor = fragmentEntriesDisplayContext.getFragmentCollectionContributor();
+			%>
+
+			<c:if test="<%= (fragmentEntriesDisplayContext.getFragmentCollection() != null) || (fragmentCollectionContributor != null) %>">
 				<clay:sheet
 					size="full"
 				>
@@ -174,6 +208,15 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentEnt
 							<clay:content-col>
 								<%= fragmentEntriesDisplayContext.getFragmentCollectionName() %>
 							</clay:content-col>
+
+							<c:if test="<%= (fragmentCollectionContributor != null) && fragmentCollectionContributor.isDeprecated() %>">
+								<div class="c-ml-3">
+									<liferay-frontend:feature-indicator
+										interactive="<%= true %>"
+										type="deprecated"
+									/>
+								</div>
+							</c:if>
 
 							<c:if test="<%= fragmentEntriesDisplayContext.showFragmentCollectionActions() %>">
 								<clay:content-col

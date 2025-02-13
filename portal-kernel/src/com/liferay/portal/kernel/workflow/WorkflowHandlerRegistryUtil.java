@@ -142,6 +142,8 @@ public class WorkflowHandlerRegistryUtil {
 			WorkflowConstants.CONTEXT_USER_ID, String.valueOf(userId)
 		).build();
 
+		workflowHandler.contributeWorkflowContext(workflowContext);
+
 		T updatedModel = workflowHandler.updateStatus(
 			model, status, workflowContext);
 
@@ -242,11 +244,7 @@ public class WorkflowHandlerRegistryUtil {
 			WorkflowInstanceManagerUtil.getWorkflowInstance(
 				companyId, workflowInstanceLink.getWorkflowInstanceId());
 
-		if (!workflowInstance.isComplete()) {
-			return true;
-		}
-
-		return false;
+		return !workflowInstance.isComplete();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -421,7 +421,7 @@ definition {
 			webContentImage = "Document_2.jpg",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoSitePage(
 			pageName = "Staging DM Page",
@@ -1016,7 +1016,7 @@ definition {
 			webContentContent = "WC WebContent Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		JSONLayout.addWidgetToPublicLayout(
 			column = 2,
@@ -1100,7 +1100,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoSitePage(
 			pageName = "Staging DM Page",
@@ -1595,7 +1595,7 @@ definition {
 			webContentContent = "Web Content Content",
 			webContentTitle = "WC WebContent Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoSitePage(
 			pageName = "Staging DM Page",
@@ -1768,10 +1768,6 @@ definition {
 			dmDocumentFileName = "Document_3Edit.png",
 			remoteStaging = "true",
 			siteName = "remote-site");
-
-		DMDocument.viewDocumentMetadataCP(
-			metadataData = "image/png",
-			metadataLabel = "Content Type");
 	}
 
 	@description = "This ensures that the image can be deleted and republished in web content."
@@ -1823,7 +1819,7 @@ definition {
 			webContentImage = "Document_2.jpg",
 			webContentTitle = "Web Content Title");
 
-		PortletEntry.publish();
+		WebContent.publishWithPermissions();
 
 		Navigator.gotoSitePage(
 			pageName = "Staging DM Page",

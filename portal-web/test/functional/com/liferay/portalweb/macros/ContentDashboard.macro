@@ -185,6 +185,9 @@ definition {
 
 			Click(locator1 = "Icon#BACK");
 		}
+		else if (isSet(isWebContent)) {
+			WebContent.publishExistingWCArticleWithPermissions();
+		}
 		else {
 			Button.clickPublish();
 		}

@@ -770,6 +770,16 @@ public class ServletDataImpl implements ServletData {
 							DocumentMetadataSetResourceImpl.class,
 							"postAssetLibraryDocumentMetadataSetBatch"));
 					put(
+						"mutation#deleteAssetLibraryDocumentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"deleteAssetLibraryDocumentMetadataSetByExternalReferenceCode"));
+					put(
+						"mutation#updateAssetLibraryDocumentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"putAssetLibraryDocumentMetadataSetByExternalReferenceCode"));
+					put(
 						"mutation#deleteDocumentMetadataSet",
 						new ObjectValuePair<>(
 							DocumentMetadataSetResourceImpl.class,
@@ -794,6 +804,16 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							DocumentMetadataSetResourceImpl.class,
 							"postSiteDocumentMetadataSetBatch"));
+					put(
+						"mutation#deleteSiteDocumentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"deleteSiteDocumentMetadataSetByExternalReferenceCode"));
+					put(
+						"mutation#updateSiteDocumentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"putSiteDocumentMetadataSetByExternalReferenceCode"));
 					put(
 						"mutation#createAssetLibraryDocumentShortcutsPageExportBatch",
 						new ObjectValuePair<>(
@@ -1424,6 +1444,16 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							NavigationMenuResourceImpl.class,
 							"postSiteNavigationMenuBatch"));
+					put(
+						"mutation#deleteSiteNavigationMenuByExternalReferenceCode",
+						new ObjectValuePair<>(
+							NavigationMenuResourceImpl.class,
+							"deleteSiteNavigationMenuByExternalReferenceCode"));
+					put(
+						"mutation#updateSiteNavigationMenuByExternalReferenceCode",
+						new ObjectValuePair<>(
+							NavigationMenuResourceImpl.class,
+							"putSiteNavigationMenuByExternalReferenceCode"));
 					put(
 						"mutation#updateSiteNavigationMenuPermissionsPage",
 						new ObjectValuePair<>(
@@ -2152,6 +2182,11 @@ public class ServletDataImpl implements ServletData {
 							DocumentMetadataSetResourceImpl.class,
 							"getAssetLibraryDocumentMetadataSetsPage"));
 					put(
+						"query#assetLibraryDocumentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"getAssetLibraryDocumentMetadataSetByExternalReferenceCode"));
+					put(
 						"query#documentMetadataSet",
 						new ObjectValuePair<>(
 							DocumentMetadataSetResourceImpl.class,
@@ -2161,6 +2196,11 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							DocumentMetadataSetResourceImpl.class,
 							"getSiteDocumentMetadataSetsPage"));
+					put(
+						"query#documentMetadataSetByExternalReferenceCode",
+						new ObjectValuePair<>(
+							DocumentMetadataSetResourceImpl.class,
+							"getSiteDocumentMetadataSetByExternalReferenceCode"));
 					put(
 						"query#assetLibraryDocumentShortcuts",
 						new ObjectValuePair<>(
@@ -2431,6 +2471,11 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							NavigationMenuResourceImpl.class,
 							"getSiteNavigationMenusPage"));
+					put(
+						"query#navigationMenuByExternalReferenceCode",
+						new ObjectValuePair<>(
+							NavigationMenuResourceImpl.class,
+							"getSiteNavigationMenuByExternalReferenceCode"));
 					put(
 						"query#siteNavigationMenuPermissions",
 						new ObjectValuePair<>(

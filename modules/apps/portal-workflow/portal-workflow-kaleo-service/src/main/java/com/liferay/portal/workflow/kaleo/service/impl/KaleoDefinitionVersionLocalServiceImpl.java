@@ -6,28 +6,49 @@
 package com.liferay.portal.workflow.kaleo.service.impl;
 
 import com.liferay.exportimport.kernel.staging.Staging;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
-import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.Junction;
-import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.ProjectionList;
-import com.liferay.portal.kernel.dao.orm.Property;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.aggregation.AggregationResult;
+import com.liferay.portal.search.aggregation.Aggregations;
+import com.liferay.portal.search.aggregation.bucket.Bucket;
+import com.liferay.portal.search.aggregation.bucket.TermsAggregation;
+import com.liferay.portal.search.aggregation.bucket.TermsAggregationResult;
+import com.liferay.portal.search.aggregation.metrics.TopHitsAggregation;
+import com.liferay.portal.search.aggregation.metrics.TopHitsAggregationResult;
+import com.liferay.portal.search.document.Document;
+import com.liferay.portal.search.engine.adapter.search.SearchRequestExecutor;
+import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
+import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
+import com.liferay.portal.search.hits.SearchHit;
+import com.liferay.portal.search.hits.SearchHits;
+import com.liferay.portal.search.index.IndexNameBuilder;
+import com.liferay.portal.search.localization.SearchLocalizationHelper;
+import com.liferay.portal.search.query.BooleanQuery;
+import com.liferay.portal.search.query.Queries;
+import com.liferay.portal.search.query.QueryHelper;
+import com.liferay.portal.search.query.StringQuery;
+import com.liferay.portal.search.query.TermsQuery;
+import com.liferay.portal.search.sort.SortOrder;
+import com.liferay.portal.search.sort.Sorts;
+import com.liferay.portal.workflow.constants.WorkflowDefinitionConstants;
 import com.liferay.portal.workflow.exception.IncompleteWorkflowInstancesException;
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinition;
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
@@ -43,6 +64,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -319,18 +343,8 @@ public class KaleoDefinitionVersionLocalServiceImpl
 
 	@Override
 	public List<KaleoDefinitionVersion> getLatestKaleoDefinitionVersions(
-		long companyId, int start, int end,
-		OrderByComparator<KaleoDefinitionVersion> orderByComparator) {
-
-		return getLatestKaleoDefinitionVersions(
-			companyId, null, WorkflowConstants.STATUS_ANY, start, end,
-			orderByComparator);
-	}
-
-	@Override
-	public List<KaleoDefinitionVersion> getLatestKaleoDefinitionVersions(
-		long companyId, String keywords, int status, int start, int end,
-		OrderByComparator<KaleoDefinitionVersion> orderByComparator) {
+		long companyId, String keywords, int status, Locale locale, int start,
+		int end, OrderByComparator<KaleoDefinitionVersion> orderByComparator) {
 
 		List<Long> kaleoDefinitionVersionIds = _getKaleoDefinitionVersionIds(
 			companyId, keywords, status);
@@ -339,15 +353,63 @@ public class KaleoDefinitionVersionLocalServiceImpl
 			return Collections.emptyList();
 		}
 
-		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
-			KaleoDefinitionVersion.class, getClassLoader());
+		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
 
-		Property property = PropertyFactoryUtil.forName(
-			"kaleoDefinitionVersionId");
+		String[] orderByFields = orderByComparator.getOrderByFields();
 
-		dynamicQuery.add(property.in(kaleoDefinitionVersionIds));
+		String orderByField = orderByFields[0];
 
-		return dynamicQuery(dynamicQuery, start, end, orderByComparator);
+		if (Objects.equals(orderByField, "modifiedDate")) {
+			orderByField = Field.MODIFIED_DATE;
+		}
+		else if (Objects.equals(orderByField, "title")) {
+			orderByField =
+				Field.TITLE + StringPool.UNDERLINE + locale.toString();
+		}
+
+		searchSearchRequest.addSorts(
+			_sorts.field(Field.getSortableFieldName("active"), SortOrder.DESC),
+			_sorts.field(
+				Field.getSortableFieldName(orderByField),
+				orderByComparator.isAscending() ? SortOrder.ASC :
+					SortOrder.DESC));
+
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(companyId));
+
+		BooleanQuery booleanQuery = _queries.booleanQuery();
+
+		TermsQuery termsQuery = _queries.terms(Field.ENTRY_CLASS_PK);
+
+		termsQuery.addValues(
+			ArrayUtil.toStringArray(kaleoDefinitionVersionIds));
+
+		booleanQuery.addMustQueryClauses(
+			_queries.term(Field.COMPANY_ID, companyId),
+			_queries.term(
+				Field.ENTRY_CLASS_NAME, KaleoDefinitionVersion.class.getName()),
+			termsQuery);
+
+		searchSearchRequest.setQuery(booleanQuery);
+
+		if ((end != QueryUtil.ALL_POS) && (start != QueryUtil.ALL_POS)) {
+			searchSearchRequest.setSize(end - start);
+			searchSearchRequest.setStart(start);
+		}
+
+		SearchSearchResponse searchSearchResponse =
+			_searchRequestExecutor.executeSearchRequest(searchSearchRequest);
+
+		SearchHits searchHits = searchSearchResponse.getSearchHits();
+
+		return TransformUtil.transform(
+			searchHits.getSearchHits(),
+			searchHit -> {
+				Document document = searchHit.getDocument();
+
+				return kaleoDefinitionVersionPersistence.fetchByPrimaryKey(
+					document.getLong(Field.ENTRY_CLASS_PK));
+			});
 	}
 
 	@Override
@@ -360,69 +422,109 @@ public class KaleoDefinitionVersionLocalServiceImpl
 		return kaleoDefinitionVersionIds.size();
 	}
 
-	private void _addKeywordsCriterion(
-		DynamicQuery dynamicQuery, String keywords) {
-
-		if (Validator.isNull(keywords)) {
-			return;
-		}
-
-		Junction junction = RestrictionsFactoryUtil.disjunction();
-
-		for (String keyword : _customSQL.keywords(keywords)) {
-			junction.add(RestrictionsFactoryUtil.ilike("description", keyword));
-			junction.add(RestrictionsFactoryUtil.ilike("name", keyword));
-			junction.add(RestrictionsFactoryUtil.ilike("title", keyword));
-		}
-
-		dynamicQuery.add(junction);
-	}
-
-	private void _addStatusCriterion(DynamicQuery dynamicQuery, int status) {
-		if (status != WorkflowConstants.STATUS_ANY) {
-			Junction junction = RestrictionsFactoryUtil.disjunction();
-
-			junction.add(RestrictionsFactoryUtil.eq("status", status));
-
-			dynamicQuery.add(junction);
-		}
-	}
-
 	private List<Long> _getKaleoDefinitionVersionIds(
 		long companyId, String keywords, int status) {
 
 		List<Long> kaleoDefinitionVersionIds = new ArrayList<>();
 
-		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
-			KaleoDefinitionVersion.class, getClassLoader());
+		SearchSearchRequest searchSearchRequest = new SearchSearchRequest();
 
-		Property companyIdProperty = PropertyFactoryUtil.forName("companyId");
+		TermsAggregation termsAggregation = _aggregations.terms(
+			"processDefinitionLatestVersions",
+			Field.getSortableFieldName(Field.NAME));
 
-		dynamicQuery.add(companyIdProperty.eq(companyId));
+		termsAggregation.setSize(10000);
 
-		_addKeywordsCriterion(dynamicQuery, keywords);
+		TopHitsAggregation topHitsAggregation = _aggregations.topHits(
+			"topHits");
 
-		_addStatusCriterion(dynamicQuery, status);
+		topHitsAggregation.addSortFields(
+			_sorts.field(
+				Field.getSortableFieldName(Field.VERSION), SortOrder.DESC));
 
-		ProjectionList projectionList = ProjectionFactoryUtil.projectionList();
+		topHitsAggregation.setSize(1);
 
-		projectionList.add(
-			ProjectionFactoryUtil.max("kaleoDefinitionVersionId"));
-		projectionList.add(ProjectionFactoryUtil.groupProperty("name"));
+		termsAggregation.addChildrenAggregations(topHitsAggregation);
 
-		dynamicQuery.setProjection(projectionList);
+		searchSearchRequest.addAggregation(termsAggregation);
 
-		List<Object[]> results = dynamicQuery(dynamicQuery);
+		searchSearchRequest.setIndexNames(
+			_indexNameBuilder.getIndexName(companyId));
 
-		for (Object[] result : results) {
-			kaleoDefinitionVersionIds.add((Long)result[0]);
+		BooleanQuery booleanQuery = _queries.booleanQuery();
+
+		booleanQuery.addMustQueryClauses(
+			_queries.term(Field.COMPANY_ID, companyId),
+			_queries.term(
+				Field.ENTRY_CLASS_NAME, KaleoDefinitionVersion.class.getName()),
+			_queries.term("scope", WorkflowDefinitionConstants.SCOPE_ALL));
+
+		if (Validator.isNotNull(keywords)) {
+			BooleanQuery keywordsBooleanQuery = _queries.booleanQuery();
+
+			keywordsBooleanQuery.addShouldQueryClauses(
+				_queries.match(Field.DESCRIPTION, keywords),
+				_queries.match(Field.NAME, keywords));
+
+			String[] localizedFieldNames =
+				_searchLocalizationHelper.getLocalizedFieldNames(
+					new String[] {Field.TITLE}, new SearchContext());
+
+			for (String localizedFieldName : localizedFieldNames) {
+				StringQuery stringQuery = _queries.string(
+					keywords + StringPool.STAR);
+
+				stringQuery.setDefaultField(localizedFieldName);
+
+				keywordsBooleanQuery.addShouldQueryClauses(
+					stringQuery, _queries.match(localizedFieldName, keywords));
+			}
+
+			booleanQuery.addMustQueryClauses(keywordsBooleanQuery);
+		}
+
+		if (status == WorkflowConstants.STATUS_APPROVED) {
+			booleanQuery.addMustQueryClauses(_queries.term("active", 1));
+		}
+		else if (status == WorkflowConstants.STATUS_DRAFT) {
+			booleanQuery.addMustQueryClauses(_queries.term("active", 0));
+		}
+
+		searchSearchRequest.setQuery(booleanQuery);
+		searchSearchRequest.setSize(0);
+
+		SearchSearchResponse searchSearchResponse =
+			_searchRequestExecutor.executeSearchRequest(searchSearchRequest);
+
+		Map<String, AggregationResult> aggregationResultsMap =
+			searchSearchResponse.getAggregationResultsMap();
+
+		TermsAggregationResult termsAggregationResult =
+			(TermsAggregationResult)aggregationResultsMap.get(
+				"processDefinitionLatestVersions");
+
+		for (Bucket bucket : termsAggregationResult.getBuckets()) {
+			TopHitsAggregationResult topHitsAggregationResult =
+				(TopHitsAggregationResult)bucket.getChildAggregationResult(
+					"topHits");
+
+			SearchHits searchHits = topHitsAggregationResult.getSearchHits();
+
+			for (SearchHit searchHit : searchHits.getSearchHits()) {
+				kaleoDefinitionVersionIds.add(
+					MapUtil.getLong(
+						searchHit.getSourcesMap(), Field.ENTRY_CLASS_PK));
+			}
 		}
 
 		return kaleoDefinitionVersionIds;
 	}
 
 	@Reference
-	private CustomSQL _customSQL;
+	private Aggregations _aggregations;
+
+	@Reference
+	private IndexNameBuilder _indexNameBuilder;
 
 	@Reference
 	private KaleoConditionLocalService _kaleoConditionLocalService;
@@ -440,7 +542,22 @@ public class KaleoDefinitionVersionLocalServiceImpl
 	private KaleoTransitionLocalService _kaleoTransitionLocalService;
 
 	@Reference
+	private Queries _queries;
+
+	@Reference
+	private QueryHelper _queryHelper;
+
+	@Reference
 	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private SearchLocalizationHelper _searchLocalizationHelper;
+
+	@Reference
+	private SearchRequestExecutor _searchRequestExecutor;
+
+	@Reference
+	private Sorts _sorts;
 
 	@Reference
 	private Staging _staging;

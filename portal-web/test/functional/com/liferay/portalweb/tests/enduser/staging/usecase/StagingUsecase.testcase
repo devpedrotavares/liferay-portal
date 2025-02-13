@@ -221,7 +221,7 @@ definition {
 				webContentLinkToPage = "Second Test Page",
 				webContentTitle = "WC WebContent Title 2");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("And: Add the WC to the first page of the staging site and publish it") {
@@ -812,7 +812,6 @@ definition {
 		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
-		property testray.component.names = "Page Administration,Training,Web Content Administration";
 
 		task ("Given: User import home page from LAR file on staging site") {
 			LAR.importSiteCP(
@@ -941,9 +940,17 @@ definition {
 				navTab = "Documents and Media",
 				uploadFileName = "Document_1.png");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 
 			Navigator.openStagingSiteURL(siteName = "Site Name");
+
+			var count = 0;
+
+			while ((${count} != 3) && (IsTextNotEqual(locator1 = "Portlet#HEADER", value1 = "Staging Test Page"))) {
+				Navigator.openStagingSiteURL(siteName = "Site Name");
+
+				var count = ${count} + 1;
+			}
 
 			Staging.gotoPublishToLive();
 
@@ -1069,7 +1076,7 @@ definition {
 				navTab = "Documents and Media",
 				uploadFileName = "Document_1.png");
 
-			PortletEntry.publish();
+			WebContent.publishExistingWCArticleWithPermissions();
 
 			Navigator.openStagingSiteURL(siteName = "Site Name");
 
@@ -1203,7 +1210,6 @@ definition {
 	@priority = 4
 	test PublishPortlet {
 		property portal.acceptance = "true";
-		property testray.component.names = "Training";
 
 		task ("When: User add a new WC on the staging site") {
 			WebContentNavigator.openWebContentAdmin(siteURLKey = "site-name-staging");
@@ -1214,7 +1220,7 @@ definition {
 				webContentContent = "Web Content Content",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 		}
 
 		task ("Then: User can publish it directly from the portlet") {
@@ -1413,7 +1419,7 @@ definition {
 				webContentContent = "Web Content Content",
 				webContentTitle = "Web Content Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			FormsAdminNavigator.openFormsAdmin(siteURLKey = "site-name-staging");
 
@@ -1723,6 +1729,10 @@ definition {
 	@description = "This is a use case for LPS-82028."
 	@priority = 3
 	test SingleAssetPublishLayoutScopedContent {
+		task ("Enable Scope Configuration") {
+			Portlet.enableScopeConfiguration();
+		}
+
 		task ("Given: User add a Blog portlet to the staging site") {
 			JSONLayout.addWidgetToPublicLayout(
 				column = 1,
@@ -2050,7 +2060,7 @@ definition {
 				webContentTitle = "WC WebContent 1 Title",
 				webContentWebContent = "WC WebContent Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "WC WebContent 1 Title");
 
@@ -2224,7 +2234,6 @@ definition {
 		property portal.acceptance = "quarantine";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
-		property testray.component.names = "Training";
 
 		task ("Given: User add a new file to the staging site") {
 			JSONDocument.addFileWithUploadedFile(
@@ -2757,7 +2766,7 @@ definition {
 				webContentTitle = "WC WebContent Title",
 				webContentUpload = '''example (“PDF”).pdf''');
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "WC WebContent Title");
 		}
@@ -2865,7 +2874,7 @@ definition {
 				webContentImageDescription = "this image doesn't work",
 				webContentTitle = "WebContent Title");
 
-			PortletEntry.publish();
+			WebContent.publishWithPermissions();
 
 			WebContent.viewTitle(webContentTitle = "WebContent Title");
 		}

@@ -45,7 +45,7 @@ public class MetatypeAttributeDefinitionTest {
 		ExtendedObjectClassDefinition extendedObjectClassDefinition =
 			extendedMetaTypeInformation.getObjectClassDefinition(
 				"com.liferay.portal.configuration.metatype.definitions.test." +
-					"TestConfiguration",
+					"MetatypeAttributeDefinitionTest",
 				null);
 
 		Assert.assertArrayEquals(
@@ -84,7 +84,7 @@ public class MetatypeAttributeDefinitionTest {
 	private ExtendedMetaTypeService _extendedMetaTypeService;
 
 	@Meta.OCD(
-		id = "com.liferay.portal.configuration.metatype.definitions.test.TestConfiguration"
+		id = "com.liferay.portal.configuration.metatype.definitions.test.MetatypeAttributeDefinitionTest"
 	)
 	private interface TestConfiguration {
 

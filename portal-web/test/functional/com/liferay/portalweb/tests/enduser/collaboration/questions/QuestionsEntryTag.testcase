@@ -1,4 +1,4 @@
-@component-name = "portal-questions"
+@component-name = "portal-content-management"
 definition {
 
 	property portal.release = "true";
@@ -471,6 +471,10 @@ definition {
 			Questions.openToTagsTab(
 				layoutName = "questions-page",
 				siteURLKey = "guest");
+
+			WaitForElementPresent(
+				key_tagName = "tag1",
+				locator1 = "Questions#TAGS_LIST_TAB_NAMES");
 
 			Questions.search(
 				searchKey = "tag1",

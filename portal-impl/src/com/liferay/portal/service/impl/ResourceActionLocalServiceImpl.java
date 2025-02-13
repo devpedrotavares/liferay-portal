@@ -7,7 +7,9 @@ package com.liferay.portal.service.impl;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.cache.CacheRegistryItem;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
@@ -18,6 +20,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mass.delete.MassDeleteCacheThreadLocal;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
@@ -30,6 +33,7 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.persistence.ResourcePermissionPersistence;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.service.base.ResourceActionLocalServiceBaseImpl;
 
@@ -46,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Shuyang Zhou
  */
 public class ResourceActionLocalServiceImpl
-	extends ResourceActionLocalServiceBaseImpl {
+	extends ResourceActionLocalServiceBaseImpl implements CacheRegistryItem {
 
 	@Override
 	public ResourceAction addResourceAction(
@@ -113,7 +117,7 @@ public class ResourceActionLocalServiceImpl
 			for (String actionId : actionIds) {
 				String key = encodeKey(name, actionId);
 
-				if (_resourceActions.get(key) != null) {
+				if (fetchResourceAction(name, actionId) != null) {
 					continue;
 				}
 
@@ -321,25 +325,45 @@ public class ResourceActionLocalServiceImpl
 	}
 
 	@Override
-	@Transactional(enabled = false)
 	public ResourceAction fetchResourceAction(String name, String actionId) {
-		return _resourceActions.get(encodeKey(name, actionId));
-	}
-
-	@Override
-	@Transactional(enabled = false)
-	public ResourceAction getResourceAction(String name, String actionId)
-		throws PortalException {
-
-		String key = encodeKey(name, actionId);
-
-		ResourceAction resourceAction = _resourceActions.get(key);
+		ResourceAction resourceAction = _resourceActions.get(
+			encodeKey(name, actionId));
 
 		if (resourceAction == null) {
-			throw new NoSuchResourceActionException(key);
+			resourceAction = resourceActionPersistence.fetchByN_A(
+				name, actionId);
+
+			if (resourceAction == null) {
+				_resourceActions.put(encodeKey(name, actionId), _NULL_HOLDER);
+			}
+			else {
+				_resourceActions.put(encodeKey(name, actionId), resourceAction);
+			}
+		}
+
+		if (resourceAction == _NULL_HOLDER) {
+			return null;
 		}
 
 		return resourceAction;
+	}
+
+	@Override
+	public String getRegistryName() {
+		return ResourceActionLocalServiceImpl.class.getName();
+	}
+
+	@Override
+	public ResourceAction getResourceAction(String name, String actionId)
+		throws PortalException {
+
+		ResourceAction resourceAction = fetchResourceAction(name, actionId);
+
+		if (resourceAction != null) {
+			return resourceAction;
+		}
+
+		throw new NoSuchResourceActionException(encodeKey(name, actionId));
 	}
 
 	@Override
@@ -352,16 +376,32 @@ public class ResourceActionLocalServiceImpl
 		return resourceActionPersistence.countByName(name);
 	}
 
-	protected String encodeKey(String name, String actionId) {
-		String key = StringBundler.concat(name, StringPool.POUND, actionId);
+	@Override
+	public void invalidate() {
+		if (!DBPartition.isPartitionEnabled() ||
+			(CompanyThreadLocal.getCompanyId() == CompanyConstants.SYSTEM)) {
 
-		if (DBPartition.isPartitionEnabled()) {
-			return StringBundler.concat(
-				key, StringPool.AT, CompanyThreadLocal.getNonsystemCompanyId());
+			_resourceActions.clear();
+
+			return;
 		}
 
-		return key;
+		for (String key : _resourceActions.keySet()) {
+			if (key.endsWith(
+					StringPool.AT + CompanyThreadLocal.getCompanyId())) {
+
+				_resourceActions.remove(key);
+			}
+		}
 	}
+
+	protected String encodeKey(String name, String actionId) {
+		return DBPartitionUtil.getPartitionKey(
+			StringBundler.concat(name, StringPool.POUND, actionId));
+	}
+
+	private static final ResourceAction _NULL_HOLDER =
+		ProxyFactory.newDummyInstance(ResourceAction.class);
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ResourceActionLocalServiceImpl.class);

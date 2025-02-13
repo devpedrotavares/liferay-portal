@@ -27,13 +27,13 @@ import com.liferay.bulk.selection.BulkSelectionFactory;
 import com.liferay.document.library.kernel.exception.FileSizeException;
 import com.liferay.friendly.url.exception.DuplicateFriendlyURLEntryException;
 import com.liferay.friendly.url.exception.FriendlyURLCategoryException;
+import com.liferay.friendly.url.exception.FriendlyURLLocalizationUrlTitleException;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTTransactionException;
 import com.liferay.portal.kernel.editor.constants.EditorConstants;
 import com.liferay.portal.kernel.exception.ImageResolutionException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -243,9 +243,10 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 			   EntryDisplayDateException | EntrySmallImageNameException |
 			   EntrySmallImageScaleException | EntryTitleException |
 			   EntryUrlTitleException | FileSizeException |
-			   FriendlyURLCategoryException | ImageResolutionException |
-			   LiferayFileItemException | SanitizerException |
-			   UploadRequestSizeException exception) {
+			   FriendlyURLCategoryException |
+			   FriendlyURLLocalizationUrlTitleException |
+			   ImageResolutionException | LiferayFileItemException |
+			   SanitizerException | UploadRequestSizeException exception) {
 
 			SessionErrors.add(actionRequest, exception.getClass());
 
@@ -538,15 +539,10 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			BlogsEntry.class.getName(), actionRequest);
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				themeDisplay.getCompanyId(), "LPD-11147")) {
-
-			serviceContext.setAttribute(
-				"friendlyURLAssetCategoryIds",
-				ParamUtil.getLongValues(
-					actionRequest, "friendlyURLAssetCategoryIds"));
-		}
-
+		serviceContext.setAttribute(
+			"friendlyURLAssetCategoryIds",
+			ParamUtil.getLongValues(
+				actionRequest, "friendlyURLAssetCategoryIds"));
 		serviceContext.setAttribute(
 			"updateAutoTags",
 			ParamUtil.getBoolean(actionRequest, "updateAutoTags"));

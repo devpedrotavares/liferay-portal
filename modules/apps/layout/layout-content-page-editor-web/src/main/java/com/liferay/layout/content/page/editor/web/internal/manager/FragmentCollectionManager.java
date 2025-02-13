@@ -26,7 +26,6 @@ import com.liferay.layout.page.template.info.item.capability.EditPageInfoItemCap
 import com.liferay.layout.util.PortalPreferencesUtil;
 import com.liferay.layout.util.structure.DropZoneLayoutStructureItem;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -384,6 +383,8 @@ public class FragmentCollectionManager {
 			fragmentCollectionContributorMaps.put(
 				fragmentCollectionContributor.getFragmentCollectionKey(),
 				HashMapBuilder.<String, Object>put(
+					"deprecated", fragmentCollectionContributor.isDeprecated()
+				).put(
 					"fragmentCollectionId",
 					fragmentCollectionContributor.getFragmentCollectionKey()
 				).put(
@@ -462,10 +463,7 @@ public class FragmentCollectionManager {
 				  Objects.equals(
 					  fragmentEntry.getFragmentEntryKey(),
 					  "INPUTS-submit-button")) &&
-				 hideInputFragments) ||
-				(Objects.equals(
-					fragmentEntry.getFragmentEntryKey(), "INPUTS-stepper") &&
-				 !FeatureFlagManagerUtil.isEnabled("LPD-10727"))) {
+				 hideInputFragments)) {
 
 				continue;
 			}

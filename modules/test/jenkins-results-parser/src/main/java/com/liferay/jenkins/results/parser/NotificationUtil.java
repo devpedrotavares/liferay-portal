@@ -61,10 +61,17 @@ public class NotificationUtil {
 			body, attachmentFileName, null);
 	}
 
-	public static void sendEmail(
+	public static synchronized void sendEmail(
 		String senderEmailAddress, String senderName,
 		String recipientEmailAddress, String subject, String body,
 		String attachmentFileName, String mimeType) {
+
+		Thread thread = Thread.currentThread();
+
+		if (thread.getContextClassLoader() == null) {
+			thread.setContextClassLoader(
+				NotificationUtil.class.getClassLoader());
+		}
 
 		body = JenkinsResultsParserUtil.redact(body);
 		subject = JenkinsResultsParserUtil.redact(subject);
@@ -85,6 +92,10 @@ public class NotificationUtil {
 		}
 
 		try {
+			if (!senderEmailAddress.endsWith(".liferay.com")) {
+				senderEmailAddress = senderEmailAddress + ".lax.liferay.com";
+			}
+
 			mimeMessage.setFrom(
 				new InternetAddress(senderEmailAddress, senderName));
 			mimeMessage.setRecipients(
@@ -110,9 +121,18 @@ public class NotificationUtil {
 
 				File attachmentFile = new File(attachmentFileName);
 
-				attachmentBodyPart.setFileName(attachmentFile.getName());
+				long attachmentFileSize = attachmentFile.length();
 
-				multipart.addBodyPart(attachmentBodyPart);
+				if (attachmentFileSize < _MAX_ATTACHMENT_FILE_SIZE) {
+					attachmentBodyPart.setFileName(attachmentFile.getName());
+
+					multipart.addBodyPart(attachmentBodyPart);
+				}
+				else {
+					System.out.println(
+						"Attachment file size for " + attachmentFile +
+							" exceeds 10MB cannot be attached to email");
+				}
 			}
 
 			mimeMessage.setContent(multipart);
@@ -136,9 +156,22 @@ public class NotificationUtil {
 		}
 		catch (IOException | MessagingException exception) {
 			System.out.println("Unable to send email.");
-			System.out.println(exception.getMessage());
+
+			String message = exception.getMessage();
+
+			System.out.println(message);
 
 			exception.printStackTrace();
+
+			Throwable throwable = exception.getCause();
+
+			if (throwable != null) {
+				String throwableMessage = throwable.getMessage();
+
+				if (throwableMessage.contains("no object DCH for MIME type")) {
+					return;
+				}
+			}
 
 			StringBuilder sb = new StringBuilder();
 
@@ -151,7 +184,7 @@ public class NotificationUtil {
 			sb.append("\nBody: ");
 			sb.append(body);
 			sb.append("\nError: ");
-			sb.append(exception.getMessage());
+			sb.append(message);
 			sb.append("\n\n<@U04GTH03Q>");
 
 			sendSlackNotification(
@@ -214,6 +247,8 @@ public class NotificationUtil {
 			ioException.printStackTrace();
 		}
 	}
+
+	private static final long _MAX_ATTACHMENT_FILE_SIZE = 1024 * 1024 * 10;
 
 	static {
 		Thread thread = Thread.currentThread();

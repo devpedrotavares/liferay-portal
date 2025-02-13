@@ -12,6 +12,9 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import java.util.List;
 import java.util.Map;
 
@@ -150,12 +153,12 @@ public class AccountUsage {
 		).put(
 			"clientExtensionsCapacityCPU",
 			_getUsageJSONObject(
-				_clientExtensionsCapacityCPUUsed,
+				_format(_clientExtensionsCapacityCPUUsed),
 				_clientExtensionsCapacityCPUMax)
 		).put(
 			"clientExtensionsCapacityRAM",
 			_getUsageJSONObject(
-				_clientExtensionsCapacityRAMUsed,
+				_format(_clientExtensionsCapacityRAMUsed),
 				_clientExtensionsCapacityRAMMax)
 		).put(
 			"monthlyActiveLoggedInUsers",
@@ -166,11 +169,21 @@ public class AccountUsage {
 		).put(
 			"storageCapacityDocumentLibrary",
 			_getUsageJSONObject(
-				_storageCapacityDocumentLibraryUsed,
+				_format(_storageCapacityDocumentLibraryUsed),
 				_storageCapacityDocumentLibraryMax)
 		);
 
 		return jsonObject;
+	}
+
+	private float _format(BigDecimal bigDecimal) {
+		if (bigDecimal != null) {
+			return bigDecimal.setScale(
+				2, RoundingMode.DOWN
+			).floatValue();
+		}
+
+		return BigDecimal.ZERO.floatValue();
 	}
 
 	private long _getAnonymousPageViewsMax(String name) {
@@ -193,7 +206,7 @@ public class AccountUsage {
 		return GetterUtil.getLong(monthlyActiveLoggedInUsersMaxString);
 	}
 
-	private JSONObject _getUsageJSONObject(long usedCount, long maxCount) {
+	private JSONObject _getUsageJSONObject(float usedCount, long maxCount) {
 		JSONObject jsonObject = new JSONObject();
 
 		jsonObject.put(
@@ -246,30 +259,32 @@ public class AccountUsage {
 	}
 
 	private void _initUsage(JSONObject jsonObject) {
-		_anonymousPageViewsUsed = jsonObject.getLong(
-			"totalAnonymousPageViewsCount");
-		_clientExtensionsCapacityCPUUsed = jsonObject.getInt(
-			"totalClientExtensionsCapacityCPUCount");
-		_clientExtensionsCapacityRAMUsed = jsonObject.getInt(
-			"totalClientExtensionsCapacityRAM");
-		_monthlyActiveLoggedInUsersUsed = jsonObject.getLong(
-			"totalMonthlyActiveLoggedInUsersCount");
-		_sitesUsed = jsonObject.getInt("totalSitesCount");
-		_storageCapacityDocumentLibraryUsed = jsonObject.getInt(
-			"totalStorageCapacityDocumentLibrary");
+		if (jsonObject != null) {
+			_anonymousPageViewsUsed = jsonObject.optLong(
+				"totalAnonymousPageViewsCount");
+			_clientExtensionsCapacityCPUUsed = jsonObject.optBigDecimal(
+				"totalClientExtensionsCapacityCPUCount", BigDecimal.ZERO);
+			_clientExtensionsCapacityRAMUsed = jsonObject.optBigDecimal(
+				"totalClientExtensionsCapacityRAM", BigDecimal.ZERO);
+			_monthlyActiveLoggedInUsersUsed = jsonObject.optLong(
+				"totalMonthlyActiveLoggedInUsersCount");
+			_sitesUsed = jsonObject.optInt("totalSitesCount");
+			_storageCapacityDocumentLibraryUsed = jsonObject.optBigDecimal(
+				"totalStorageCapacityDocumentLibrary", BigDecimal.ZERO);
+		}
 	}
 
 	private final long _anonymousPageViewsMax;
 	private long _anonymousPageViewsUsed;
 	private int _clientExtensionsCapacityCPUMax;
-	private int _clientExtensionsCapacityCPUUsed;
+	private BigDecimal _clientExtensionsCapacityCPUUsed;
 	private int _clientExtensionsCapacityRAMMax;
-	private int _clientExtensionsCapacityRAMUsed;
+	private BigDecimal _clientExtensionsCapacityRAMUsed;
 	private final long _monthlyActiveLoggedInUsersMax;
 	private long _monthlyActiveLoggedInUsersUsed;
 	private int _sitesMax;
 	private int _sitesUsed;
 	private int _storageCapacityDocumentLibraryMax;
-	private int _storageCapacityDocumentLibraryUsed;
+	private BigDecimal _storageCapacityDocumentLibraryUsed;
 
 }

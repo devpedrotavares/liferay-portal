@@ -54,23 +54,29 @@ public class CPConfigurationEntryLocalServiceWrapper
 	public CPConfigurationEntry addCPConfigurationEntry(
 			String externalReferenceCode, long userId, long groupId,
 			long classNameId, long classPK, long cpConfigurationListId,
-			String allowedOrderQuantities, boolean backOrders,
-			long commerceAvailabilityEstimateId,
-			String cpDefinitionInventoryEngine, boolean displayAvailability,
-			boolean displayStockQuantity, String lowStockActivity,
+			long cpTaxCategoryId, String allowedOrderQuantities,
+			boolean backOrders, long commerceAvailabilityEstimateId,
+			String cpDefinitionInventoryEngine, double depth,
+			boolean displayAvailability, boolean displayStockQuantity,
+			boolean freeShipping, double height, String lowStockActivity,
 			java.math.BigDecimal maxOrderQuantity,
 			java.math.BigDecimal minOrderQuantity,
 			java.math.BigDecimal minStockQuantity,
-			java.math.BigDecimal multipleOrderQuantity)
+			java.math.BigDecimal multipleOrderQuantity, boolean purchasable,
+			boolean shippable, double shippingExtraPrice,
+			boolean shipSeparately, boolean taxExempt, boolean visible,
+			double weight, double width)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpConfigurationEntryLocalService.addCPConfigurationEntry(
 			externalReferenceCode, userId, groupId, classNameId, classPK,
-			cpConfigurationListId, allowedOrderQuantities, backOrders,
-			commerceAvailabilityEstimateId, cpDefinitionInventoryEngine,
-			displayAvailability, displayStockQuantity, lowStockActivity,
+			cpConfigurationListId, cpTaxCategoryId, allowedOrderQuantities,
+			backOrders, commerceAvailabilityEstimateId,
+			cpDefinitionInventoryEngine, depth, displayAvailability,
+			displayStockQuantity, freeShipping, height, lowStockActivity,
 			maxOrderQuantity, minOrderQuantity, minStockQuantity,
-			multipleOrderQuantity);
+			multipleOrderQuantity, purchasable, shippable, shippingExtraPrice,
+			shipSeparately, taxExempt, visible, weight, width);
 	}
 
 	/**
@@ -100,9 +106,19 @@ public class CPConfigurationEntryLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteCPConfigurationEntries(long cpConfigurationListId) {
+	public void deleteCPConfigurationEntries(long cpConfigurationListId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_cpConfigurationEntryLocalService.deleteCPConfigurationEntries(
 			cpConfigurationListId);
+	}
+
+	@Override
+	public void deleteCPConfigurationEntries(long classNameId, long classPK)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_cpConfigurationEntryLocalService.deleteCPConfigurationEntries(
+			classNameId, classPK);
 	}
 
 	/**
@@ -114,10 +130,12 @@ public class CPConfigurationEntryLocalServiceWrapper
 	 *
 	 * @param cpConfigurationEntry the cp configuration entry
 	 * @return the cp configuration entry that was removed
+	 * @throws PortalException
 	 */
 	@Override
 	public CPConfigurationEntry deleteCPConfigurationEntry(
-		CPConfigurationEntry cpConfigurationEntry) {
+			CPConfigurationEntry cpConfigurationEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpConfigurationEntryLocalService.deleteCPConfigurationEntry(
 			cpConfigurationEntry);
@@ -301,6 +319,14 @@ public class CPConfigurationEntryLocalServiceWrapper
 	}
 
 	@Override
+	public CPConfigurationEntry forceDeleteCPConfigurationEntry(
+		CPConfigurationEntry cpConfigurationEntry) {
+
+		return _cpConfigurationEntryLocalService.
+			forceDeleteCPConfigurationEntry(cpConfigurationEntry);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -332,6 +358,22 @@ public class CPConfigurationEntryLocalServiceWrapper
 
 		return _cpConfigurationEntryLocalService.getCPConfigurationEntries(
 			cpConfigurationListId);
+	}
+
+	@Override
+	public java.util.List<CPConfigurationEntry> getCPConfigurationEntries(
+		long classNameId, long classPK) {
+
+		return _cpConfigurationEntryLocalService.getCPConfigurationEntries(
+			classNameId, classPK);
+	}
+
+	@Override
+	public java.util.List<CPConfigurationEntry> getCPConfigurationEntries(
+		long classNameId, long classPK, boolean visible) {
+
+		return _cpConfigurationEntryLocalService.getCPConfigurationEntries(
+			classNameId, classPK, visible);
 	}
 
 	/**
@@ -496,22 +538,28 @@ public class CPConfigurationEntryLocalServiceWrapper
 	@Override
 	public CPConfigurationEntry updateCPConfigurationEntry(
 			String externalReferenceCode, long cpConfigurationEntryId,
-			String allowedOrderQuantities, boolean backOrders,
-			long commerceAvailabilityEstimateId,
-			String cpDefinitionInventoryEngine, boolean displayAvailability,
-			boolean displayStockQuantity, String lowStockActivity,
+			long cpTaxCategoryId, String allowedOrderQuantities,
+			boolean backOrders, long commerceAvailabilityEstimateId,
+			String cpDefinitionInventoryEngine, double depth,
+			boolean displayAvailability, boolean displayStockQuantity,
+			boolean freeShipping, double height, String lowStockActivity,
 			java.math.BigDecimal maxOrderQuantity,
 			java.math.BigDecimal minOrderQuantity,
 			java.math.BigDecimal minStockQuantity,
-			java.math.BigDecimal multipleOrderQuantity)
+			java.math.BigDecimal multipleOrderQuantity, boolean purchasable,
+			boolean shippable, double shippingExtraPrice,
+			boolean shipSeparately, boolean taxExempt, boolean visible,
+			double weight, double width)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _cpConfigurationEntryLocalService.updateCPConfigurationEntry(
-			externalReferenceCode, cpConfigurationEntryId,
+			externalReferenceCode, cpConfigurationEntryId, cpTaxCategoryId,
 			allowedOrderQuantities, backOrders, commerceAvailabilityEstimateId,
-			cpDefinitionInventoryEngine, displayAvailability,
-			displayStockQuantity, lowStockActivity, maxOrderQuantity,
-			minOrderQuantity, minStockQuantity, multipleOrderQuantity);
+			cpDefinitionInventoryEngine, depth, displayAvailability,
+			displayStockQuantity, freeShipping, height, lowStockActivity,
+			maxOrderQuantity, minOrderQuantity, minStockQuantity,
+			multipleOrderQuantity, purchasable, shippable, shippingExtraPrice,
+			shipSeparately, taxExempt, visible, weight, width);
 	}
 
 	@Override

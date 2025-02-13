@@ -299,7 +299,7 @@ export default function ObjectFieldFormBase({
 			oneToManyObjectRelationship &&
 			oneToManyObjectRelationship.deletionType !== 'disassociate'
 		) {
-			return Liferay.FeatureFlags['LPS-187142']
+			return Liferay.FeatureFlags['LPD-34594']
 				? oneToManyObjectRelationship.edge
 				: false;
 		}
@@ -312,7 +312,11 @@ export default function ObjectFieldFormBase({
 			return true;
 		}
 
-		return !!values.relationshipType || values.localized || values.state;
+		return (
+			!!values.relationshipType ||
+			(!Liferay.FeatureFlags['LPD-32050'] && values.localized) ||
+			values.state
+		);
 	};
 
 	const handleStateToggleChange = (toggled: boolean) => {
