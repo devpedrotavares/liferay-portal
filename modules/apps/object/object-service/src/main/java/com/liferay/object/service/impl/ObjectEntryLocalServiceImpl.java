@@ -5255,8 +5255,7 @@ public class ObjectEntryLocalServiceImpl
 				acceptedGroupId -> acceptedGroupId.equals(
 					String.valueOf(groupId)))) {
 
-			throw new NoSuchObjectDefinitionException(
-				"This object definition does not exist");
+			throw new NoSuchObjectDefinitionException();
 		}
 	}
 
