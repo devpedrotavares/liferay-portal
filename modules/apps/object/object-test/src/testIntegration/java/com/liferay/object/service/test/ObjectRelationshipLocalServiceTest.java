@@ -106,6 +106,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
@@ -1899,6 +1900,9 @@ public class ObjectRelationshipLocalServiceTest {
 		_objectRelationshipLocalService.deleteObjectRelationship(
 			systemObjectRelationship);
 	}
+
+	@Rule
+	public Timeout timeout = Timeout.seconds(10);
 
 	private static ObjectDefinition _addSystemObjectDefinition(
 			String restContextPath)
